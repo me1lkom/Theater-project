@@ -43,6 +43,6 @@ export async function getPlayById(id) {
 };
 
 export async function getGenres(){
-    const response = await apiClient.get('api/genres/');
+    const response = await apiClient.get('/genres/');
     return response.data;
 }
