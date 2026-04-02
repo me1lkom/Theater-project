@@ -4,7 +4,7 @@ export default function PlayCard({ play, onClick }) {
       <div className="posterContainer">
         <img src={play.poster} alt={play.title} />
         {play.genres?.map(genre =>(
-          <div className="genre" key={genre}>{genre}</div>
+          <div className="genre" key={genre.genre_id}>{genre.name}</div>
         ))}
       </div>
       <div className="infoContainer">

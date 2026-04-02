@@ -47,9 +47,11 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'api',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -169,9 +171,14 @@ REST_FRAMEWORK = {
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SECURE = False      # True в продакшене
 CSRF_COOKIE_SAMESITE = 'Lax'
-CSRF_TRUSTED_ORIGINS = ['http://localhost:8000', 'http://127.0.0.1:8000']
+CSRF_TRUSTED_ORIGINS = ['http://localhost:8000', 'http://127.0.0.1:8000', 'http://localhost:8001', 'http://127.0.0.1:8001',]
 
 # Для разработки
 if DEBUG:
     CSRF_COOKIE_SECURE = False
     SIMPLE_JWT['AUTH_COOKIE_SECURE'] = False
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8001",  # Vite порт по умолчанию
+    "http://127.0.0.1:8001",
+]
