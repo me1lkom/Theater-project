@@ -1,0 +1,99 @@
+cd 4\ semester/SPO/project/Theater-project/backend
+
+первый раз / изменение системных настроек:
+docker-compose up -d --build
+
+потом просто запускать:
+docker-compose up -d
+
+
+создание админа: 
+docker-compose exec web python manage.py createsuperuser
+lev
+
+lev 
+y
+
+
+
+
+
+import { useState, useEffect } from "react";
+import { getPlays } from "../api/index";
+
+export function usePlays() {
+  const [plays, setPlays] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchPlays = async () => {
+        try {
+            setLoading(true);
+            const data = await getPlays();
+            setPlays(data);
+            setError(null);
+        } catch (err) {
+            setError(err.massage || 'Ошибка загрузки данных');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    fetchPlays();
+
+  }, []);
+
+  return {plays, loading, error};
+}
+
+
+
+import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { usePlays } from '../../hooks/usePlays';
+import PlayFilter from '../../components/plays/PlayFilter';
+import PlayList from '../../components/plays/PlayList';
+
+export default function MainPage() {
+  const navigate = useNavigate();
+  const { plays, loading, error } = usePlays();
+  
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Фильтруем только по названию
+  const filteredPlays = useMemo(() => {
+    if (!plays) return [];
+    
+    return plays.filter(play => {
+      const matchesSearch = play.title
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+      
+      return matchesSearch;
+    });
+  }, [plays, searchQuery]);
+
+  const handlePlayClick = (playId) => {
+    navigate(`/play/${playId}`);
+  };
+
+  if (loading) return <div>Загрузка...</div>;
+  if (error) return <div>Ошибка: {error}</div>;
+
+  return (
+    <main>
+      <h1>Афиша спектаклей</h1>
+      
+      <PlayFilter
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+      />
+      
+      <PlayList
+        plays={filteredPlays}
+        onPlayClick={handlePlayClick}
+      />
+    </main>
+  );
+}

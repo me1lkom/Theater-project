@@ -1,33 +1,23 @@
-export default function PlayCard({ play, onclick }) {
-  return (
-    <article className="playCard">
-      <div className="playPoster">
-        {play.poster_url ? (
-          <img src={play.poster_url} alt={play.title} />
-        ) : (
-          <div className="posterPlaceholder">🎭</div>
-        )}
-        // сюда, поверх постера должне подтягиваться жанр. хочу сделать его в
-        небольшой кружке в правом верхнем углу постера
+export default function PlayCard({ play, onClick }) {
+  return(
+    <article className="playCard" onClick={() => onClick(play.play_id)}>
+      <div className="posterContainer">
+        <img src={play.poster} alt={play.title} />
+        {play.genres?.map(genre =>(
+          <div className="genre" key={genre}>{genre}</div>
+        ))}
       </div>
-      <div className="playInfo">
-        <div>
-          <h3 className="playTitle">{play.title}</h3>
-          <p className="playDescription">{play.description}</p>
+      <div className="infoContainer">
+        <div className="info-all"> 
+          <div className="title">{play.title}</div>
+          <div className="description">{play.description}</div>
         </div>
-        
-        <div className="playFooter">
-          <div className="playMeta">
-            <span>⏱ {play.duration} мин</span>
-            <span>от {play.price} ₽</span>
-          </div>
-          <button className="btn" onClick={() => onClick(play.play_id)}>
-            Купить
-          </button>
+        <div className="info-session"> 
+          <div className="">//ближайшая дата и время, нужно подгружать через session/id. пока не реализовано</div>
+          <div className="">{play.duration}</div> {/* В будущем необходимо перевести длительность из минут в номальный вид */}
+          <div className="price">{play.price}</div> {/* В будущем необходимо перевести цену в номарльный вид */}
         </div>
       </div>
     </article>
-  );
-}
-
-// Много div, нужно менять структуру
+  )
+};

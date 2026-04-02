@@ -8,7 +8,7 @@ export const apiClient = axios.create({
     },
 });
 
-
+// –– Перехватчики 
 apiClient.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('accessToken');
@@ -42,17 +42,7 @@ export async function getPlayById(id) {
     return response.data;
 };
 
-export async function getSessionByPlay(playId) {
-    const response = await apiClient.get('/sessions/', {
-        params: { play_id: playId }
-    });
+export async function getGenres(){
+    const response = await apiClient.get('api/genres/');
     return response.data;
-};
-
-export async function getAvailableSeats(sessionId) {
-    const response = await apiClient.get(`/sessions/${sessionId}/available-seats/`);
-    return response.data;
-};
-
-
-
+}
