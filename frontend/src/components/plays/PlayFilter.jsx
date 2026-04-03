@@ -13,7 +13,7 @@ export default function PlayFilter({ searchQuery, onSearchChange, selectedGenre,
       />
       <select value={selectedGenre} onChange={(e) => onGenreChange(e.target.value)}>
         <option value="all">Все жанры</option>
-        {!loading && genres?.map((genre) => <option key={genre.gense_id} value={genre.genre_id}>{genre.name}</option>)}
+        {!loading && genres?.map((genre) => <option key={genre.genre_id} value={genre.genre_id}>{genre.name}</option>)}
       </select>
     </div>
   );

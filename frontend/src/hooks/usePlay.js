@@ -1,36 +1,27 @@
-import { useState, useEffect } from 'react';
-import { getPlayById, getSessionsByPlay } from '../api/index';
+import { useState, useEffect } from "react";
+import { getPlayById } from "../api/index";
 
-export function usePlay(playId) {
+export function usePlay(id) {
     const [play, setPlay] = useState(null);
-    const [sessions, setSessions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        if (!playId) return;
-
         const fetchPlay = async () => {
             try {
                 setLoading(true);
-
-                const [playData, sessionData] = await Promise.all([
-                    getPlayById(playId),
-                    getSessionsByPlay(playId)
-                ]);
-                
-                setPlay(playData);
-                setSessions(sessionData);
+                const data = await getPlayById(id);
+                setPlay(data);
                 setError(null);
             } catch (err) {
-                setError(err.message || 'Ошибка загрузки спектакля');
+                setError(err.massage || 'Ошибка загрузки спектаклся по id.');
             } finally {
                 setLoading(false);
             }
-        };
-
+        }
         fetchPlay();
-    }, [playId]);
 
-    return { play, sessions, loading, error };
+    }, [id]);
+
+    return { play, loading, error };
 }
