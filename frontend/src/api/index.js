@@ -46,3 +46,18 @@ export async function getGenres(){
     const response = await apiClient.get('/genres/');
     return response.data;
 }
+
+export async function getSessions() {
+    const response = await apiClient.get('/sessions/');
+    return response.data;
+}
+
+export async function getSeats() {
+    const response = await apiClient.get('/seats/');
+    return response.data;
+}
+
+export async function getAvailableSeats(session_id) {
+    const response = await apiClient.get(`/sessions/${session_id}/available-seats/`);
+    return response.data;
+}
