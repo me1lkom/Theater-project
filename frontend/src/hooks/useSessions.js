@@ -14,7 +14,7 @@ export function useSessions() {
                 setSessions(data);
                 setError(null);
             } catch (err) {
-                setError(err.massage || 'Ошибка загрузки сессий');
+                setError(err.message || 'Ошибка загрузки сессий');
             } finally {
                 setLoading(false);
             }

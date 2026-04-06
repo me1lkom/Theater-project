@@ -14,7 +14,7 @@ export function usePlay(id) {
                 setPlay(data);
                 setError(null);
             } catch (err) {
-                setError(err.massage || 'Ошибка загрузки спектаклся по id.');
+                setError(err.message || 'Ошибка загрузки спектаклся по id.');
             } finally {
                 setLoading(false);
             }

@@ -2,36 +2,15 @@ import axios from "axios";
 
 export const apiClient = axios.create({
     baseURL: "http://localhost:8000/api",
+    // withCredentials: true, 
     headers: {
         "Content-Type": "application/json",
         "accept": "application/json",
     },
 });
 
-// –– Перехватчики 
-apiClient.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('accessToken');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
-    }
-);
 
-apiClient.interceptors.response.use(
-    (response) => response,
-    (error) => {
-        console.error('API Error:', error.response?.data || error.message);
-        return Promise.reject(error);
-    }
-);
-
-
-// –– Запросы
+// –– Запросы данные
 export async function getPlays() {
     const response = await apiClient.get('/plays/');
     return response.data;
@@ -60,4 +39,25 @@ export async function getSeats() {
 export async function getAvailableSeats(session_id) {
     const response = await apiClient.get(`/sessions/${session_id}/available-seats/`);
     return response.data;
+}
+
+// –– Запросы auth
+export async function login(credentials) {
+    const response = await apiClient.post('/auth/login/', credentials, {
+        withCredentials: true
+    });
+    return response.data;
+}
+
+export async function register(credentials) {
+    const response = await apiClient.post('/auth/register/', credentials, {
+        withCredentials: true
+    });
+    return response.data;
+}
+
+export async function logout(){
+    await apiClient.post('/auth/logout/', {}, {
+        withCredentials: true
+    });
 }

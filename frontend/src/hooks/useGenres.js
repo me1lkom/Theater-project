@@ -14,7 +14,7 @@ export function useGenres() {
                 setGenres(data);
                 setError(null);
             } catch (err) {
-                setError(err.massage || 'Ошибка загрузки жанров.')
+                setError(err.message || 'Ошибка загрузки жанров.')
             } finally {
                 setLoading(false);
             }
