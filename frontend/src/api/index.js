@@ -13,7 +13,7 @@ export const apiClient = axios.create({
 {/*  Добавить интерцептор дл перехвата ошибки 401 и автообновления токенов */}
 
 
-// –– Запросы данные
+// –– Спектакли
 export async function getPlays() {
     const response = await apiClient.get('/plays/');
     return response.data;
@@ -69,4 +69,10 @@ export async function register(credentials) {
 
 export async function logout(){
     await apiClient.post('/auth/logout/');
+}
+
+// –– Билеты 
+export async function postReturnTicket(id, reason) {
+    const response = await apiClient.post(`/tickets/return/${id}/`, reason);
+    return response.data;
 }

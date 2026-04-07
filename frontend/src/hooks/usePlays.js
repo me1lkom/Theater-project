@@ -15,7 +15,9 @@ export function usePlays() {
                 setPlays(data);
                 setError(null);
             } catch (err) {
-                setError(err.message || 'Ошибка загрузки данных.');
+                if (err.response?.status !== 401) {
+                    setError(err.message || 'Ошибка загрузки данных.');
+                }
             } finally {
                 setLoading(false);
             }

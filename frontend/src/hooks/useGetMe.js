@@ -25,4 +25,3 @@ export function useGetMe() {
     return { me, loading, error };
 }
 
-// хочется поставить зависимость от чего-то, для смены данных
