@@ -17,6 +17,11 @@ class RedisTokenStorage:
     ACCESS_BLACKLIST_PREFIX = 'blacklist:access:'
     
     @classmethod
+    def _hash_token(cls, token):
+        return hashlib.sha256(token.encode()).hexdigest()
+
+
+    @classmethod
     def _get_refresh_key(cls, user_id, jti=None):
 
         if jti:

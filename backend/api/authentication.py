@@ -8,9 +8,6 @@ logger = logging.getLogger(__name__)
 
 
 class RedisJWTAuthentication(JWTAuthentication):
-    """
-    JWT аутентификация с проверкой черного списка в Redis
-    """
     
     def authenticate(self, request):
         # Получаем токен из cookie
@@ -22,7 +19,7 @@ class RedisJWTAuthentication(JWTAuthentication):
             return None
         
         try:
-            # ✅ Проверяем, не в черном ли списке access токен
+            #  проверка на черный список access токен
             if RedisTokenStorage.is_access_blacklisted(token):
                 logger.warning(f"Попытка использования заблокированного access токена")
                 raise AuthenticationFailed('Token is blacklisted')

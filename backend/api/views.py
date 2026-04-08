@@ -1,6 +1,6 @@
 from rest_framework import generics
 from .models import Play, Session, Seat, Panorama, Ticket, Basket, TicketStatus, ActionLog, Profile, TheaterHall, Sector, PanoramaLink, Genre
-from .serializers import PlaySerializer, SessionSerializer, SeatSerializer, PanoramaSerializer, RegisterSerializer, SectorSerializer, BulkSeatSerializer, ActionLogSerializer, PanoramaLinkSerializer, TicketStatusSerializer, GenreSerializer
+from .serializers import PlaySerializer, SessionSerializer, SeatSerializer, PanoramaSerializer, RegisterSerializer, SectorSerializer, BulkSeatSerializer, ActionLogSerializer, PanoramaLinkSerializer, TicketStatusSerializer, GenreSerializer, BulkBuySerializer, BulkBasketSerializer
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
@@ -224,6 +224,172 @@ def buy_ticket(request):
         'message': 'Билет успешно куплен'
     }, status=201)
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def buy_tickets_bulk(request):
+    """
+    Покупка нескольких билетов одной операцией
+    - Обычный пользователь: покупает только для себя
+    - Кассир: может купить для любого пользователя (указав user_id)
+    
+    POST /api/tickets/buy/bulk/
+    Body: {"session_id": 1, "seat_ids": [5, 6, 7, 8]}
+    Body (кассир): {"session_id": 1, "seat_ids": [5, 6], "user_id": 10}
+    """
+    current_user = request.user
+    
+    # Валидация входных данных
+    serializer = BulkBuySerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    session_id = serializer.validated_data['session_id']
+    seat_ids = serializer.validated_data['seat_ids']
+    target_user_id = serializer.validated_data.get('user_id')
+
+    if target_user_id:
+        # Если указан user_id, проверяем, что текущий пользователь - кассир или админ
+        if not is_admin_or_cashier(current_user):
+            return Response(
+                {'error': 'Только кассир или администратор могут покупать билеты для других пользователей'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Проверяем, что целевой пользователь существует
+        try:
+            target_user = User.objects.get(pk=target_user_id)
+        except User.DoesNotExist:
+            return Response(
+                {'error': 'Пользователь не найден'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        buyer_user_id = target_user_id
+        buyer_info = f"для пользователя {target_user.username} (ID: {target_user_id})"
+    else:
+        # Если user_id не указан, покупаем для себя
+        buyer_user_id = current_user.id
+        buyer_info = f"для себя"
+    
+    # Проверяем, существует ли сеанс
+    try:
+        session = Session.objects.get(pk=session_id)
+    except Session.DoesNotExist:
+        return Response(
+            {'error': 'Сеанс не найден'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Проверяем, что все места существуют
+    seats = Seat.objects.filter(pk__in=seat_ids)
+    if seats.count() != len(seat_ids):
+        return Response(
+            {'error': 'Одно или несколько мест не найдены'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Проверяем, что все места свободны
+    busy_seats = []
+    available_seats = []
+    
+    for seat in seats:
+        # Проверяем билеты
+        existing_ticket = Ticket.objects.filter(
+            session=session,
+            seat=seat
+        ).exclude(status__name='возврат').first()
+        
+        if existing_ticket:
+            busy_seats.append({
+                'seat_id': seat.seat_id,
+                'row': seat.row_number,
+                'seat_number': seat.seat_number
+            })
+        else:
+            available_seats.append(seat)
+    
+    if busy_seats:
+        return Response({
+            'error': 'Некоторые места уже заняты',
+            'busy_seats': busy_seats
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Проверяем брони в корзине
+    busy_baskets = []
+    for seat in available_seats[:]:
+        existing_basket = Basket.objects.filter(
+            session=session,
+            seat=seat,
+            expires_at__gt=timezone.now()
+        ).first()
+        
+        if existing_basket:
+            # Если бронь принадлежит тому, кто покупает - удалим позже
+            if existing_basket.user_id != buyer_user_id:
+                busy_baskets.append({
+                    'seat_id': seat.seat_id,
+                    'row': seat.row_number,
+                    'seat_number': seat.seat_number
+                })
+                available_seats.remove(seat)
+    
+    if busy_baskets:
+        return Response({
+            'error': 'Некоторые места забронированы другими пользователями',
+            'busy_seats': busy_baskets
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Удаляем корзину для этих мест (если есть)
+    Basket.objects.filter(
+        session=session,
+        seat__in=available_seats,
+        user_id=buyer_user_id
+    ).delete()
+    
+    # Получаем статус "продан"
+    try:
+        sold_status = TicketStatus.objects.get(name='продан')
+    except TicketStatus.DoesNotExist:
+        return Response(
+            {'error': 'Статус "продан" не найден в системе'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    
+    # Создаем билеты
+    tickets = []
+    for seat in available_seats:
+        ticket = Ticket.objects.create(
+            session=session,
+            seat=seat,
+            user_id=buyer_user_id,
+            status=sold_status,
+            price_paid=session.play.price,
+            purchase_date=timezone.now()
+        )
+        tickets.append(ticket)
+    
+    # Логируем действие
+    ActionLog.objects.create(
+        user_id=current_user.id,
+        action_type='BUY_TICKETS_BULK',
+        description=f'Куплено {len(tickets)} билетов {buyer_info} на спектакль {session.play.title}'
+    )
+    
+    return Response({
+        'success': True,
+        'message': f'Успешно куплено {len(tickets)} билетов {buyer_info}',
+        'tickets': [
+            {
+                'ticket_id': t.ticket_id,
+                'seat_id': t.seat.seat_id,
+                'row': t.seat.row_number,
+                'seat_number': t.seat.seat_number,
+                'price': str(t.price_paid)
+            }
+            for t in tickets
+        ]
+    }, status=status.HTTP_201_CREATED)
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def my_tickets(request):
@@ -400,6 +566,130 @@ def add_to_basket(request):
         'basket_id': basket.basket_id,
         'expires_at': basket.expires_at,
         'message': f"Место забронировано до {basket.expires_at}"
+    }, status=status.HTTP_201_CREATED)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def add_to_basket_bulk(request):
+
+    # Добавление нескольких мест в корзину одной операцией
+    # POST /api/basket/add/bulk/
+
+    user_id = request.user.id
+    
+    # Валидация входных данных
+    serializer = BulkBasketSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    session_id = serializer.validated_data['session_id']
+    seat_ids = serializer.validated_data['seat_ids']
+    
+    # Проверяем, существует ли сеанс
+    try:
+        session = Session.objects.get(pk=session_id)
+    except Session.DoesNotExist:
+        return Response(
+            {'error': 'Сеанс не найден'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Проверяем, что все места существуют
+    seats = Seat.objects.filter(pk__in=seat_ids)
+    if seats.count() != len(seat_ids):
+        return Response(
+            {'error': 'Одно или несколько мест не найдены'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Проверяем, что все места свободны (не проданы)
+    sold_seats = []
+    available_seats = []
+    
+    for seat in seats:
+        existing_ticket = Ticket.objects.filter(
+            session=session,
+            seat=seat
+        ).exclude(status__name='возврат').first()
+        
+        if existing_ticket:
+            sold_seats.append({
+                'seat_id': seat.seat_id,
+                'row': seat.row_number,
+                'seat_number': seat.seat_number
+            })
+        else:
+            available_seats.append(seat)
+    
+    if sold_seats:
+        return Response({
+            'error': 'Некоторые места уже проданы',
+            'sold_seats': sold_seats
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Проверяем, что места не забронированы другими пользователями
+    busy_baskets = []
+    free_seats = []
+    
+    for seat in available_seats:
+        existing_basket = Basket.objects.filter(
+            session=session,
+            seat=seat,
+            expires_at__gt=timezone.now()
+        ).first()
+        
+        if existing_basket:
+            if existing_basket.user_id != user_id:
+                busy_baskets.append({
+                    'seat_id': seat.seat_id,
+                    'row': seat.row_number,
+                    'seat_number': seat.seat_number
+                })
+            else:
+                # Уже в корзине этого пользователя
+                free_seats.append(seat)
+        else:
+            free_seats.append(seat)
+    
+    if busy_baskets:
+        return Response({
+            'error': 'Некоторые места уже забронированы другими пользователями',
+            'busy_seats': busy_baskets
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Создаем брони
+    expires_at = timezone.now() + timedelta(minutes=15)
+    baskets = []
+    
+    for seat in free_seats:
+        basket = Basket.objects.create(
+            user_id=user_id,
+            session=session,
+            seat=seat,
+            expires_at=expires_at
+        )
+        baskets.append(basket)
+    
+    # Логируем действие
+    ActionLog.objects.create(
+        user_id=user_id,
+        action_type='ADD_TO_BASKET_BULK',
+        description=f'Добавлено {len(baskets)} мест в корзину на спектакль {session.play.title}'
+    )
+    
+    return Response({
+        'success': True,
+        'message': f'Добавлено {len(baskets)} мест в корзину',
+        'expires_at': expires_at,
+        'baskets': [
+            {
+                'basket_id': b.basket_id,
+                'seat_id': b.seat.seat_id,
+                'row': b.seat.row_number,
+                'seat_number': b.seat.seat_number
+            }
+            for b in baskets
+        ]
     }, status=status.HTTP_201_CREATED)
 
 @api_view(['DELETE'])

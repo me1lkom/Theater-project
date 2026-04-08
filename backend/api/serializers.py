@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
-from .models import Play, Actor, Session, Seat, Panorama, PanoramaLink, Sector, TheaterHall, Genre, ActionLog, TicketStatus
+from .models import Play, Actor, Session, Seat, Panorama, PanoramaLink, Sector, TheaterHall, Genre, ActionLog, TicketStatus, Profile
 
 # cериализатор для модели Actor, превращает объект актера в JSON
 class ActorSerializer(serializers.ModelSerializer):
@@ -62,9 +62,16 @@ class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password], style={'input': 'password'})
     password2 = serializers.CharField(write_only=True, required=True, style={'input': 'password'})
 
+    phone = serializers.CharField(
+        required=True,
+        allow_blank=False,
+        max_length=20,
+        help_text="Номер телефона"
+    )
+
     class Meta:
         model = User
-        fields = ['username', 'password', 'password2', 'email', 'first_name', 'last_name']
+        fields = ['username', 'password', 'password2', 'email', 'first_name', 'last_name', 'phone']
 
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']: # attrs - атрибуты(данные клиента)
@@ -72,8 +79,14 @@ class RegisterSerializer(serializers.ModelSerializer):
         return attrs
     
     def create(self, validate_data):
+        
         validate_data.pop('password2')
+        phone = validate_data.pop('phone')
         user = User.objects.create_user(**validate_data) # распаковываем словарь с проверенным данными о пользователе
+        profile, created = Profile.objects.get_or_create(user=user)
+        profile.phone = phone
+        profile.save()
+
 
         return user
 
@@ -129,3 +142,36 @@ class ActionLogSerializer(serializers.ModelSerializer):
         model = ActionLog
         fields = ['log_id', 'user', 'username', 'action_type', 'description', 'action_date']
         read_only_fields = ['log_id', 'action_date']
+
+class BulkBuySerializer(serializers.Serializer):
+
+    session_id = serializers.IntegerField()
+    seat_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        min_length=1,
+        max_length=20
+    )
+    user_id = serializers.IntegerField(
+        required=False,  # необязательный для обычных пользователей
+        help_text="ID пользователя, для которого покупаются билеты (только для кассира)"
+    )
+    
+    def validate_seat_ids(self, value):
+        if len(value) != len(set(value)):
+            raise serializers.ValidationError("Места не должны повторяться")
+        return value
+    
+class BulkBasketSerializer(serializers.Serializer):
+
+    session_id = serializers.IntegerField()
+    seat_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        min_length=1,
+        max_length=20  # максимум 20 мест за раз
+    )
+    
+    def validate_seat_ids(self, value):
+        # Проверяем уникальность мест
+        if len(value) != len(set(value)):
+            raise serializers.ValidationError("Места не должны повторяться")
+        return value

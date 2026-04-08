@@ -149,7 +149,7 @@ from datetime import timedelta
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),      # 15 минут
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),         # 7 дней
-    'ROTATE_REFRESH_TOKENS': False,                      # Не создаем новый refresh
+    'ROTATE_REFRESH_TOKENS': True,                      # Не создаем новый refresh
     'BLACKLIST_AFTER_ROTATION': False,                   # Не используем черный список
     
     # Настройки для cookie

@@ -26,12 +26,14 @@ urlpatterns = [
 
     path('basket/add/', views.add_to_basket, name='add-to-basket'),
     path('basket/my/', views.my_basket, name='my-basket'),
+    path('basket/add/bulk/', views.add_to_basket_bulk, name='add-to-basket-bulk'),
     path('basket/remove/<int:basket_id>/', views.remove_from_basket, name='remove-from-basket'),
     path('basket/check-expired/', views.check_expired_baskets, name='check-expired'),
 
     path('tickets/my/', views.my_tickets, name='my-tickets'),
     path('tickets/all/', views.all_tickets, name='all-tickets'),
     path('tickets/buy/', views.buy_ticket, name='buy-ticket'),
+    path('tickets/buy/bulk/', views.buy_tickets_bulk, name='buy-tickets-bulk'),
     path('ticket-statuses/', views.TicketStatusListView.as_view(), name='ticket-statuses'),
     path('tickets/return/<int:ticket_id>/', views.return_ticket, name='return-ticket'),
     path('tickets/my/', views.my_tickets, name='my-tickets'),

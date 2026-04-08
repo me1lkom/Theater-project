@@ -8,6 +8,8 @@ from django.contrib.auth import authenticate
 from .serializers import RegisterSerializer
 from .redis_utils import RedisTokenStorage
 import logging
+from django.contrib.auth.models import User
+from django.core.cache import cache
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +56,8 @@ def login_cookie(request):
             status=status.HTTP_401_UNAUTHORIZED
         )
     
+    RedisTokenStorage.revoke_all_user_tokens(user.id)
+
     # созжание токенов
     refresh = RefreshToken.for_user(user)
     access_token = str(refresh.access_token)
@@ -94,56 +98,42 @@ def login_cookie(request):
 
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
 def refresh_cookie(request):
-
-    # Обновление access токена через refresh токен из cookie
-    # POST /api/auth/refresh/
-
-    refresh_token = request.COOKIES.get(
-        settings.SIMPLE_JWT.get('AUTH_COOKIE_REFRESH', 'refresh_token')
-    )
+    refresh_token = request.COOKIES.get('refresh_token')
     
     if not refresh_token:
-        return Response(
-            {'error': 'Refresh токен не найден'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        return Response({'error': 'Refresh токен не найден'}, status=400)
     
     try:
-        refresh = RefreshToken(refresh_token)
-        user_id = refresh.payload.get('user_id')
+        # Проверяем старый токен
+        old_refresh = RefreshToken(refresh_token)
+        user_id = old_refresh.payload.get('user_id')
         
-        # существует ли refresh токен в Redis
+        # Проверяем, не заблокирован ли старый токен
         if not RedisTokenStorage.check_refresh_token(user_id, refresh_token):
-            logger.warning(f"Попытка использовать недействительный refresh токен для user_id={user_id}")
-            return Response(
-                {'error': 'Refresh токен недействителен или отозван'},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
+            return Response({'error': 'Refresh токен недействителен'}, status=401)
         
-        new_access = str(refresh.access_token)
+        # СОЗДАЕМ НОВЫЙ refresh токен
+        user = User.objects.get(id=user_id)
+        new_refresh_obj = RefreshToken.for_user(user)  # ← новый токен!
+        new_access = str(new_refresh_obj.access_token)
+        new_refresh = str(new_refresh_obj)
         
-        response = Response({
-            'success': True,
-            'message': 'Токен обновлен'
-        })
+        # Сохраняем НОВЫЙ токен в Redis
+        RedisTokenStorage.save_refresh_token(user_id, new_refresh)
         
-        set_cookie(
-            response,
-            settings.SIMPLE_JWT.get('AUTH_COOKIE', 'access_token'),
-            new_access,
-            int(settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'].total_seconds())
-        )
+        # Удаляем СТАРЫЙ токен из Redis
+        RedisTokenStorage.revoke_refresh_token(user_id, refresh_token)
+        
+        response = Response({'success': True})
+        
+        set_cookie(response, 'access_token', new_access, 900)
+        set_cookie(response, 'refresh_token', new_refresh, 604800)
         
         return response
         
     except Exception as e:
-        logger.error(f"Ошибка обновления токена: {e}")
-        return Response(
-            {'error': 'Недействительный refresh токен'},
-            status=status.HTTP_401_UNAUTHORIZED
-        )
+        return Response({'error': 'Недействительный refresh токен'}, status=401)
 
 
 @api_view(['POST'])
@@ -194,10 +184,14 @@ def register_cookie(request):
     if serializer.is_valid():
         user = serializer.save()
         
+
+        RedisTokenStorage.revoke_all_user_tokens(user.id)
         # создание токенов
         refresh = RefreshToken.for_user(user)
         access_token = str(refresh.access_token)
         refresh_token = str(refresh)
+        
+        profile = user.profile
         
         # сохранение refresh токена в Redis
         logger.info(f"Регистрация пользователя {user.username}, сохраняем refresh токен")
@@ -211,6 +205,8 @@ def register_cookie(request):
                 'email': user.email,
                 'first_name': user.first_name,
                 'last_name': user.last_name,
+                'phone' : profile.phone,
+
             }
         }, status=status.HTTP_201_CREATED)
         
@@ -260,4 +256,3 @@ def me_cookie(request):
         'phone': phone,
         'role': role
     })
-
