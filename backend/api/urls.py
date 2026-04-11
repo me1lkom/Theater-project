@@ -15,7 +15,7 @@ urlpatterns = [
     path('sessions/manage/', views.manage_sessions, name='manage-sessions'), # все сеансы
     path('sessions/manage/<int:session_id>/', views.manage_sessions, name='manage-session-detail'),
     path('sessions/', views.SessionListView.as_view(), name='session-list'), # только будующие сеансы
-    # path('sessions/<int:pk>/', views.SessionDetailView.as_view(), name='session-detail'),
+    path('sessions/<int:pk>/', views.SessionDetailView.as_view(), name='session-detail'),
     path('sessions/<int:pk>/available-seats/', views.available_seats, name='available-seats'),
 
     path('seats/manage/', views.manage_seats, name='manage-seats'),

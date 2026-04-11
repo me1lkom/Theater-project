@@ -47,14 +47,14 @@ class SessionListView(generics.ListAPIView):
     
     serializer_class = SessionSerializer
 
-# class SessionDetailView(generics.RetrieveAPIView):
+class SessionDetailView(generics.RetrieveAPIView):
 
-#     # возвращает информацию об одном сеансе
-#     # URL: /api/sessions/1/
-#     # метод: GET
+    # возвращает информацию об одном сеансе
+    # URL: /api/sessions/1/
+    # метод: GET
 
-#     queryset = Session.objects.all()
-#     serializer_class = SessionSerializer
+    queryset = Session.objects.all()
+    serializer_class = SessionSerializer
 
 class SeatListView(generics.ListAPIView):
 
@@ -1098,21 +1098,21 @@ def manage_sessions(request, session_id=None):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-    if request.method == 'GET':
-        if session_id:
-            try:
-                session = Session.objects.get(pk=session_id)
-                serializer = SessionSerializer(session)
-                return Response(serializer.data)
-            except Session.DoesNotExist:
-                return Response(
-                    {'error': 'Сеанс не найден'},
-                    status=status.HTTP_404_NOT_FOUND
-                )
-        else:
-            sessions = Session.objects.all().order_by('date', 'time')
-            serializer = SessionSerializer(sessions, many=True)
-            return Response(serializer.data)
+    # if request.method == 'GET':
+    #     if session_id:
+    #         try:
+    #             session = Session.objects.get(pk=session_id)
+    #             serializer = SessionSerializer(session)
+    #             return Response(serializer.data)
+    #         except Session.DoesNotExist:
+    #             return Response(
+    #                 {'error': 'Сеанс не найден'},
+    #                 status=status.HTTP_404_NOT_FOUND
+    #             )
+    #     else:
+    #         sessions = Session.objects.all().order_by('date', 'time')
+    #         serializer = SessionSerializer(sessions, many=True)
+    #         return Response(serializer.data)
 
     if request.method == 'POST':
         data = request.data
