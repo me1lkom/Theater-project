@@ -68,6 +68,8 @@ def login_cookie(request):
     save_result = RedisTokenStorage.save_refresh_token(user.id, refresh_token)
     logger.info(f"Результат сохранения: {save_result}")
 
+    profile = user.profile
+
     response = Response({
         'success': True,
         'user': {
@@ -76,6 +78,7 @@ def login_cookie(request):
             'email': user.email,
             'first_name': user.first_name,
             'last_name': user.last_name,
+            'phone': profile.phone,
         }
     })
     
@@ -105,34 +108,22 @@ def refresh_cookie(request):
         return Response({'error': 'Refresh токен не найден'}, status=400)
     
     try:
-        # Проверяем старый токен
-        old_refresh = RefreshToken(refresh_token)
-        user_id = old_refresh.payload.get('user_id')
+        refresh = RefreshToken(refresh_token)
+        user_id = refresh.payload.get('user_id')
         
-        # Проверяем, не заблокирован ли старый токен
         if not RedisTokenStorage.check_refresh_token(user_id, refresh_token):
             return Response({'error': 'Refresh токен недействителен'}, status=401)
         
-        # СОЗДАЕМ НОВЫЙ refresh токен
-        user = User.objects.get(id=user_id)
-        new_refresh_obj = RefreshToken.for_user(user)  # ← новый токен!
-        new_access = str(new_refresh_obj.access_token)
-        new_refresh = str(new_refresh_obj)
-        
-        # Сохраняем НОВЫЙ токен в Redis
-        RedisTokenStorage.save_refresh_token(user_id, new_refresh)
-        
-        # Удаляем СТАРЫЙ токен из Redis
-        RedisTokenStorage.revoke_refresh_token(user_id, refresh_token)
+        # Только новый access
+        new_access = str(refresh.access_token)
         
         response = Response({'success': True})
-        
         set_cookie(response, 'access_token', new_access, 900)
-        set_cookie(response, 'refresh_token', new_refresh, 604800)
+        # refresh cookie НЕ меняем
         
         return response
         
-    except Exception as e:
+    except Exception:
         return Response({'error': 'Недействительный refresh токен'}, status=401)
 
 

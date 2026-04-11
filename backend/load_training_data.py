@@ -44,10 +44,9 @@ def load_training_data(csv_file):
     sold_status, created = TicketStatus.objects.get_or_create(
         name='продан'
     )
-    print(f"✓ Статус: {sold_status.name}")
+    print(f" Статус: {sold_status.name}")
     
-    # ========== ШАГ 3: Получаем пользователя ==========
-    # Получаем или создаем системного пользователя
+    # получение или создание системного пользователя
     system_user, _ = User.objects.get_or_create(
         username='system',
         defaults={
@@ -56,7 +55,7 @@ def load_training_data(csv_file):
         }
     ) 
     
-    # ========== ШАГ 4: Проверяем количество мест ==========
+    # проверка на количество мест
     max_tickets = df['tickets_sold'].max()
     total_seats = Seat.objects.filter(hall=hall).count()
     
@@ -64,7 +63,7 @@ def load_training_data(csv_file):
     print(f"Всего мест в зале: {total_seats}")
     
     if total_seats < max_tickets:
-        print(f"\n❌ ОШИБКА: Не хватает мест для загрузки данных!")
+        print(f"\n ОШИБКА: Не хватает мест для загрузки данных!")
         print(f"   Нужно: {max_tickets} мест")
         print(f"   Есть: {total_seats} мест")
         print(f"   Не хватает: {max_tickets - total_seats} мест")
@@ -72,9 +71,9 @@ def load_training_data(csv_file):
         print("   http://localhost:8000/admin/api/seat/add/")
         sys.exit(1)
     
-    print(f"✓ Мест достаточно")
+    print(f"Мест достаточно")
     
-    # ========== ШАГ 5: Загружаем данные ==========
+    # загрузка данных
     created_sessions = 0
     created_tickets = 0
     skipped_tickets = 0
@@ -82,7 +81,7 @@ def load_training_data(csv_file):
     for idx, row in df.iterrows():
         print(f"\nОбработка {idx + 1}/{len(df)}: {row['play_title']} на {row['date']}")
         
-        # Создаем или получаем спектакль
+        # создание или получение спектакля
         play, created = Play.objects.get_or_create(
             title=row['play_title'],
             defaults={
@@ -92,13 +91,11 @@ def load_training_data(csv_file):
             }
         )
         
-        # Если спектакль уже был, обновляем цену и длительность
         if not created:
             play.price = row['price']
             play.duration = row['duration']
             play.save()
-        
-        # Создаем сеанс
+
         session_date = datetime.strptime(row['date'], '%Y-%m-%d').date()
         session_time = datetime.strptime(row['time'], '%H:%M:%S').time()
         
@@ -111,22 +108,18 @@ def load_training_data(csv_file):
         
         if created:
             created_sessions += 1
-        
-        # Создаем билеты (количество = tickets_sold)
+
         tickets_sold = int(row['tickets_sold'])
-        
-        # Получаем существующие билеты на этот сеанс
+
         existing_tickets_count = Ticket.objects.filter(session=session).count()
         
         if existing_tickets_count < tickets_sold:
             need_to_create = tickets_sold - existing_tickets_count
-            
-            # Получаем занятые места
+
             taken_seats = Ticket.objects.filter(
                 session=session
             ).values_list('seat_id', flat=True)
-            
-            # Берем свободные места (из любого сектора)
+
             free_seats = Seat.objects.filter(
                 hall=hall
             ).exclude(
@@ -134,8 +127,8 @@ def load_training_data(csv_file):
             )[:need_to_create]
             
             if free_seats.count() < need_to_create:
-                print(f"  ⚠️ Внимание: не хватает свободных мест для {need_to_create} билетов")
-                print(f"     Создано только {free_seats.count()} билетов")
+                print(f"  Внимание: не хватает свободных мест для {need_to_create} билетов")
+                print(f"  Создано только {free_seats.count()} билетов")
                 skipped_tickets += need_to_create - free_seats.count()
             
             for seat in free_seats:
@@ -151,26 +144,24 @@ def load_training_data(csv_file):
         
         print(f"  ✓ {play.title}: {tickets_sold} билетов (создано {existing_tickets_count} новых)")
     
-    print("\n" + "="*50)
-    print("✅ ЗАГРУЗКА ЗАВЕРШЕНА!")
+
+    print(" ЗАГРУЗКА ЗАВЕРШЕНА!")
     print(f"   Всего сеансов: {Session.objects.count()}")
     print(f"   Всего билетов: {Ticket.objects.count()}")
     print(f"   Создано сеансов: {created_sessions}")
     print(f"   Создано билетов: {created_tickets}")
     if skipped_tickets > 0:
-        print(f"   ⚠️ Пропущено билетов (не хватило мест): {skipped_tickets}")
-    print("="*50)
+        print(f"  Пропущено билетов (не хватило мест): {skipped_tickets}")
 
 
 if __name__ == '__main__':
-    # Проверяем, что файл существует
+    # проверка что файл существует
     csv_file = 'training_data.csv'
     if not os.path.exists(csv_file):
         print(f"Ошибка: файл {csv_file} не найден!")
         print("Создайте файл training_data.csv в корне проекта")
         sys.exit(1)
     
-    # Проверяем pandas
     try:
         import pandas
     except ImportError:

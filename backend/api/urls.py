@@ -24,7 +24,7 @@ urlpatterns = [
     path('seats/manage/detail/<int:seat_id>/', views.manage_seat_detail, name='manage-seat-detail'),
     path('seats/', views.SeatListView.as_view(), name='seat-list'),
 
-    path('basket/add/', views.add_to_basket, name='add-to-basket'),
+    # path('basket/add/', views.add_to_basket, name='add-to-basket'), устарело
     path('basket/my/', views.my_basket, name='my-basket'),
     path('basket/add/bulk/', views.add_to_basket_bulk, name='add-to-basket-bulk'),
     path('basket/remove/<int:basket_id>/', views.remove_from_basket, name='remove-from-basket'),
@@ -32,20 +32,21 @@ urlpatterns = [
 
     path('tickets/my/', views.my_tickets, name='my-tickets'),
     path('tickets/all/', views.all_tickets, name='all-tickets'),
-    path('tickets/buy/', views.buy_ticket, name='buy-ticket'),
+    # path('tickets/buy/', views.buy_ticket, name='buy-ticket'),
     path('tickets/buy/bulk/', views.buy_tickets_bulk, name='buy-tickets-bulk'),
     path('ticket-statuses/', views.TicketStatusListView.as_view(), name='ticket-statuses'),
     path('tickets/return/<int:ticket_id>/', views.return_ticket, name='return-ticket'),
     path('tickets/my/', views.my_tickets, name='my-tickets'),
     
-    path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    # path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'), // устарело
+    # path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
     path('auth/login/', views_auth.login_cookie, name='login'),
     path('auth/register/', views_auth.register_cookie, name='register'),
     path('auth/refresh/', views_auth.refresh_cookie, name='refresh'),
     path('auth/logout/', views_auth.logout_cookie, name='logout'),
     path('auth/me/', views_auth.me_cookie, name='me'),
+    path('auth/profile/', views.update_profile, name='update-profile'),
 
     # path('halls/', views.manage_halls, name='halls'),
     # path('halls/<int:hall_id>/', views.manage_halls, name='hall-detail'),

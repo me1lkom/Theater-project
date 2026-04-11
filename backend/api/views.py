@@ -103,139 +103,136 @@ class GenreView(generics.ListAPIView):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def buy_ticket(request):
-    data = request.data
+# @api_view(['POST'])
+# @permission_classes([IsAuthenticated])
+# def buy_ticket(request):
+#     data = request.data
     
-    session_id = data.get('session_id')
-    seat_id = data.get('seat_id')
-    user_id = data.get('user_id')
+#     session_id = data.get('session_id')
+#     seat_id = data.get('seat_id')
+#     user_id = data.get('user_id')
     
-    if not user_id:
-        user_id = request.user.id
-    else:
-        if user_id != request.user.id:
-            if not is_cashier(request.user):
-                return Response(
-                    {'error': 'Только кассир может покупать билеты для других'},
-                    status=status.HTTP_403_FORBIDDEN
-                )
+#     if not user_id:
+#         user_id = request.user.id
+#     else:
+#         if user_id != request.user.id:
+#             if not is_cashier(request.user):
+#                 return Response(
+#                     {'error': 'Только кассир может покупать билеты для других'},
+#                     status=status.HTTP_403_FORBIDDEN
+#                 )
 
-    # проверка что все нужные данные прислали
-    if not all([session_id, seat_id, user_id]):
-        return Response(
-            {'error': 'Не указаны все необходимые данные'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+#     # проверка что все нужные данные прислали
+#     if not all([session_id, seat_id, user_id]):
+#         return Response(
+#             {'error': 'Не указаны все необходимые данные'},
+#             status=status.HTTP_400_BAD_REQUEST
+#         )
     
-    # проверка существует ли такой сеанс
-    try:
-        session = Session.objects.get(pk=session_id)
-    except Session.DoesNotExist:
-        return Response(
-            {'error': 'Сеанс не найден'},
-            status=status.HTTP_404_NOT_FOUND
-        )
+#     # проверка существует ли такой сеанс
+#     try:
+#         session = Session.objects.get(pk=session_id)
+#     except Session.DoesNotExist:
+#         return Response(
+#             {'error': 'Сеанс не найден'},
+#             status=status.HTTP_404_NOT_FOUND
+#         )
     
-    session_datetime = timezone.datetime.combine(session.date, session.time)
-    session_datetime = timezone.make_aware(session_datetime)
+#     session_datetime = timezone.datetime.combine(session.date, session.time)
+#     session_datetime = timezone.make_aware(session_datetime)
     
-    if session_datetime < timezone.now():
-        return Response(
-            {'error': 'Нельзя забронировать место на прошедший сеанс'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+#     if session_datetime < timezone.now():
+#         return Response(
+#             {'error': 'Нельзя забронировать место на прошедший сеанс'},
+#             status=status.HTTP_400_BAD_REQUEST
+#         )
 
-    if session_datetime - timedelta(minutes=5) < timezone.now():
-        return Response(
-            {'error': 'Продажа билетов на этот сеанс закрыта за 5 минут до начала'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+#     if session_datetime - timedelta(minutes=5) < timezone.now():
+#         return Response(
+#             {'error': 'Продажа билетов на этот сеанс закрыта за 5 минут до начала'},
+#             status=status.HTTP_400_BAD_REQUEST
+#         )
     
-    # проверка существует ли такое место
-    try:
-        seat = Seat.objects.get(pk=seat_id)
-    except Seat.DoesNotExist:
-        return Response(
-            {'error': 'Место не найдено'},
-            status=status.HTTP_404_NOT_FOUND
-        )
+#     # проверка существует ли такое место
+#     try:
+#         seat = Seat.objects.get(pk=seat_id)
+#     except Seat.DoesNotExist:
+#         return Response(
+#             {'error': 'Место не найдено'},
+#             status=status.HTTP_404_NOT_FOUND
+#         )
     
-    existing_basket = Basket.objects.filter(
-        session=session,
-        seat=seat,
-        expires_at__gt=timezone.now()
-    ).first()
+#     existing_basket = Basket.objects.filter(
+#         session=session,
+#         seat=seat,
+#         expires_at__gt=timezone.now()
+#     ).first()
     
-    if existing_basket:
-        if existing_basket.user_id == user_id:
-            # Своя бронь — удаляем и продолжаем покупку
-            existing_basket.delete()
-        else:
-            # Чужая бронь — ошибка
-            return Response(
-                {'error': 'Это место уже забронировано другим пользователем'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+#     if existing_basket:
+#         if existing_basket.user_id == user_id:
+#             # Своя бронь — удаляем и продолжаем покупку
+#             existing_basket.delete()
+#         else:
+#             # Чужая бронь — ошибка
+#             return Response(
+#                 {'error': 'Это место уже забронировано другим пользователем'},
+#                 status=status.HTTP_400_BAD_REQUEST
+#             )
 
     
-    active_ticket = Ticket.objects.filter(
-        session=session, 
-        seat=seat
-    ).exclude(
-        status__name='возврат'
-    ).first()
+#     active_ticket = Ticket.objects.filter(
+#         session=session, 
+#         seat=seat
+#     ).exclude(
+#         status__name='возврат'
+#     ).first()
     
-    if active_ticket:
-        return Response(
-            {'error': 'Это место уже занято'},
-            status=400
-        )
+#     if active_ticket:
+#         return Response(
+#             {'error': 'Это место уже занято'},
+#             status=400
+#         )
     
-    # Удаляем старый возвращенный билет (если есть)
-    Ticket.objects.filter(
-        session=session,
-        seat=seat,
-        status__name='возврат'
-    ).delete()
+#     # Удаляем старый возвращенный билет (если есть)
+#     Ticket.objects.filter(
+#         session=session,
+#         seat=seat,
+#         status__name='возврат'
+#     ).delete()
     
-    # Создаем новый билет
-    try:
-        sold_status = TicketStatus.objects.get(name='продан')
-    except TicketStatus.DoesNotExist:
-        return Response(
-            {'error': 'Статус "продан" не найден'},
-            status=500
-        )
+#     # Создаем новый билет
+#     try:
+#         sold_status = TicketStatus.objects.get(name='продан')
+#     except TicketStatus.DoesNotExist:
+#         return Response(
+#             {'error': 'Статус "продан" не найден'},
+#             status=500
+#         )
     
-    ticket = Ticket.objects.create(
-        session=session,
-        seat=seat,
-        user_id=user_id,
-        status=sold_status,
-        price_paid=session.play.price,
-        purchase_date=timezone.now()
-    )
+#     ticket = Ticket.objects.create(
+#         session=session,
+#         seat=seat,
+#         user_id=user_id,
+#         status=sold_status,
+#         price_paid=session.play.price,
+#         purchase_date=timezone.now()
+#     )
     
-    return Response({
-        'success': True,
-        'ticket_id': ticket.ticket_id,
-        'message': 'Билет успешно куплен'
-    }, status=201)
+#     return Response({
+#         'success': True,
+#         'ticket_id': ticket.ticket_id,
+#         'message': 'Билет успешно куплен'
+#     }, status=201)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def buy_tickets_bulk(request):
-    """
-    Покупка нескольких билетов одной операцией
-    - Обычный пользователь: покупает только для себя
-    - Кассир: может купить для любого пользователя (указав user_id)
-    
-    POST /api/tickets/buy/bulk/
-    Body: {"session_id": 1, "seat_ids": [5, 6, 7, 8]}
-    Body (кассир): {"session_id": 1, "seat_ids": [5, 6], "user_id": 10}
-    """
+
+    # Покупка нескольких билетов одной операцией
+    # Обычный пользователь: покупает только для себя
+    # Кассир: может купить для любого пользователя (указав user_id)
+    # POST /api/tickets/buy/bulk/
+
     current_user = request.user
     
     # Валидация входных данных
@@ -468,105 +465,113 @@ def available_seats(request, pk):
     serializer = SeatSerializer(available_seats, many=True)
     return Response(serializer.data)
 
-# 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def add_to_basket(request):
-    data = request.data
+# @api_view(['POST'])
+# @permission_classes([IsAuthenticated])
+# def add_to_basket(request):
+#     data = request.data
 
-    session_id = data.get('session_id')
-    seat_id = data.get('seat_id')
-    user_id = request.user.id
+#     session_id = data.get('session_id')
+#     seat_id = data.get('seat_id')
+#     user_id = request.user.id
 
-    if not all([session_id, seat_id, user_id]):
-        return Response(
-            {'error': 'Не указаны все необходимые данные'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+#     if not all([session_id, seat_id, user_id]):
+#         return Response(
+#             {'error': 'Не указаны все необходимые данные'},
+#             status=status.HTTP_400_BAD_REQUEST
+#         )
     
-    try:
-        session = Session.objects.get(pk=session_id)
-    except Session.DoesNotExist:
-        return Response(
-            {'error': 'Сеанс не найден'},
-            status=status.HTTP_404_NOT_FOUND
-        )
+#     try:
+#         session = Session.objects.get(pk=session_id)
+#     except Session.DoesNotExist:
+#         return Response(
+#             {'error': 'Сеанс не найден'},
+#             status=status.HTTP_404_NOT_FOUND
+#         )
 
-    try:
-        seat = Seat.objects.get(pk=seat_id)
-    except Seat.DoesNotExist:
-        return Response(
-            {'error': 'Место не найдено'},
-            status=status.HTTP_404_NOT_FOUND
-        )
+#     try:
+#         seat = Seat.objects.get(pk=seat_id)
+#     except Seat.DoesNotExist:
+#         return Response(
+#             {'error': 'Место не найдено'},
+#             status=status.HTTP_404_NOT_FOUND
+#         )
 
-    session_datetime = timezone.datetime.combine(session.date, session.time)
-    session_datetime = timezone.make_aware(session_datetime)
+#     session_datetime = timezone.datetime.combine(session.date, session.time)
+#     session_datetime = timezone.make_aware(session_datetime)
     
-    if session_datetime < timezone.now():
-        return Response(
-            {'error': 'Нельзя забронировать место на прошедший сеанс'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+#     if session_datetime < timezone.now():
+#         return Response(
+#             {'error': 'Нельзя забронировать место на прошедший сеанс'},
+#             status=status.HTTP_400_BAD_REQUEST
+#         )
 
-    if session_datetime - timedelta(minutes=5) < timezone.now():
-        return Response(
-            {'error': 'Продажа билетов на этот сеанс закрыта за 5 минут до начала'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+#     if session_datetime - timedelta(minutes=5) < timezone.now():
+#         return Response(
+#             {'error': 'Продажа билетов на этот сеанс закрыта за 5 минут до начала'},
+#             status=status.HTTP_400_BAD_REQUEST
+#         )
 
-    existing_ticket = Ticket.objects.filter(
-        session=session, 
-        seat=seat
-    ).exclude(
-        status__name='возврат'
-    ).first()
+#     existing_ticket = Ticket.objects.filter(
+#         session=session, 
+#         seat=seat
+#     ).exclude(
+#         status__name='возврат'
+#     ).first()
     
-    if existing_ticket:
-        return Response(
-            {'error': 'Это место уже занято'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+#     if existing_ticket:
+#         return Response(
+#             {'error': 'Это место уже занято'},
+#             status=status.HTTP_400_BAD_REQUEST
+#         )
 
+#     Basket.objects.filter(
+#         session_id=session_id,
+#         seat_id=seat_id,
+#         expires_at__lt=timezone.now()
+#     ).delete()
+    
+#     existing_basket = Basket.objects.filter(
+#         session_id=session_id,
+#         seat_id=seat_id,
+#         expires_at__gt=timezone.now()
+#     ).first()
+
+#     if existing_basket:
+#         if existing_basket.user_id == user_id:
+#             return Response(
+#                 {'error': 'Это место уже в вашей корзине'},
+#                 status=status.HTTP_400_BAD_REQUEST
+#             )
+#         else:
+#             return Response(
+#                 {'error': 'Это место уже забронировано другим пользователем'},
+#                 status=status.HTTP_400_BAD_REQUEST
+#             )
+        
+#     expires_at = timezone.now() + timedelta(minutes=15)
+
+#     basket = Basket.objects.create(
+#         user_id=user_id,
+#         session=session,
+#         seat=seat,
+#         expires_at=expires_at
+#     )
+
+#     return Response({
+#         'success': True,
+#         'basket_id': basket.basket_id,
+#         'expires_at': basket.expires_at,
+#         'message': f"Место забронировано до {basket.expires_at}"
+#     }, status=status.HTTP_201_CREATED)
+
+def get_active_baskets(user):
+    # Сначала удаляем просроченные
     Basket.objects.filter(
-        session_id=session_id,
-        seat_id=seat_id,
+        user=user,
         expires_at__lt=timezone.now()
     ).delete()
     
-    existing_basket = Basket.objects.filter(
-        session_id=session_id,
-        seat_id=seat_id,
-        expires_at__gt=timezone.now()
-    ).first()
-
-    if existing_basket:
-        if existing_basket.user_id == user_id:
-            return Response(
-                {'error': 'Это место уже в вашей корзине'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        else:
-            return Response(
-                {'error': 'Это место уже забронировано другим пользователем'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-    expires_at = timezone.now() + timedelta(minutes=15)
-
-    basket = Basket.objects.create(
-        user_id=user_id,
-        session=session,
-        seat=seat,
-        expires_at=expires_at
-    )
-
-    return Response({
-        'success': True,
-        'basket_id': basket.basket_id,
-        'expires_at': basket.expires_at,
-        'message': f"Место забронировано до {basket.expires_at}"
-    }, status=status.HTTP_201_CREATED)
+    return Basket.objects.filter(user=user, expires_at__gt=timezone.now())
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -576,16 +581,15 @@ def add_to_basket_bulk(request):
     # POST /api/basket/add/bulk/
 
     user_id = request.user.id
-    
-    # Валидация входных данных
+    get_active_baskets(request.user) 
+
     serializer = BulkBasketSerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     session_id = serializer.validated_data['session_id']
     seat_ids = serializer.validated_data['seat_ids']
-    
-    # Проверяем, существует ли сеанс
+
     try:
         session = Session.objects.get(pk=session_id)
     except Session.DoesNotExist:
@@ -593,16 +597,14 @@ def add_to_basket_bulk(request):
             {'error': 'Сеанс не найден'},
             status=status.HTTP_404_NOT_FOUND
         )
-    
-    # Проверяем, что все места существуют
+
     seats = Seat.objects.filter(pk__in=seat_ids)
     if seats.count() != len(seat_ids):
         return Response(
             {'error': 'Одно или несколько мест не найдены'},
             status=status.HTTP_404_NOT_FOUND
         )
-    
-    # Проверяем, что все места свободны (не проданы)
+
     sold_seats = []
     available_seats = []
     
@@ -626,8 +628,7 @@ def add_to_basket_bulk(request):
             'error': 'Некоторые места уже проданы',
             'sold_seats': sold_seats
         }, status=status.HTTP_400_BAD_REQUEST)
-    
-    # Проверяем, что места не забронированы другими пользователями
+
     busy_baskets = []
     free_seats = []
     
@@ -646,7 +647,6 @@ def add_to_basket_bulk(request):
                     'seat_number': seat.seat_number
                 })
             else:
-                # Уже в корзине этого пользователя
                 free_seats.append(seat)
         else:
             free_seats.append(seat)
@@ -656,8 +656,7 @@ def add_to_basket_bulk(request):
             'error': 'Некоторые места уже забронированы другими пользователями',
             'busy_seats': busy_baskets
         }, status=status.HTTP_400_BAD_REQUEST)
-    
-    # Создаем брони
+
     expires_at = timezone.now() + timedelta(minutes=15)
     baskets = []
     
@@ -669,8 +668,7 @@ def add_to_basket_bulk(request):
             expires_at=expires_at
         )
         baskets.append(basket)
-    
-    # Логируем действие
+
     ActionLog.objects.create(
         user_id=user_id,
         action_type='ADD_TO_BASKET_BULK',
@@ -743,7 +741,6 @@ def my_basket(request):
 
     user = request.user
     
-    # Получаем все активные брони пользователя
     baskets = Basket.objects.filter(
         user=user,
         expires_at__gt=timezone.now()
@@ -772,6 +769,10 @@ def my_basket(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
+
+    # Возврат билета
+    # POST api/tickets/return/<int:ticket_id>/'
+
 def return_ticket(request, ticket_id):
     data = request.data
     user_id = request.user.id
@@ -950,7 +951,10 @@ def return_ticket(request, ticket_id):
 @api_view(['PUT', 'PATCH'])
 @permission_classes([IsAuthenticated])
 def update_profile(request):
-#PUT - полное обновление, PATCH - частичное обновление
+    # Изменение профиля
+    # PUT /api/auth/profile/
+    # PATCH /api/auth/profile/
+    #PUT - полное обновление, PATCH - частичное обновление
     user = request.user
     
     try:
@@ -2208,7 +2212,7 @@ def train_ml_model(request):
 def predict_demand_ml(request):
 
     # Делает прогноз спроса для конкретного сеанса
-    # GET /api/ml/predict/?session_id=1
+    # GET /api/ml/demand-predict/?session_id=1
 
     # Проверяем права
     if not is_admin_or_manager(request.user):
