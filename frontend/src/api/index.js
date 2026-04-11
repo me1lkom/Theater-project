@@ -1,4 +1,35 @@
 import axios from "axios";
+import useAuthStore from "../store/useAuthStore";
+
+// Глобальные переменные для управления обновлением токена
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+    failedQueue.forEach(prom => {
+        if (error) {
+            prom.reject(error);
+        } else {
+            prom.resolve(token);
+        }
+    });
+    failedQueue = [];
+};
+
+const addToQueue = (resolve, reject) => {
+    failedQueue.push({ resolve, reject });
+};
+
+// Функция для очистки и редиректа
+const redirectToLogin = async () => {
+    const { logout } = useAuthStore.getState();
+    await logout();  // Очищаем store и localStorage
+    
+    // Чтобы избежать множественных редиректов
+    if (!window.location.pathname.includes('/auth')) {
+        window.location.href = '/auth';
+    }
+};
 
 export const apiClient = axios.create({
     baseURL: "http://localhost:8000/api",
@@ -10,7 +41,77 @@ export const apiClient = axios.create({
 });
 
 
-{/*  Добавить интерцептор дл перехвата ошибки 401 и автообновления токенов */}
+apiClient.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        const originalRequest = error.config;
+        
+        console.log('Interceptor caught error:', error.response?.status, originalRequest.url);
+        
+        const isAuthEndpoint = originalRequest.url?.includes('/auth/login') || 
+                               originalRequest.url?.includes('/auth/register') ||
+                               originalRequest.url?.includes('/auth/refresh');
+
+        // Если не 401 - просто пробрасываем ошибку
+        if (error.response?.status !== 401 || isAuthEndpoint) {
+            return Promise.reject(error);
+        }
+        
+        // Если это запрос к /auth/refresh/ - не пытаемся обновлять, редиректим на логин
+        if (originalRequest.url === '/auth/refresh/') {
+            console.log('Refresh token expired or invalid, redirecting to login');
+            await redirectToLogin();
+            return Promise.reject(error);
+        }
+        
+        // Если уже идет обновление токена - добавляем запрос в очередь
+        if (isRefreshing) {
+            console.log('Refresh in progress, queuing request');
+            return new Promise((resolve, reject) => {
+                addToQueue(resolve, reject);
+            }).then(() => {
+                console.log('Queue resolved, retrying original request');
+                return apiClient(originalRequest);
+            }).catch((err) => {
+                return Promise.reject(err);
+            });
+        }
+        
+        // Первый запрос с 401 - запускаем обновление токена
+        originalRequest._retry = true;
+        isRefreshing = true;
+        
+        console.log('Starting token refresh');
+        
+        try {
+            // Отправляем запрос на обновление токена
+            await apiClient.post('/auth/refresh/');
+            console.log('Token refresh successful');
+            
+            // Обрабатываем очередь запросов
+            processQueue(null);
+            
+            // Повторяем исходный запрос
+            console.log('Retrying original request');
+            return apiClient(originalRequest);
+            
+        } catch (refreshError) {
+            console.log('Token refresh failed:', refreshError);
+            
+            // Обрабатываем очередь с ошибкой
+            processQueue(refreshError, null);
+            
+            // Редирект на логин
+            await redirectToLogin();
+            
+            return Promise.reject(refreshError);
+            
+        } finally {
+            isRefreshing = false;
+            console.log('Refresh flag reset');
+        }
+    }
+);
 
 
 // –– Спектакли
@@ -20,17 +121,22 @@ export async function getPlays() {
 };
 
 export async function getPlayById(id) {
-    const response = await apiClient.get(`/plays/${id}`)
+    const response = await apiClient.get(`/plays/${id}/`)
     return response.data;
 };
 
-export async function getGenres(){
+export async function getGenres() {
     const response = await apiClient.get('/genres/');
     return response.data;
 }
 
 export async function getSessions() {
     const response = await apiClient.get('/sessions/');
+    return response.data;
+}
+
+export async function getSessionById(id) {
+    const response = await apiClient.get(`/sessions/${id}`);
     return response.data;
 }
 
@@ -54,7 +160,7 @@ export async function getMe() {
 export async function getMyTickets() {
     const response = await apiClient.get('/tickets/my/');
     return response.data;
-}   
+}
 
 // –– Запросы auth
 export async function login(credentials) {
@@ -67,8 +173,12 @@ export async function register(credentials) {
     return response.data;
 }
 
-export async function logout(){
+export async function logout() {
     await apiClient.post('/auth/logout/');
+}
+
+export async function refreshToken() {
+    await apiClient.post('/auth/refresh/');
 }
 
 // –– Билеты 
@@ -76,3 +186,22 @@ export async function postReturnTicket(id, reason) {
     const response = await apiClient.post(`/tickets/return/${id}/`, reason);
     return response.data;
 }
+
+// –– Покупка билетов / Козина
+export async function addToBasket(session_id, seat_ids) {
+    const response = await apiClient.post('/basket/add/bulk/', {
+        session_id: session_id,
+        seat_ids: seat_ids
+    });
+    return response.data;
+}
+
+export async function buyTicket(user_id, session_id, seat_ids) {
+    const response = await apiClient.post('/tickets/buy/bulk/', {
+        user_id: user_id,
+        session_id: session_id,
+        seat_ids: seat_ids
+    });
+    return response.data;
+}
+

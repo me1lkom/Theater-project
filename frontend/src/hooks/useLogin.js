@@ -4,7 +4,7 @@ import { useState } from 'react';
 import useAuthStore from '../store/useAuthStore';
 
 export function useLogin() {
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
     const setUser  = useAuthStore(state => state.setUser);

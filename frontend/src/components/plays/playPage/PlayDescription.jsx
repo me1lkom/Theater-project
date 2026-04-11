@@ -17,9 +17,6 @@ export default function PlayDescription({ play, selectedSession, onChangeSession
                         <div className="title">{play.title}</div>
                         <div className="description">{play.description}</div>
                         <div className="duration">{play.duration}</div>
-                        <div className="selectDate">
-                            {/* в будущем добавить выбор даты и времени */}
-                        </div>
                         <div className="price">{play.price}</div>
                     </div>
                     <div className="actorsInfo">
