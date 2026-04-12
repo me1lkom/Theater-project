@@ -10,6 +10,7 @@ from .redis_utils import RedisTokenStorage
 import logging
 from django.contrib.auth.models import User
 from django.core.cache import cache
+from .models import Profile
 
 logger = logging.getLogger(__name__)
 
@@ -35,10 +36,6 @@ def delete_cookie(response, key):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login_cookie(request):
-
-    # Вход в систему — устанавливает httpOnly cookie и сохраняет refresh токен в Redis
-    # POST /api/auth/login/
-    
     username = request.data.get('username')
     password = request.data.get('password')
     
@@ -56,19 +53,23 @@ def login_cookie(request):
             status=status.HTTP_401_UNAUTHORIZED
         )
     
+    # ✅ Получаем или создаем профиль
+    try:
+        profile = user.profile
+    except Profile.DoesNotExist:
+        profile = Profile.objects.create(user=user)
+        logger.warning(f"Создан профиль для {user.username} при логине")
+    
     RedisTokenStorage.revoke_all_user_tokens(user.id)
 
-    # созжание токенов
+    # Создание токенов
     refresh = RefreshToken.for_user(user)
     access_token = str(refresh.access_token)
     refresh_token = str(refresh)
     
-    # сохранение refresh токен в Redis
     logger.info(f"Логин пользователя {user.username}, сохраняем refresh токен в Redis")
     save_result = RedisTokenStorage.save_refresh_token(user.id, refresh_token)
     logger.info(f"Результат сохранения: {save_result}")
-
-    profile = user.profile
 
     response = Response({
         'success': True,
@@ -82,7 +83,6 @@ def login_cookie(request):
         }
     })
     
-    # установка cookie
     set_cookie(
         response,
         settings.SIMPLE_JWT.get('AUTH_COOKIE', 'access_token'),
@@ -105,46 +105,73 @@ def refresh_cookie(request):
     refresh_token = request.COOKIES.get('refresh_token')
     
     if not refresh_token:
-        return Response({'error': 'Refresh токен не найден'}, status=400)
+        return Response(
+            {'error': 'Refresh токен не найден'}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
     
     try:
-        refresh = RefreshToken(refresh_token)
-        user_id = refresh.payload.get('user_id')
+        old_refresh = RefreshToken(refresh_token)
+        user_id = old_refresh.payload.get('user_id')
         
         if not RedisTokenStorage.check_refresh_token(user_id, refresh_token):
-            return Response({'error': 'Refresh токен недействителен'}, status=401)
+            logger.warning(f"Попытка использовать отозванный refresh токен для user_id={user_id}")
+            return Response(
+                {'error': 'Refresh токен недействителен'}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )
         
-        # Только новый access
-        new_access = str(refresh.access_token)
+        # Отзываем старый refresh
+        RedisTokenStorage.revoke_refresh_token(user_id, refresh_token)
+        
+        # Создаем новые токены
+        user = User.objects.get(id=user_id)
+        new_refresh = RefreshToken.for_user(user)
+        new_access = str(new_refresh.access_token)
+        new_refresh_token = str(new_refresh)
+        
+        RedisTokenStorage.save_refresh_token(user_id, new_refresh_token)
+        
+        logger.info(f"Токены обновлены для user_id={user_id}")
         
         response = Response({'success': True})
-        set_cookie(response, 'access_token', new_access, 900)
-        # refresh cookie НЕ меняем
+        
+        set_cookie(
+            response,
+            settings.SIMPLE_JWT['AUTH_COOKIE'],
+            new_access,
+            int(settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'].total_seconds())
+        )
+        
+        set_cookie(
+            response,
+            settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'],
+            new_refresh_token,
+            int(settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'].total_seconds())
+        )
         
         return response
         
-    except Exception:
-        return Response({'error': 'Недействительный refresh токен'}, status=401)
+    except Exception as e:
+        logger.error(f"Ошибка обновления токена: {e}")
+        return Response(
+            {'error': 'Недействительный refresh токен'}, 
+            status=status.HTTP_401_UNAUTHORIZED
+        )
 
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def logout_cookie(request):
-
-    # Выход из системы — отзывает refresh токен в Redis и удаляет cookie
-    # POST /api/auth/logout/
-
     user = request.user
     refresh_token = request.COOKIES.get(
         settings.SIMPLE_JWT.get('AUTH_COOKIE_REFRESH', 'refresh_token')
     )
     
     if refresh_token:
-        # отзыв refresh токен в Redis
         logger.info(f"Выход пользователя {user.username}, отзываем refresh токен")
         RedisTokenStorage.revoke_refresh_token(user.id, refresh_token)
     
-    # добавление текущего access токен в черный список
     access_token = request.COOKIES.get(
         settings.SIMPLE_JWT.get('AUTH_COOKIE', 'access_token')
     )
@@ -156,7 +183,6 @@ def logout_cookie(request):
         'message': 'Выход выполнен'
     })
     
-    # удаление cookie
     delete_cookie(response, settings.SIMPLE_JWT.get('AUTH_COOKIE', 'access_token'))
     delete_cookie(response, settings.SIMPLE_JWT.get('AUTH_COOKIE_REFRESH', 'refresh_token'))
     
@@ -166,25 +192,23 @@ def logout_cookie(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register_cookie(request):
-
-    # Регистрация нового пользователя — сразу логинит
-    # POST /api/auth/register/
-
     serializer = RegisterSerializer(data=request.data)
     
     if serializer.is_valid():
         user = serializer.save()
         
-
+        # ✅ Получаем профиль (он уже создан в сериализаторе)
+        try:
+            profile = user.profile
+        except Profile.DoesNotExist:
+            profile = Profile.objects.create(user=user)
+        
         RedisTokenStorage.revoke_all_user_tokens(user.id)
-        # создание токенов
+        
         refresh = RefreshToken.for_user(user)
         access_token = str(refresh.access_token)
         refresh_token = str(refresh)
         
-        profile = user.profile
-        
-        # сохранение refresh токена в Redis
         logger.info(f"Регистрация пользователя {user.username}, сохраняем refresh токен")
         RedisTokenStorage.save_refresh_token(user.id, refresh_token)
         
@@ -196,12 +220,10 @@ def register_cookie(request):
                 'email': user.email,
                 'first_name': user.first_name,
                 'last_name': user.last_name,
-                'phone' : profile.phone,
-
+                'phone': profile.phone,
             }
         }, status=status.HTTP_201_CREATED)
         
-        # установка cookie
         set_cookie(
             response,
             settings.SIMPLE_JWT.get('AUTH_COOKIE', 'access_token'),
@@ -224,17 +246,13 @@ def register_cookie(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def me_cookie(request):
-
-    # Получить информацию о текущем пользователе
-    # GET /api/auth/me/
-
     user = request.user
     
     try:
         profile = user.profile
         role = profile.role.name if profile.role else None
         phone = profile.phone
-    except:
+    except Profile.DoesNotExist:
         role = None
         phone = ''
     

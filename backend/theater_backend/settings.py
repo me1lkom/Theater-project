@@ -59,6 +59,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'api.middleware.ExceptionMiddleware',
 ]
 
 ROOT_URLCONF = 'theater_backend.urls'
@@ -147,9 +148,9 @@ STATIC_URL = 'static/'
 from datetime import timedelta
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),      # 15 минут
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1),      # 15 минут
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),         # 7 дней
-    'ROTATE_REFRESH_TOKENS': True,                      # Не создаем новый refresh
+    'ROTATE_REFRESH_TOKENS': False,                      # Не создаем новый refresh
     'BLACKLIST_AFTER_ROTATION': False,                   # Не используем черный список
     
     # Настройки для cookie
@@ -166,7 +167,13 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'api.authentication.RedisJWTAuthentication',    # кастомный класс
     ),
+    'EXCEPTION_HANDLER': 'api.exceptions.custom_exception_handler',
 }
+
+handler404 = 'api.exceptions.handler404'
+handler500 = 'api.exceptions.handler500'
+handler403 = 'api.exceptions.handler403'
+handler400 = 'api.exceptions.handler400'
 
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SECURE = False      # True в продакшене

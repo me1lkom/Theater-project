@@ -59,8 +59,17 @@ class SessionSerializer(serializers.ModelSerializer):
         fields = ['session_id', 'play', 'play_title', 'hall', 'hall_name', 'date', 'time']
 
 class RegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=True, validators=[validate_password], style={'input': 'password'})
-    password2 = serializers.CharField(write_only=True, required=True, style={'input': 'password'})
+    password = serializers.CharField(
+        write_only=True, 
+        required=True, 
+        validators=[validate_password], 
+        style={'input_type': 'password'}
+    )
+    password2 = serializers.CharField(
+        write_only=True, 
+        required=True, 
+        style={'input_type': 'password'}
+    )
 
     phone = serializers.CharField(
         required=True,
@@ -74,19 +83,18 @@ class RegisterSerializer(serializers.ModelSerializer):
         fields = ['username', 'password', 'password2', 'email', 'first_name', 'last_name', 'phone']
 
     def validate(self, attrs):
-        if attrs['password'] != attrs['password2']: # attrs - атрибуты(данные клиента)
-            raise serializers.ValidatetionError({'Password': 'Пароли не совпадают'})
+        if attrs['password'] != attrs['password2']:
+            raise serializers.ValidationError({'password': 'Пароли не совпадают'})
         return attrs
     
-    def create(self, validate_data):
+    def create(self, validated_data):
+        validated_data.pop('password2')
+        phone = validated_data.pop('phone')
+        user = User.objects.create_user(**validated_data)
         
-        validate_data.pop('password2')
-        phone = validate_data.pop('phone')
-        user = User.objects.create_user(**validate_data) # распаковываем словарь с проверенным данными о пользователе
         profile, created = Profile.objects.get_or_create(user=user)
         profile.phone = phone
         profile.save()
-
 
         return user
 
