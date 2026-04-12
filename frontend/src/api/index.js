@@ -213,3 +213,19 @@ export async function removeFromBasket(basketId) {
     const response = await apiClient.delete(`/basket/remove/${basketId}/`);
     return response.data;
 }
+
+// –– ML
+export async function getMLInfo() {
+    const response = await apiClient.get('/ml/info/');
+    return response.data;
+}
+
+export async function getPredictForSession(session_id) {
+    const response = await apiClient.get(`ml/demand-predict/?session_id=${session_id}`);
+    return response.data;
+}
+
+export async function modelTraining() {
+    const response = await apiClient.get('/ml/train/');
+    return response.data;
+}
