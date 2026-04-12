@@ -1,18 +1,17 @@
 import { useState, useEffect } from 'react';
-import { getPlays } from '../api/index';
+import { getMLInfo } from '../api/index';
 
-export function usePlays() {
-    const [plays, setPlays] = useState(null);
+export function useGetMLInfo() {
+    const [info, setInfo] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     useEffect(() => {
-
-        const fetchPlays = async () => {
+        const fetchInfo = async () => {
             try {
                 setLoading(true);
-                const data = await getPlays();
-                setPlays(data);
+                const data = await getMLInfo();
+                setInfo(data);
                 setError(null);
             } catch (err) {
                 setError(err.message || 'Ошибка загрузки данных.');
@@ -21,8 +20,8 @@ export function usePlays() {
             }
         };
 
-        fetchPlays();
+        fetchInfo();
     }, []);
 
-    return { plays, loading, error }
+    return { info, loading, error };
 }

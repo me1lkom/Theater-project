@@ -1,4 +1,4 @@
-import { register } from '../api/index';
+import { register, getMe } from '../api/index';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import useAuthStore from '../store/useAuthStore';
@@ -16,7 +16,8 @@ export function useRegister() {
         try {
             const response = await register({ username, password, password2, email, first_name, last_name })
             if (response.success) {
-                setUser(response.user);
+                const response = await getMe();
+                setUser(response);
                 navigate('/');
                 return { success: true };
             } else {

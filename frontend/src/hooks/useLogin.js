@@ -1,10 +1,10 @@
-import { login } from "../api/index";
+import { login, getMe } from "../api/index";
 import { useNavigate } from "react-router-dom";
 import { useState } from 'react';
 import useAuthStore from '../store/useAuthStore';
 
 export function useLogin() {
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
     const setUser  = useAuthStore(state => state.setUser);
@@ -18,7 +18,8 @@ export function useLogin() {
             const response = await login({ username, password });
 
             if(response.success) {
-                setUser(response.user);
+                const response = await getMe();
+                setUser(response);
                 navigate('/');
                 return { success: true };
             } else {

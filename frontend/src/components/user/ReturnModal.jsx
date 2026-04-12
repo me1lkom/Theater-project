@@ -37,7 +37,7 @@ export default function ReturnModal({  ticketId, onConfirm, onCancel }) {
                         </button>
                     </div>
                 </form>
-            </div>Í
+            </div>
         </div>
     )
 }

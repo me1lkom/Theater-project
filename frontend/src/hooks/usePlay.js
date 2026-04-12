@@ -7,6 +7,7 @@ export function usePlay(id) {
     const [error, setError] = useState(null);
 
     useEffect(() => {
+        if (!id) return;
         const fetchPlay = async () => {
             try {
                 setLoading(true);

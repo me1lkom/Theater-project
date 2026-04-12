@@ -18,9 +18,11 @@ const useAuthStore = create((set) => ({
             console.log(err.message || 'Ошибка при выходе');
         }
         
-        set({ user: null, isAuthenticated: false })
+        set({ user: null, isAuthenticated: false });
         localStorage.removeItem('user');
+
     },
+
     
     hydrate: () => {
         const savedUser = localStorage.getItem('user');
