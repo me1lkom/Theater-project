@@ -1,4 +1,4 @@
-import { addToBasket  } from "../api/index";
+import { addToBasket, getMyBasket, removeFromBasket } from "../api/index";
 import { useState } from "react";
 
 export function useAddToBasket() {
@@ -8,13 +8,29 @@ export function useAddToBasket() {
     const addTicketToBasket = async (session_id, seat_ids) => {
         setLoading(true);
         setError(null);
-        
-        try{
+
+        try {
+            console.log(`Запрос`)
+            const basket = await getMyBasket();
+
+            if (basket.count > 0) {
+                console.log(`Зашел, ${basket.count}`)
+                const availableBasket = basket.baskets;
+
+                
+
+                for (const item of availableBasket) {
+                    await removeFromBasket(item.basket_id);
+                    console.log(`Удалена старая бронь ${item.basket_id}`)
+                }
+
+            }
+
             await addToBasket(session_id, seat_ids);
             setLoading(true);
             setError(null);
             return { success: true };
-        } catch(err){
+        } catch (err) {
             setError(err.message || 'Ошибка добавления в корзину');
             return { success: false };
         } finally {
@@ -22,5 +38,5 @@ export function useAddToBasket() {
         }
     }
 
-    return {addTicketToBasket, loading, error};
+    return { addTicketToBasket, loading, error };
 }

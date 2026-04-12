@@ -8,7 +8,7 @@ import ReturnModal from './ReturnModal';
 export default function UserTickets() {
     const { tickets, loading, error, refetch } = useMyTickets(); 
 
-const { returnTicket, loading: returnLoading, error: returnError } = useReturnTicket();
+const { returnTicket, error: returnError } = useReturnTicket();
 
     const [selectedTicketId, setSelectedTicketId] = useState(null);
     const [showModal, setShowModal] = useState(false);
@@ -20,14 +20,14 @@ const { returnTicket, loading: returnLoading, error: returnError } = useReturnTi
 
     const handleConfirmReturn = async (ticketId, reason) => {
         const result = await returnTicket(ticketId, reason);
-        
+        console.log(`Попытка возврата билета: ${ticketId}`)
         if (result.success) {
             setShowModal(false);
             setSelectedTicketId(null);
             if (refetch) refetch();
             alert('Билет успешно возвращен');
         } else {
-            alert('Ошибка при возврате билета');
+            alert(`Ошибка при возврате билета ${returnError}`);
         }
     };
 
@@ -50,8 +50,6 @@ const { returnTicket, loading: returnLoading, error: returnError } = useReturnTi
                     ticketId={selectedTicketId}
                     onConfirm={handleConfirmReturn}
                     onCancel={handleCancelReturn}
-                    loading={returnLoading}
-                    error={returnError}
                 />
             )}
         </div>

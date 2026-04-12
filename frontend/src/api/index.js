@@ -196,12 +196,20 @@ export async function addToBasket(session_id, seat_ids) {
     return response.data;
 }
 
-export async function buyTicket(user_id, session_id, seat_ids) {
+export async function buyTicket(session_id, seat_ids) {
     const response = await apiClient.post('/tickets/buy/bulk/', {
-        user_id: user_id,
         session_id: session_id,
         seat_ids: seat_ids
     });
     return response.data;
 }
 
+export async function getMyBasket() {
+    const response = await apiClient.get('/basket/my/');
+    return response.data;
+}
+
+export async function removeFromBasket(basketId) {
+    const response = await apiClient.delete(`/basket/remove/${basketId}/`);
+    return response.data;
+}

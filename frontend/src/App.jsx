@@ -9,7 +9,7 @@ import AuthPage from "./pages/userPages/AuthPage";
 import useAuthStore from './store/useAuthStore';
 import ProfilePage from "./pages/userPages/ProfilePage";
 import PaymentPage from "./pages/userPages/PaymentPage";
-
+import ContactPage from "./pages/userPages/ContactPage";
 function App() {
   const hydrate = useAuthStore((state) => state.hydrate);
 
@@ -28,6 +28,7 @@ function App() {
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/payment" element={<PaymentPage />} />
+          <Route path="/contact" element={<ContactPage />} />
         </Routes>
         <Footer />
       </div>
