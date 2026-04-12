@@ -7,7 +7,6 @@ export default function Header() {
 
   const { user, isAuthenticated } = useAuthStore();
 
-
   const handleLogoClick = () => {
     navigate(`/`);
   };
@@ -27,6 +26,11 @@ export default function Header() {
   const handlePanoramaClick = () => {
     navigate(`/panorama`);
   };
+
+  const handleStatisticClick = () => {
+    navigate(`/statistics`);
+  }
+
   return (
     <header>
       <div onClick={handleLogoClick}>Логотип</div>
@@ -41,7 +45,11 @@ export default function Header() {
         ) : (
           <button onClick={handleLoginClick}>Войти</button>
         )}
-
+        {user?.role == 'admin' ? (
+          <button onClick={handleStatisticClick}>Статистика</button>
+        ): (
+          null
+        )}
       </nav>
 
     </header>

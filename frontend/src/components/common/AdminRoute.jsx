@@ -5,7 +5,7 @@ export function AdminRoute({ children }) {
     const { user, isAuthenticated } = useAuthStore();
 
     if (!isAuthenticated) {
-        return <Navigate to="/auth" />;
+        return <Navigate to="/" />;
     }
 
     if (user?.role !== 'admin') {
