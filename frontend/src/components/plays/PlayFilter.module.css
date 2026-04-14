@@ -1,0 +1,26 @@
+.playFilter {
+    display: flex;
+    gap: var(--space-xs);
+    padding: var(--space-md);
+    width: 100%;
+}
+
+.playFilter input{
+    background-color: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-xs);
+    color: var(--text-h);
+    outline:none;
+    width: 80%;
+}
+
+.playFilter select {
+    background-color: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-xs);
+    color: var(--text-h);
+    outline:none;
+    width: 20%;
+}

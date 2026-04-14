@@ -1,10 +1,11 @@
 import { useGenres } from "../../hooks/useGenres";
+import styles from "./PlayFilter.module.css";
 
 export default function PlayFilter({ searchQuery, onSearchChange, selectedGenre, onGenreChange }) {
   const { genres, loading } = useGenres();
 
   return (
-    <div className="playFilter">
+    <div className={styles.playFilter}>
       <input
         type="text"
         placeholder="Поиск по названию..."

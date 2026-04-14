@@ -1,15 +1,12 @@
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import useAuthStore from "../../store/useAuthStore";
-
+import logo from "../../assets/logo.svg";
+import styles from './Header.module.css';
 
 export default function Header() {
   const navigate = useNavigate();
 
   const { user, isAuthenticated } = useAuthStore();
-
-  const handleLogoClick = () => {
-    navigate(`/`);
-  };
 
   const handleLoginClick = () => {
     navigate(`/auth`)
@@ -19,39 +16,55 @@ export default function Header() {
     navigate(`/profile`);
   };
 
-  const handleContactClick = () => {
-    navigate(`/contact`);
-  };
-
-  const handlePanoramaClick = () => {
-    navigate(`/panorama`);
-  };
-
   const handleStatisticClick = () => {
     navigate(`/statistics`);
   }
 
   return (
-    <header>
-      <div onClick={handleLogoClick}>Логотип</div>
-      <nav>Меню
-        {isAuthenticated ? (
-          <span>
-            <span>Привет, {user?.username}!</span>
-            <button onClick={handleProfileClick}>Профиль</button>
-            <button onClick={handleContactClick}>Контакты</button>
-            <button onClick={handlePanoramaClick}>Панорама</button>
-          </span>
-        ) : (
-          <button onClick={handleLoginClick}>Войти</button>
-        )}
-        {user?.role == 'admin' ? (
-          <button onClick={handleStatisticClick}>Статистика</button>
-        ): (
-          null
-        )}
+    <header className={styles.header}>
+      <div className={styles.header__logo}>
+        <Link to="/">
+          <img src={logo} alt="Логотип театра" />
+        </Link>
+      </div>
+
+      <nav className={styles.header__nav}>
+        <ul className={styles.nav__list}>
+          <li><Link to="/">Афиша</Link></li>
+          <li><Link to="/contact">Контакты</Link></li>
+          <li><Link to="/panorama">Панорама</Link></li>
+        </ul>
       </nav>
 
+      <div className={styles.header__actions}>
+        {isAuthenticated ? (
+          <button
+            className={styles.actions__button}
+            onClick={handleProfileClick}
+            aria-label="Профиль"
+          >
+            Профиль
+          </button>
+        ) : (
+          <button
+            className={`${styles.actions__button} ${styles.notAuth}`}
+            onClick={handleLoginClick}
+            aria-label="Войти"
+          >
+            Войти
+          </button>
+        )}
+
+        {user?.role === 'admin' && (
+          <button
+            className={`${styles.actions__button} ${styles['actions__button--admin']}`}
+            onClick={handleStatisticClick}
+            aria-label="Статистика"
+          >
+            Статистика
+          </button>
+        )}
+      </div>
     </header>
   );
 }

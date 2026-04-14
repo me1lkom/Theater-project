@@ -1,0 +1,109 @@
+.playCard {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: var(--shadow);
+}
+
+.playCard:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+}
+
+.posterContainer {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 2 / 3;   /* ← фиксируем пропорции (ширина 2, высота 3) */
+}
+
+.posterContainer img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.genre {
+    position: absolute;
+    top: var(--space-sm);
+    right: var(--space-sm);
+    background: var(--text-h);
+    color: white;
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-lg);
+    font-size: var(--font-xs);
+    font-weight: 500;
+    z-index: 1;
+    box-shadow: var(--shadow-sm);
+}
+
+/* Информация — отступы со всех сторон */
+.infoContainer {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-md);
+}
+
+/* Контейнер информации */
+.infoContainer {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: var(--space-md);
+}
+
+/* Блок с заголовком и описанием */
+.info-all {
+    margin-bottom: var(--space-md);
+}
+
+.title {
+    font-size: var(--font-lg);
+    font-weight: 600;
+    color: var(--text-h);
+    margin-bottom: var(--space-xs);
+}
+
+.description {
+    font-size: var(--font-sm);
+    color: var(--text-h);
+    line-height: 1.4;
+}
+
+/* Блок с длительностью и ценой */
+.info-session {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: var(--space-sm);
+    border-top: 1px solid var(--border-card);
+}
+
+.timedate {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    color: var(--text-h)
+}
+
+.infoRow {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.icon {
+    width: 20px;
+    height: 20px;
+    display: block;
+}
+.price{
+    font-size: var(--font-sm);
+    font-weight:bolder;
+    color: var(--text-h);
+}

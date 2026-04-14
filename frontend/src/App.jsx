@@ -14,6 +14,7 @@ import PanoramaPage from "./pages/userPages/PanoramaPage";
 import StatisticsPage from "./pages/adminPages/StatisticsPage";
 import { AdminRoute } from "./components/common/AdminRoute";
 
+
 function App() {
   const hydrate = useAuthStore((state) => state.hydrate);
 

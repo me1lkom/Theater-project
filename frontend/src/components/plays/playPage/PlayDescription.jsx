@@ -11,7 +11,7 @@ export default function PlayDescription({ play, selectedSession, onChangeSession
         <div className="PlayPage">
 
             <div className="playInfo">
-                <img src={play.poster} alt={play.title} />
+                <img src={play.poster_url} alt={play.title} />
                 <div className="playDetails">
                     <div className="play...">
                         <div className="title">{play.title}</div>

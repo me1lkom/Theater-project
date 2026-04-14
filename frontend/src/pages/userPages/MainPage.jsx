@@ -15,10 +15,8 @@ export default function MainPage(){
   if (!plays || plays.length === 0) return <div>Спектаклей не найдено</div>;
 
   const filteredPlays = plays.filter(play => {
-    {/* поиск по названию */}
     const matchByTitle = play.title.toLowerCase().includes(searchQuery.toLowerCase());
 
-    {/* поиск по жанру */}
     let matchByGenre = true;
     if (selectedGenre !== 'all') {
       matchByGenre = play.genres?.some(

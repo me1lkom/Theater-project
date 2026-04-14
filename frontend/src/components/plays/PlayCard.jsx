@@ -1,21 +1,58 @@
+import styles from './PlayCard.module.css';
+import time from '../../assets/icon/time.svg';
+import date from '../../assets/icon/date.svg';
+import { useSessions } from '../../hooks/useSessions.js';
+
 export default function PlayCard({ play, onClick }) {
-  return(
-    <article className="playCard" onClick={() => onClick(play.play_id)}>
-      <div className="posterContainer">
-        <img src={play.poster} alt={play.title} />
-        {play.genres?.map(genre =>(
-          <div className="genre" key={genre.genre_id}>{genre.name}</div>
+  const hours = Math.floor(play.duration / 60);
+  let minutes = play.duration % 60;
+
+  if (minutes == 0) {
+    minutes = "00";
+  }
+
+  let price = Number(play.price);
+
+
+  const { sessions, loading } = useSessions();
+  let neededSessions = sessions?.filter(session => session.play_title.toLowerCase().includes(play.title.toLowerCase())) || [];
+
+  if (loading) return <div>Загрузка сеансов...</div>;
+
+
+  return (
+    <article className={styles.playCard} onClick={() => onClick(play.play_id)}>
+      <div className={styles.posterContainer}>
+        <img src={play.poster_url} alt={play.title} />
+        {play.genres?.map(genre => (
+          <div className={styles.genre} key={genre.genre_id}>{genre.name}</div>
         ))}
       </div>
-      <div className="infoContainer">
-        <div className="info-all"> 
-          <div className="title">{play.title}</div>
-          <div className="description">{play.description}</div>
+      <div className={styles.infoContainer}>
+        <div className={styles['info-all']}>
+          <div className={styles.title}>{play.title}</div>
+          <div className={styles.description}>{play.description}</div>
         </div>
-        <div className="info-session"> 
-          <div className="">//ближайшая дата и время, нужно подгружать через session/id. пока не реализовано</div>
-          <div className="">{play.duration}</div> {/* В будущем необходимо перевести длительность из минут в номальный вид */}
-          <div className="price">{play.price}</div> {/* В будущем необходимо перевести цену в номарльный вид */}
+        <div className={styles['info-session']}>
+          <div className={styles.timedate}>
+
+
+            {neededSessions.length > 0 ? (
+              <>
+                <div className={styles.infoRow}>
+                  <img src={date} alt="Дата" className={styles.icon} />
+                  <span>{neededSessions[0].date}</span>
+                </div>
+                <div className={styles.infoRow}>
+                  <img src={time} alt="Время" className={styles.icon} />
+                  <span>{neededSessions[0].time} ({hours}ч {minutes}мин)</span>
+                </div>
+              </>
+            ) : (
+              <div>Нет доступных сеансов</div>
+            )}
+          </div>
+          <div className={styles.price}>{price}₽</div>
         </div>
       </div>
     </article>

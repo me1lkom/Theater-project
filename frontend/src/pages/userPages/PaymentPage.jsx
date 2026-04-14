@@ -9,7 +9,7 @@ export default function PaymentPage() {
     const { sessionId, selectedSeats } = location.state || {};
 
     return(
-        <div>
+        <div className="container">
             <DataInfo sessionId={sessionId} selectedSeats={selectedSeats} />
         </div>
     )
