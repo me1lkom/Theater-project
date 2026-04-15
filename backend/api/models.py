@@ -63,18 +63,13 @@ class Play(models.Model):
         verbose_name='URL постера'
     )
 
-    # связь многие ко многим
-    actors = models.ManyToManyField(
-        Actor,
-        through='PlayActor', # использовать промежуточную модель PlayActor
-        related_name='plays', # из Actor можно получить все спектакли
-        verbose_name='Актеры'
-    )
-
-    genres = models.ManyToManyField(
-        Genre, 
+    genre = models.ForeignKey(
+        Genre,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name='plays',
-        verbose_name="Жанры"
+        verbose_name='Жанр'
     )
 
     class Meta:
@@ -86,33 +81,35 @@ class Play(models.Model):
         return self.title
     
 
-class PlayActor(models.Model):
-    play_actor_id = models.AutoField(primary_key=True)
-    play = models.ForeignKey(
-        Play,
-        on_delete=models.CASCADE, # если удалить спектакль, удалятся все его связи
-        related_name='play_actors',
-        verbose_name='Спектакль'
-    )
-
-    actor = models.ForeignKey(
-        Actor,
+class SessionActor(models.Model):
+    session_actor_id = models.AutoField(primary_key=True)
+    
+    session = models.ForeignKey(
+        'Session',
         on_delete=models.CASCADE,
-        related_name='actor_plays',
+        related_name='session_actors',
+        verbose_name='Сеанс'
+    )
+    
+    actor = models.ForeignKey(
+        'Actor',
+        on_delete=models.CASCADE,
+        related_name='session_actors',
         verbose_name='Актер'
     )
-
-    actor_role_name = models.CharField(max_length=200, verbose_name='Название роли')
-
+    
+    actor_role_name = models.CharField(
+        max_length=200,
+        verbose_name='Название роли'
+    )
+    
     class Meta:
-        verbose_name = 'Роль актера в спектакле'
-        verbose_name_plural = 'Роли актеров в спектаклях'
-        unique_together = ['play', 'actor', 'actor_role_name']  
-        # unique_together - гарантирует, что не будет дубликатов
-        # не может быть двух записей с одинаковым спектаклем, актером И ролью
-
+        verbose_name = 'Актер в сеансе'
+        verbose_name_plural = 'Актеры в сеансах'
+        unique_together = ['session', 'actor', 'actor_role_name']
+    
     def __str__(self):
-        return f'{self.actor.actor_fio} - {self.actor_role_name}'
+        return f'{self.actor.actor_fio} - {self.actor_role_name} (сеанс {self.session_id})'
 
 # на будушее. Пока нет
 class TheaterHall(models.Model):

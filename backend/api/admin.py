@@ -1,9 +1,9 @@
 from django.contrib import admin
 from .models import Profile, Role
 from django.contrib import admin
-from .models import (Role, Actor, Play, PlayActor, TheaterHall, Seat, 
+from .models import (Role, Actor, Play, TheaterHall, Seat, 
                     Panorama, PanoramaLink, Session, TicketStatus, Ticket, Basket, 
-                    ActionLog, AIPrediction, Genre, Sector)
+                    ActionLog, AIPrediction, Genre, Sector, SessionActor)
 
 
 
@@ -19,7 +19,7 @@ class ProfileAdmin(admin.ModelAdmin):
 admin.site.register(Role)
 admin.site.register(Actor)
 admin.site.register(Play)
-admin.site.register(PlayActor)
+admin.site.register(SessionActor)
 admin.site.register(Genre)
 admin.site.register(TheaterHall)
 admin.site.register(Seat)

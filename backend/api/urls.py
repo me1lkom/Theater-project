@@ -5,12 +5,14 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 urlpatterns = [
     path('plays/', views.PlayListView.as_view(), name='play-list'), #as_view - гтовый класс Django Rest
     path('plays/<int:pk>/', views.PlayDetailView.as_view(), name='play-detail'),
-    path('plays/manage/', views.manage_play),
-    path('plays/manage/<int:play_id>/', views.manage_play),
+    # path('plays/manage/', views.manage_play),
+    # path('plays/manage/<int:play_id>/', views.manage_play, name='manage-play'),
     path('plays/manage/', views.manage_plays, name='manage-plays'),
     path('plays/manage/<int:play_id>/', views.manage_plays, name='manage-play-detail'),
 
     path('genres/', views.GenreView.as_view(), name='genre-list'),
+
+    path('actors-roles/', views.session_with_actors, name='actors-roles'),
 
     path('sessions/', views.SessionListView.as_view(), name='session-list'), # только будующие сеансы
     path('sessions/<int:pk>/', views.SessionDetailView.as_view(), name='session-detail'),

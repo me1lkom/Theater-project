@@ -1,6 +1,6 @@
 from rest_framework import generics
 from .models import Play, Session, Seat, Panorama, Ticket, Basket, TicketStatus, ActionLog, Profile, TheaterHall, Sector, PanoramaLink, Genre, AIPrediction
-from .serializers import PlaySerializer, SessionSerializer, SeatSerializer, PanoramaSerializer, RegisterSerializer, SectorSerializer, BulkSeatSerializer, ActionLogSerializer, PanoramaLinkSerializer, TicketStatusSerializer, GenreSerializer, BulkBuySerializer, BulkBasketSerializer
+from .serializers import PlaySerializer, SessionSerializer, SeatSerializer, PanoramaSerializer, RegisterSerializer, SectorSerializer, BulkSeatSerializer, ActionLogSerializer, PanoramaLinkSerializer, TicketStatusSerializer, GenreSerializer, BulkBuySerializer, BulkBasketSerializer, SessionWithActorsSerializer
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
@@ -229,6 +229,18 @@ class GenreView(generics.ListAPIView):
 #         'ticket_id': ticket.ticket_id,
 #         'message': 'Билет успешно куплен'
 #     }, status=201)
+
+
+@api_view(['GET'])
+def session_with_actors(request, session_id):
+    session = Session.objects.get(pk=session_id)
+
+    # Возавращает акторов с ролями по сеансам
+    # GET api/actors-roles/
+
+    serializer = SessionWithActorsSerializer(session)
+    return Response(serializer.data)
+
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -1025,67 +1037,67 @@ def my_tickets(request):
     
     return Response(result)
 
-@api_view(['POST', 'PUT', 'DELETE'])
-@permission_classes([IsAuthenticated])
-def manage_play(request, play_id=None):
-    if not is_admin_or_manager(request.user):
-        return Response(
-            {'error': 'Недостаточно прав'},
-            status=status.HTTP_403_FORBIDDEN
-        )
+# @api_view(['POST', 'PUT', 'DELETE'])
+# @permission_classes([IsAuthenticated])
+# def manage_play(request, play_id=None):
+#     if not is_admin_or_manager(request.user):
+#         return Response(
+#             {'error': 'Недостаточно прав'},
+#             status=status.HTTP_403_FORBIDDEN
+#         )
     
-    if request.method == 'POST':
-        data = request.data
+#     if request.method == 'POST':
+#         data = request.data
         
-        play = Play.objects.create(
-            title=data['title'],
-            duration=data['duration'],
-            description=data.get('description', ''),
-            price=data['price'],
-            poster_url=data.get('poster_url', '')
-        )
+#         play = Play.objects.create(
+#             title=data['title'],
+#             duration=data['duration'],
+#             description=data.get('description', ''),
+#             price=data['price'],
+#             poster_url=data.get('poster_url', '')
+#         )
         
-        return Response({
-            'success': True,
-            'play_id': play.play_id
-        }, status=status.HTTP_201_CREATED)
+#         return Response({
+#             'success': True,
+#             'play_id': play.play_id
+#         }, status=status.HTTP_201_CREATED)
     
-    elif request.method in ['PUT', 'PATCH']:
-        try:
-            play = Play.objects.get(pk=play_id)
-        except Play.DoesNotExist:
-            return Response(
-                {'error': 'Спектакль не найден'},
-                status=status.HTTP_404_NOT_FOUND
-            )
+#     elif request.method in ['PUT', 'PATCH']:
+#         try:
+#             play = Play.objects.get(pk=play_id)
+#         except Play.DoesNotExist:
+#             return Response(
+#                 {'error': 'Спектакль не найден'},
+#                 status=status.HTTP_404_NOT_FOUND
+#             )
         
-        data = request.data
+#         data = request.data
         
-        if 'title' in data:
-            play.title = data['title']
-        if 'duration' in data:
-            play.duration = data['duration']
-        if 'description' in data:
-            play.description = data['description']
-        if 'price' in data:
-            play.price = data['price']
-        if 'poster_url' in data:
-            play.poster_url = data['poster_url']
-        play.save()
+#         if 'title' in data:
+#             play.title = data['title']
+#         if 'duration' in data:
+#             play.duration = data['duration']
+#         if 'description' in data:
+#             play.description = data['description']
+#         if 'price' in data:
+#             play.price = data['price']
+#         if 'poster_url' in data:
+#             play.poster_url = data['poster_url']
+#         play.save()
         
-        return Response({'success': True})
+#         return Response({'success': True})
     
-    elif request.method == 'DELETE':
-        try:
-            play = Play.objects.get(pk=play_id)
-        except Play.DoesNotExist:
-            return Response(
-                {'error': 'Спектакль не найден'},
-                status=status.HTTP_404_NOT_FOUND
-            )
+#     elif request.method == 'DELETE':
+#         try:
+#             play = Play.objects.get(pk=play_id)
+#         except Play.DoesNotExist:
+#             return Response(
+#                 {'error': 'Спектакль не найден'},
+#                 status=status.HTTP_404_NOT_FOUND
+#             )
         
-        play.delete()
-        return Response({'success': True})
+#         play.delete()
+#         return Response({'success': True})
 
 @api_view(['GET', 'POST', 'PUT', 'DELETE'])
 @permission_classes([IsAuthenticated])
@@ -1584,27 +1596,27 @@ def manage_plays(request, play_id=None):
     # PUT/PATCH /api/plays/manage/{id}/ - изменение спектакля (только админ/руководитель)
     # DELETE /api/plays/manage/{id}/ - удаление спектакля (только админ/руководитель)
 
-    if request.method == 'GET':
-        if play_id:
-            try:
-                play = Play.objects.get(pk=play_id)
-                serializer = PlaySerializer(play)
-                return Response(serializer.data)
-            except Play.DoesNotExist:
-                return Response(
-                    {'error': 'Спектакль не найден'},
-                    status=status.HTTP_404_NOT_FOUND
-                )
-        else:
-            plays = Play.objects.all()
-            serializer = PlaySerializer(plays, many=True)
-            return Response(serializer.data)
+    # if request.method == 'GET':
+    #     if play_id:
+    #         try:
+    #             play = Play.objects.get(pk=play_id)
+    #             serializer = PlaySerializer(play)
+    #             return Response(serializer.data)
+    #         except Play.DoesNotExist:
+    #             return Response(
+    #                 {'error': 'Спектакль не найден'},
+    #                 status=status.HTTP_404_NOT_FOUND
+    #             )
+    #     else:
+    #         plays = Play.objects.all()
+    #         serializer = PlaySerializer(plays, many=True)
+    #         return Response(serializer.data)
 
-    if not is_admin_or_manager(request.user):
-        return Response(
-            {'error': 'Недостаточно прав. Требуется роль администратора или руководителя'},
-            status=status.HTTP_403_FORBIDDEN
-        )
+    # if not is_admin_or_manager(request.user):
+    #     return Response(
+    #         {'error': 'Недостаточно прав. Требуется роль администратора или руководителя'},
+    #         status=status.HTTP_403_FORBIDDEN
+    #     )
 
     if request.method == 'POST':
         serializer = PlaySerializer(data=request.data)
@@ -1959,8 +1971,6 @@ def action_types(request):
     
     return Response(list(types))
 
-from rest_framework.parsers import MultiPartParser, FormParser
-
 @api_view(['GET', 'POST', 'PUT', 'DELETE'])
 @permission_classes([IsAuthenticated])
 def manage_panoramas(request, panorama_id=None):
@@ -2274,6 +2284,12 @@ def train_ml_model(request):
     if not success:
         return Response(result, status=status.HTTP_400_BAD_REQUEST)
         
+    ActionLog.objects.create(
+        user_id=request.user.id,
+        action_type='TRAIN_MODEL',
+        description=f'Обучена модель'
+    )
+
     return Response({
         'success': True,
         'message': 'Модель Random Forest успешно обучена',
@@ -2289,6 +2305,7 @@ def train_ml_model(request):
         'feature_importance': result['feature_importance']
     }, status=status.HTTP_200_OK)
 
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def demand_predict(request):
@@ -2302,6 +2319,8 @@ def demand_predict(request):
             status=status.HTTP_403_FORBIDDEN
         )
     
+
+
     session_id = request.query_params.get('session_id')
     if not session_id:
         return Response({'error': 'Не указан session_id'}, status=400)
@@ -2330,6 +2349,12 @@ def demand_predict(request):
             'predicted_tickets': predicted,
             'prediction_date': timezone.now().date()
         }
+    )
+
+    ActionLog.objects.create(
+        user_id=request.user.id,
+        action_type='SESSION_PREDICT',
+        description=f'Сделан прогноз на сеанс {session_id}'
     )
     
     return Response({
@@ -2602,8 +2627,14 @@ def download_sql_backup(request):
         response = StreamingHttpResponse(generate(), content_type='application/sql')
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         
+        ActionLog.objects.create(
+            user_id=request.user.id,
+            action_type='DOWNLOAD_BACKUP',
+            description=f'Скачена резервного копированиям'
+        )
+
         return response
-        
+
     except Exception as e:
         return Response({'error': str(e)}, status=500)
 

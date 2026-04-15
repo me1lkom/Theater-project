@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
-from .models import Play, Actor, Session, Seat, Panorama, PanoramaLink, Sector, TheaterHall, Genre, ActionLog, TicketStatus, Profile
+from .models import Play, Actor, Session, Seat, Panorama, PanoramaLink, Sector, TheaterHall, Genre, ActionLog, TicketStatus, Profile, SessionActor
 
 # cериализатор для модели Actor, превращает объект актера в JSON
 class ActorSerializer(serializers.ModelSerializer):
@@ -16,15 +16,14 @@ class GenreSerializer(serializers.ModelSerializer):
         model = Genre
         fields = ['genre_id', 'name', 'description']
 
-class PlaySerializer(serializers.ModelSerializer): 
-    actors = ActorSerializer(many=True, read_only=True)  # добавление актеров в вывод спектакля
-    genres = GenreSerializer(many=True)
-
+class PlaySerializer(serializers.ModelSerializer):
+    genre_name = serializers.CharField(source='genre.name', read_only=True)
+    
     class Meta:
         model = Play
-        fields = ['play_id', 'title', 'duration', 'description','genres',
-                'price', 'poster_url', 'actors']
-        
+        fields = ['play_id', 'title', 'duration', 'description', 
+                  'price', 'poster_url', 'genre', 'genre_name']
+    
 # class SeatSerializer(serializers.ModelSerializer):
 
 #     class Meta:
@@ -179,7 +178,23 @@ class BulkBasketSerializer(serializers.Serializer):
     )
     
     def validate_seat_ids(self, value):
-        # Проверяем уникальность мест
+        # проверка уникальности мест
         if len(value) != len(set(value)):
             raise serializers.ValidationError("Места не должны повторяться")
         return value
+    
+class SessionActorSerializer(serializers.ModelSerializer):
+    actor_name = serializers.CharField(source='actor.actor_fio', read_only=True)
+    
+    class Meta:
+        model = SessionActor
+        fields = ['actor_id', 'actor_name', 'actor_role_name']
+
+class SessionWithActorsSerializer(serializers.ModelSerializer):
+    session_actors = SessionActorSerializer(many=True, read_only=True)
+    hall_name = serializers.CharField(source='hall.name', read_only=True)
+    play_title = serializers.CharField(source='play.title', read_only=True)
+    
+    class Meta:
+        model = Session
+        fields = ['session_id', 'play_title', 'hall_name', 'date', 'time', 'session_actors']
