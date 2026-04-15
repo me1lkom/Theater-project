@@ -1,0 +1,114 @@
+.playDescription {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    padding: var(--space-md);
+    width: 100%;
+}
+
+.playInfo {
+    display: flex;
+    justify-content: space-around;
+}
+
+/* Афиша */
+.poster {
+    width: 45%;
+    padding: var(--space-md);
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.poster img {
+    border-radius: var(--radius-md);
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Делати спектакля */
+.infoMain {
+    background-color: var(--bg-card);
+    border-radius: var(--radius-md);
+    padding: var(--space-lg);
+}
+.playDetails {
+    width: 55%;
+    padding: var(--space-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.description {
+    text-align: left;
+    color: var(--text-h)
+}
+
+.duration {
+    color: var(--text-h);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.duration img {
+    width: 20px;
+}
+
+.price {
+    text-align: right;
+    color: var(--text-h)
+}
+
+
+/* Актеры */
+.actorsInfo {
+    background-color: var(--bg-card);
+    border-radius: var(--radius-md);
+    padding: var(--space-lg);
+    color: var(--text-h)
+}
+
+.actorsTitle {
+    padding-bottom: var(--space-md);
+}
+
+.actorsList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+}
+
+.actor {
+    background: var(--code-bg);
+    padding: var(--space-xs) var(--space-md);
+    border-radius: var(--radius-lg);
+    font-size: var(--font-sm);
+    color: var(--text-h);
+}
+
+
+/* Выбор мест */
+.seatsInfo {
+    margin-top: var(--space-xl);
+    padding-top: var(--space-lg);
+    border-top: 1px solid var(--border);
+    color: var(--text-h)
+}
+
+.select {
+    padding: var(--space-sm) var(--space-md);
+    font-size: var(--font-md);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg);
+    color: var(--text-h);
+    cursor: pointer;
+    min-width: 250px;
+}
+
+.select:focus {
+    outline: none;
+    border-color: var(--accent);
+}

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useLogin } from '../../hooks/useLogin';
 import { useRegister } from '../../hooks/useRegister';
-
+import styles from './AuthPage.module.css';
 export default function AuthPage() {
     const [isLogin, setIsLogin] = useState(true);
 
@@ -23,47 +23,57 @@ export default function AuthPage() {
 
     const handleSubmitRegister = async (e) => {
         e.preventDefault();
-        await registerUser( username, password, password2, email, first_name, last_name );
+        await registerUser(username, password, password2, email, first_name, last_name);
     }
 
 
-    const toggleAuthMode = () => {
-        setIsLogin(prev => !prev);
-        if (!isLogin) {
-            ;
-        }
-    }
 
 
 
     return (
-        <div className="container">
-            {loading && <div>Загрузка...</div>}
-            {error && <div>Ошибка: {error}</div>}
+        <div className={styles.container}>
+            {loading && <div className={styles.loading}>Загрузка...</div>}
+            {error && <div className={styles.error}>Ошибка: {error}</div>}
+
+            <div className={styles.header}>
+                <h1>{isLogin ? 'Вход' : 'Регистрация'}</h1>
+                <p>Войдите или создайте учетную запись, чтобы управлять своими бронированиями</p>
+            </div>
+
+
+            <div className={styles.tabs}>
+                <button className={`${styles.tab} ${isLogin ? styles.tabActive : ''}`} onClick={() => setIsLogin(true)} >
+                    Вход
+                </button>
+                <button className={`${styles.tab} ${!isLogin ? styles.tabActive : ''}`} onClick={() => setIsLogin(false)} >
+                    Регистрация
+                </button>
+            </div>
+
             {isLogin ? (
                 <>
-                    <form onSubmit={handleSubmitLogin} className='authForm'>
+                    <form onSubmit={handleSubmitLogin} className={styles.authForm}>
                         <input type='text' placeholder='Логин' value={username} onChange={(e) => setUsername(e.target.value)} />
                         <input type='password' placeholder='Пароль' value={password} onChange={(e) => setPassword(e.target.value)} />
-                        <button type='submit'>Войти</button>
+                        <button type='submit' disabled={loading}>
+                            {loading ? 'Вход...' : 'Войти'}
+                        </button>
                     </form>
-                    <button onClick={toggleAuthMode}>Ещё не зарегистрированы?</button>
                 </>
             ) : (
                 <>
-                    <form onSubmit={handleSubmitRegister} className='authForm'>
+                    <form onSubmit={handleSubmitRegister} className={styles.authForm}>
                         <input type='text' placeholder='Логин' value={username} onChange={(e) => setUsername(e.target.value)} />
                         <input type='password' placeholder='Пароль' value={password} onChange={(e) => setPassword(e.target.value)} />
                         <input type='password' placeholder='Подтверждение пароля' value={password2} onChange={(e) => setPassword2(e.target.value)} />
                         <input type='email' placeholder='Email' value={email} onChange={(e) => setEmail(e.target.value)} />
                         <input type='text' placeholder='Имя' value={first_name} onChange={(e) => setFirstName(e.target.value)} />
                         <input type='text' placeholder='Фамилия' value={last_name} onChange={(e) => setLastName(e.target.value)} />
-                        <button type='submit'>Зарегистироваться</button>
+                        <button type='submit' disabled={loading}>
+                            {loading ? 'Регистрация...' : 'Зарегистрироваться'}
+                        </button>
                     </form>
-                    <button onClick={toggleAuthMode}>Уже зарегистрированы?</button>
                 </>
-
-
             )}
         </div>
     );

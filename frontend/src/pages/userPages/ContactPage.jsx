@@ -9,7 +9,6 @@ export default function ContactPage() {
                 <p>Email: emailtheater@gmail.com</p>
                 <p>Часы работы: Понедельник - воскресенье: 10:00 - 20:00</p>
             </div>
-
         </div>
     )
 }

@@ -1,0 +1,73 @@
+.container {
+    max-width: 450px;
+    margin: var(--space-md) auto;
+    padding: var(--space-xl);
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+}
+
+.header {
+    color: var(--text-h);
+    text-align: center;
+    margin-bottom: var(--space-md);
+}
+
+.tabs {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: var(--space-sm);
+    background: var(--bg-inv);
+    margin-bottom: var(--space-md);
+    margin-top: var(--space-md);
+    border-radius: var(--radius-lg);
+}
+
+.tab {
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-lg);
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.tabActive {
+    background: var(--bg-card);
+    color: var(--text-h);
+}
+
+
+.authForm {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.authForm input {
+    background-color: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: var(--space-sm);
+    color: var(--text-h);
+    outline:none;
+}
+
+.authForm button {
+    padding: var(--space-md);
+    font-size: var(--font-md);
+    font-weight: 600;
+    background: var(--bg-inv);
+    color: var(--text);
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.authForm button:hover {
+    opacity: 0.7;
+}
+
+.authForm button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
