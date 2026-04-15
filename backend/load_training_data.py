@@ -1,9 +1,4 @@
 #!/usr/bin/env python
-"""
-Скрипт для загрузки тренировочных данных из CSV файла
-Запуск: python load_training_data.py
-"""
-
 import os
 import sys
 import pandas as pd
@@ -22,15 +17,10 @@ from django.contrib.auth.models import User
 
 
 def load_training_data(csv_file):
-    """
-    Загружает данные из CSV и создает сеансы и билеты
-    """
     print(f"Загрузка данных из {csv_file}...")
-    
-    # Читаем CSV
+
     df = pd.read_csv(csv_file)
-    
-    # ========== ШАГ 1: Получаем или создаем зал ==========
+
     hall = TheaterHall.objects.first()
     if not hall:
         print("Создаем зал 'Основной зал'...")
@@ -39,8 +29,7 @@ def load_training_data(csv_file):
             description='Главная сцена театра'
         )
     print(f"✓ Зал: {hall.name}")
-    
-    # ========== ШАГ 2: Получаем статус "продан" ==========
+
     sold_status, created = TicketStatus.objects.get_or_create(
         name='продан'
     )
@@ -67,7 +56,7 @@ def load_training_data(csv_file):
         print(f"   Нужно: {max_tickets} мест")
         print(f"   Есть: {total_seats} мест")
         print(f"   Не хватает: {max_tickets - total_seats} мест")
-        print("\nПожалуйста, сначала создайте достаточно мест через админку:")
+        print("\nСначала создайте достаточно мест через админку:")
         print("   http://localhost:8000/admin/api/seat/add/")
         sys.exit(1)
     

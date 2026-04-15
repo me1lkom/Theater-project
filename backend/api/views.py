@@ -1,5 +1,5 @@
 from rest_framework import generics
-from .models import Play, Session, Seat, Panorama, Ticket, Basket, TicketStatus, ActionLog, Profile, TheaterHall, Sector, PanoramaLink, Genre
+from .models import Play, Session, Seat, Panorama, Ticket, Basket, TicketStatus, ActionLog, Profile, TheaterHall, Sector, PanoramaLink, Genre, AIPrediction
 from .serializers import PlaySerializer, SessionSerializer, SeatSerializer, PanoramaSerializer, RegisterSerializer, SectorSerializer, BulkSeatSerializer, ActionLogSerializer, PanoramaLinkSerializer, TicketStatusSerializer, GenreSerializer, BulkBuySerializer, BulkBasketSerializer
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -13,6 +13,7 @@ from django.db.models import Sum, Count
 from .redis_blacklist import RedisTokenBlacklist
 from django.conf import settings
 from rest_framework_simplejwt.tokens import RefreshToken
+from datetime import datetime, date
 
 class PlayListView(generics.ListAPIView):
 
@@ -1271,6 +1272,87 @@ def manage_sessions(request, session_id=None):
         
         return Response({'success': True})
 
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def past_sessions(request):
+
+    # Возвращает ближайшие прошедшие сеансы
+    # GET /api/sessions/past/?limit=5&play_id=1
+    
+    if not is_admin_or_manager(request.user):
+        return Response(
+            {'error': 'Недостаточно прав'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    limit = request.query_params.get('limit', 5)
+    play_id = request.query_params.get('play_id')
+
+    try:
+        limit = int(limit)
+        if limit > 10:
+            limit = 10
+        if limit < 1:
+            limit = 5
+    except ValueError:
+        limit = 5
+
+    now = timezone.now()
+
+    sessions = Session.objects.filter(
+        date__lt=now.date()
+    ) | Session.objects.filter(
+        date=now.date(),
+        time__lt=now.time()
+    )
+    
+    # сортировка от более поздних к более ранним
+    sessions = sessions.order_by('-date', '-time')
+    
+    if play_id:
+        try:
+            play_id = int(play_id)
+            sessions = sessions.filter(play_id=play_id)
+        except ValueError:
+            pass
+
+    sessions = sessions[:limit]
+
+    result = []
+    for session in sessions:
+        sold_tickets = Ticket.objects.filter(
+            session=session,
+            status__name='продан'
+        ).count()
+
+        total_seats = Seat.objects.filter(hall=session.hall).count()
+        occupancy = round(sold_tickets / total_seats * 100, 1) if total_seats > 0 else 0
+        
+        result.append({
+            'session_id': session.session_id,
+            'play': {
+                'id': session.play.play_id,
+                'title': session.play.title,
+                'duration': session.play.duration,
+                'price': float(session.play.price)
+            },
+            'date': session.date,
+            'time': session.time,
+            'statistics': {
+                'sold_tickets': sold_tickets,
+                'total_seats': total_seats,
+                'occupancy': occupancy
+            }
+        })
+    
+    return Response({
+        'count': len(result),
+        'limit': limit,
+        'results': result
+    })
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def action_log(request):
@@ -2156,14 +2238,12 @@ def train_ml_model(request):
     # Обучает модель Random Forest на исторических данных
     # POST /api/ml/train/
 
-    # Проверяем права
     if not is_admin_or_manager(request.user):
         return Response(
             {'error': 'Недостаточно прав. Требуется роль администратора или руководителя'},
             status=status.HTTP_403_FORBIDDEN
         )
     
-    # Собираем все сеансы с продажами
     sessions_with_sales = Session.objects.filter(tickets__isnull=False).distinct()
     
     session_data = []
@@ -2179,26 +2259,24 @@ def train_ml_model(request):
             session_data.append(session)
             historical_sales[session.session_id] = sold_count
     
-    # Проверяем количество данных
     if len(session_data) < 5:
         return Response({
             'error': f'Недостаточно данных для обучения. Нужно минимум 5 сеансов с продажами, найдено: {len(session_data)}'
         }, status=status.HTTP_400_BAD_REQUEST)
-    
-    # Обучаем модель
+
     success, result = predictor.train(session_data, historical_sales)
     
     if not success:
         return Response(result, status=status.HTTP_400_BAD_REQUEST)
-    
+        
     return Response({
         'success': True,
         'message': 'Модель Random Forest успешно обучена',
         'metrics': {
             'mae': result['mae'],
             'rmse': result['rmse'],
-            'r2' : result['r2'],
-            'mape' : result['mape'],
+            'r2': result.get('r2'),
+            'mape': result.get('mape'),
             'train_samples': result['train_samples'],
             'test_samples': result['test_samples'],
             'total_samples': result['total_samples']
@@ -2206,15 +2284,13 @@ def train_ml_model(request):
         'feature_importance': result['feature_importance']
     }, status=status.HTTP_200_OK)
 
-
-@api_view(['GET'])
+@api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def predict_demand_ml(request):
+def demand_predict(request):
 
-    # Делает прогноз спроса для конкретного сеанса
-    # GET /api/ml/demand-predict/?session_id=1
+    # Создает или обновляет прогноз для указанного сеанса
+    # POST /api/ml/demand-predict/?session_id=1
 
-    # Проверяем права
     if not is_admin_or_manager(request.user):
         return Response(
             {'error': 'Недостаточно прав'},
@@ -2222,53 +2298,136 @@ def predict_demand_ml(request):
         )
     
     session_id = request.query_params.get('session_id')
-    
     if not session_id:
-        return Response(
-            {'error': 'Не указан параметр session_id'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        return Response({'error': 'Не указан session_id'}, status=400)
     
     try:
         session = Session.objects.get(pk=session_id)
     except Session.DoesNotExist:
-        return Response(
-            {'error': 'Сеанс не найден'},
-            status=status.HTTP_404_NOT_FOUND
-        )
+        return Response({'error': 'Сеанс не найден'}, status=404)
     
-    if not predictor.is_trained:
+    if not predictor.is_valid():
         return Response({
             'error': 'Модель не обучена. Сначала выполните POST /api/ml/train/'
-        }, status=status.HTTP_400_BAD_REQUEST)
+        }, status=400)
 
     predicted = predictor.predict_for_session(session)
     
     if predicted is None:
-        return Response({
-            'error': 'Ошибка при прогнозировании'
-        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({'error': 'Ошибка при прогнозировании'}, status=500)
     
-    total_seats = Seat.objects.count()
-    total_seats = total_seats if total_seats > 0 else 200
-    
-    # Ограничиваем прогноз количеством мест
+    total_seats = Seat.objects.count() or 200
     predicted = min(predicted, total_seats)
     
-    return Response({
-        'success': True,
-        'session_id': session.session_id,
-        'play': {
-            'id': session.play.play_id,
-            'title': session.play.title
-        },
-        'date': session.date,
-        'time': session.time,
-        'prediction': {
+    prediction, created = AIPrediction.objects.update_or_create(
+        session=session,
+        defaults={
             'predicted_tickets': predicted,
-            'total_seats': total_seats,
-            'predicted_occupancy': round(predicted / total_seats * 100, 1)  
+            'predicted_price': session.play.price,
+            'confidence': 75,
+            'prediction_date': timezone.now().date()
         }
+    )
+    
+    return Response({
+        
+        'success': True,
+        'created': created,
+        'session_id': session.session_id,
+        'play': session.play.title,
+        'date': session.date,
+        'prediction': {
+            'predicted_tickets': prediction.predicted_tickets,
+            'predicted_price': float(prediction.predicted_price),
+            'confidence': prediction.confidence,
+            'prediction_date': prediction.prediction_date
+        }
+    })
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_predictions(request):
+
+    # Получает прогнозы из БД с фильтрацией
+    # GET /api/ml/predictions/
+    
+    # Параметры фильтрации:
+    # - session_id: ID сеанса
+    # - play_id: ID спектакля
+    # - date_from: дата начала (YYYY-MM-DD)
+    # - date_to: дата конца (YYYY-MM-DD)
+    # - limit: количество записей (по умолчанию 10)
+
+    if not is_admin_or_manager(request.user):
+        return Response(
+            {'error': 'Недостаточно прав'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
+    if not predictor.is_trained:
+        return Response({
+            'count': 0,
+            'message': 'Модель не обучена. Сначала выполните POST /api/ml/train/',
+            'predictions': []
+        })
+
+    predictions = AIPrediction.objects.select_related('session__play').all()
+    
+    session_id = request.query_params.get('session_id')
+    if session_id:
+        predictions = predictions.filter(session_id=session_id)
+
+    play_id = request.query_params.get('play_id')
+    if play_id:
+        predictions = predictions.filter(session__play_id=play_id)
+
+    date_from = request.query_params.get('date_from')
+    if date_from:
+        predictions = predictions.filter(session__date__gte=date_from)
+    
+    date_to = request.query_params.get('date_to')
+    if date_to:
+        predictions = predictions.filter(session__date__lte=date_to)
+
+    order_by = request.query_params.get('order_by', 'session__date')
+    predictions = predictions.order_by(order_by)
+    
+    limit = request.query_params.get('limit', 5)
+    try:
+        limit = int(limit)
+        if limit > 15:
+            limit = 10
+    except ValueError:
+        limit = 10
+    
+    predictions = predictions[:limit]
+
+    result = []
+    for pred in predictions:
+        result.append({
+            'prediction_id': pred.prediction_id,
+            'session': {
+                'id': pred.session.session_id,
+                'date': pred.session.date,
+                'time': pred.session.time
+            },
+            'play': {
+                'id': pred.session.play.play_id,
+                'title': pred.session.play.title,
+                'price': float(pred.session.play.price)
+            },
+            'prediction': {
+                'predicted_tickets': pred.predicted_tickets,
+                'predicted_price': float(pred.predicted_price),
+                'confidence': pred.confidence,
+                'prediction_date': pred.prediction_date
+            }
+        })
+    
+    return Response({
+        'count': len(result),
+        'limit': limit,
+        'results': result
     })
 
 

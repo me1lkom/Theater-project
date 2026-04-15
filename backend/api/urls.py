@@ -12,10 +12,11 @@ urlpatterns = [
 
     path('genres/', views.GenreView.as_view(), name='genre-list'),
 
-    path('sessions/manage/', views.manage_sessions, name='manage-sessions'), # все сеансы
-    path('sessions/manage/<int:session_id>/', views.manage_sessions, name='manage-session-detail'),
     path('sessions/', views.SessionListView.as_view(), name='session-list'), # только будующие сеансы
     path('sessions/<int:pk>/', views.SessionDetailView.as_view(), name='session-detail'),
+    path('sessions/manage/', views.manage_sessions, name='manage-sessions'), # все сеансы
+    path('sessions/past/', views.past_sessions, name='past-sessions'),
+    path('sessions/manage/<int:session_id>/', views.manage_sessions, name='manage-session-detail'),
     path('sessions/<int:pk>/available-seats/', views.available_seats, name='available-seats'),
 
     path('seats/manage/', views.manage_seats, name='manage-seats'),
@@ -67,6 +68,7 @@ urlpatterns = [
 
 
     path('ml/train/', views.train_ml_model, name='train-ml'),
-    path('ml/demand-predict/', views.predict_demand_ml, name='predict-ml'),
+    path('ml/demand-predict/', views.demand_predict, name='demand-predict'),
+    path('ml/predictions/', views.get_predictions, name='get-predictions'),
     path('ml/info/', views.model_info, name='model-info'),
 ]

@@ -29,6 +29,8 @@ class SalesPredictor:
                 print(f"Модель загружена из {MODEL_PATH}")
             except Exception as e:
                 print(f"Ошибка загрузки модели: {e}")
+        else:
+            self.is_trained = False 
     
     def _save_model(self):
 
@@ -97,6 +99,7 @@ class SalesPredictor:
     def train(self, session_data, historical_sales):
 
         if len(session_data) < 10:
+            self.is_trained = False  # ← СБРАСЫВАЕМ!
             return False, {
                 'error': f'Недостаточно данных. Нужно минимум 10 сеансов, получено: {len(session_data)}'
             }
@@ -173,5 +176,19 @@ class SalesPredictor:
             'model_exists': os.path.exists(MODEL_PATH)
         }
 
+    def is_valid(self):
+
+        if not self.is_trained or self.model is None:
+            return False
+        
+        from .models import Session, Ticket
+        sessions_with_sales = Session.objects.filter(tickets__isnull=False).distinct()
+        count = 0
+        for session in sessions_with_sales:
+            sold = Ticket.objects.filter(session=session, status__name='продан').count()
+            if sold > 0:
+                count += 1
+        
+        return count >= 5
 
 predictor = SalesPredictor()
