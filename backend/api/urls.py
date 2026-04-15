@@ -71,4 +71,6 @@ urlpatterns = [
     path('ml/demand-predict/', views.demand_predict, name='demand-predict'),
     path('ml/predictions/', views.get_predictions, name='get-predictions'),
     path('ml/info/', views.model_info, name='model-info'),
+
+    path('backup/', views.download_sql_backup, name='backup'),
 ]

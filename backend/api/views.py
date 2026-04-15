@@ -14,6 +14,11 @@ from .redis_blacklist import RedisTokenBlacklist
 from django.conf import settings
 from rest_framework_simplejwt.tokens import RefreshToken
 from datetime import datetime, date
+import os
+import subprocess
+import shutil
+from django.http import StreamingHttpResponse
+
 
 class PlayListView(generics.ListAPIView):
 
@@ -2547,6 +2552,60 @@ def model_info(request):
         )
     
     return Response(predictor.get_model_info())
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def download_sql_backup(request):
+
+    if not is_admin_or_manager(request.user):
+        return Response({'error': 'Недостаточно прав'}, status=403)
+    
+    try:
+        db_settings = settings.DATABASES['default']
+        db_name = db_settings['NAME']
+        db_user = db_settings['USER']
+        db_password = db_settings['PASSWORD']
+        db_host = db_settings.get('HOST', 'db')
+        db_port = db_settings.get('PORT', '5432')
+
+        pg_dump_path = shutil.which('pg_dump')
+        if not pg_dump_path:
+            return Response({'error': 'pg_dump не найден в системе'}, status=500)
+        
+        env = os.environ.copy()
+        env['PGPASSWORD'] = db_password
+        
+        cmd = [
+            pg_dump_path,
+            '-U', db_user,
+            '-h', db_host,
+            '-p', str(db_port),
+            db_name
+        ]
+        
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+
+        import time
+        time.sleep(0.5)
+        if proc.poll() is not None and proc.returncode != 0:
+            error = proc.stderr.read().decode('utf-8', errors='ignore')
+            return Response({'error': f'Ошибка pg_dump: {error}'}, status=500)
+        
+        def generate():
+            for line in proc.stdout:
+                yield line
+        
+        timestamp = datetime.now().strftime('%Y.%m.%d_%H.%M')
+        filename = f'theater_dump_{timestamp}.sql'
+        
+        response = StreamingHttpResponse(generate(), content_type='application/sql')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        return response
+        
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
 
 def get_total_seats():
     return Seat.objects.count()
