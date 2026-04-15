@@ -2323,8 +2323,6 @@ def demand_predict(request):
         session=session,
         defaults={
             'predicted_tickets': predicted,
-            'predicted_price': session.play.price,
-            'confidence': 75,
             'prediction_date': timezone.now().date()
         }
     )
@@ -2338,8 +2336,6 @@ def demand_predict(request):
         'date': session.date,
         'prediction': {
             'predicted_tickets': prediction.predicted_tickets,
-            'predicted_price': float(prediction.predicted_price),
-            'confidence': prediction.confidence,
             'prediction_date': prediction.prediction_date
         }
     })
@@ -2418,8 +2414,6 @@ def get_predictions(request):
             },
             'prediction': {
                 'predicted_tickets': pred.predicted_tickets,
-                'predicted_price': float(pred.predicted_price),
-                'confidence': pred.confidence,
                 'prediction_date': pred.prediction_date
             }
         })

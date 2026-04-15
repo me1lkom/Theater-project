@@ -462,23 +462,6 @@ class AIPrediction(models.Model):
         verbose_name='Прогнозируемое количество билетов'
     )
     
-    predicted_price = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        verbose_name='Рекомендуемая цена'
-    )
-    
-    confidence = models.FloatField(
-        verbose_name='Уверенность прогноза (%)'
-    )
-    
-    actual_tickets = models.IntegerField(
-        null=True,
-        blank=True,
-        verbose_name='Фактически продано'
-    )
-    # Заполняется после сеанса для оценки точности
-    
     class Meta:
         verbose_name = 'Прогноз ИИ'
         verbose_name_plural = 'Прогнозы ИИ'
