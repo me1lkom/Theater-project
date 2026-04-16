@@ -4,10 +4,10 @@ import { usePlays } from '../../hooks/usePlays';
 import PlayList from '../../components/plays/PlayList';
 import PlayFilter from '../../components/plays/PlayFilter';
 
-export default function MainPage(){
+export default function MainPage() {
   const { plays, loading, error } = usePlays();
-  const [ searchQuery, setSearchQuery ] = useState('');
-  const [ selectedGenre, setSelectedGenre ] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedGenre, setSelectedGenre] = useState('all');
   const navigate = useNavigate();
 
   if (loading) return <div>Загрузка...</div>;
@@ -36,13 +36,13 @@ export default function MainPage(){
     <div className="container">
       <PlayFilter
         searchQuery={searchQuery}
-        onSearchChange={setSearchQuery} 
-        selectedGenre={selectedGenre} 
+        onSearchChange={setSearchQuery}
+        selectedGenre={selectedGenre}
         onGenreChange={setSelectedGenre}
       />
 
       <PlayList
-        plays={filteredPlays} 
+        plays={filteredPlays}
         onPlayClick={handlePlayClick}
       />
     </div>

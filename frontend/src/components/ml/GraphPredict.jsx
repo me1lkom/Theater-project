@@ -3,8 +3,7 @@ import ReactECharts from "echarts-for-react";
 export default function GraphPredict({ dataSet }) {
 
     const predictedTickets = dataSet?.prediction?.predicted_tickets || 0;
-    const totalSeats = dataSet?.prediction?.total_seats || 0;
-    const count = totalSeats - predictedTickets;
+    const count = 300 - predictedTickets;
 
     var option = {
         title: {

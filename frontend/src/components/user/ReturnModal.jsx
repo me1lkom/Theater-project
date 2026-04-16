@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import styles from './ReturnModal.module.css';
 
 export default function ReturnModal({  ticketId, onConfirm, onCancel }) {
     const [reason, setReason] = useState('');
@@ -17,8 +18,8 @@ export default function ReturnModal({  ticketId, onConfirm, onCancel }) {
     };
 
     return (
-        <div className="modal">
-            <div className="modal-content">
+        <div className={styles.modal}>
+            <div className={styles.modalContent}>
                 <h3>Возврат билета</h3>
                 <form onSubmit={handleSubmit}>
                     <textarea
@@ -28,7 +29,7 @@ export default function ReturnModal({  ticketId, onConfirm, onCancel }) {
                         rows={4}
                         required
                     />
-                    <div className="modal-buttons">
+                    <div className={styles.modalButtons}>
                         <button type="button" onClick={onCancel}>
                             Отмена
                         </button>

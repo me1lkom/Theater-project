@@ -8,7 +8,7 @@
 
 .header {
     color: var(--text-h);
-    text-align: center;
+    text-align: right;
     margin-bottom: var(--space-md);
 }
 

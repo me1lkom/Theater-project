@@ -1,0 +1,21 @@
+.container {
+    max-width: 1200px;
+    margin: var(--space-xl) auto;
+    padding: var(--space-lg);
+}
+
+.logoutButton {
+    margin-top: var(--space-xl);
+    padding: var(--space-sm) var(--space-lg);
+    background: var(--bg-inv);
+    color: var(--text);
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-size: var(--font-md);
+    transition: opacity 0.2s;
+}
+
+.logoutButton:hover {
+    opacity: 0.9;
+}

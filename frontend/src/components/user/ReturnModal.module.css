@@ -1,0 +1,78 @@
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modalContent {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    max-width: 500px;
+    width: 90%;
+    box-shadow: var(--shadow-lg);
+}
+
+.modalContent h3 {
+    font-size: var(--font-lg);
+    color: var(--text-h);
+    margin-bottom: var(--space-md);
+}
+
+.modalContent textarea {
+    width: 100%;
+    padding: var(--space-sm);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg);
+    color: var(--text-h);
+    font-size: var(--font-sm);
+    resize: vertical;
+}
+
+.modalContent textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.modalButtons {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-sm);
+    margin-top: var(--space-md);
+}
+
+.modalButtons button {
+    padding: var(--space-sm) var(--space-lg);
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: var(--font-sm);
+
+}
+
+.modalButtons button:first-child {
+    background: var(--border);
+    color: var(--text-h);
+}
+
+.modalButtons button:last-child {
+    background: var(--error-color);
+    color: var(--text-h);
+}
+
+.modalButtons button:last-child:hover {
+    opacity: 0.9;
+}
+
+.modalButtons button:hover {
+    border: 1px solid var(--accent);
+    transition: border 0.5s;
+}
