@@ -1,8 +1,10 @@
 import { useSessions } from "../../../hooks/useSessions";
 import styles from './PlayDescription.module.css';
 import time from '../../../assets/icon/time.svg';
+import PlayActor from "./PlayActor";
 
 export default function PlayDescription({ play, selectedSession, onChangeSession }) {
+
 
     const hours = Math.floor(play.duration / 60);
     let minutes = play.duration % 60;
@@ -16,9 +18,11 @@ export default function PlayDescription({ play, selectedSession, onChangeSession
 
     const { sessions } = useSessions();
 
-    if (!sessions) return null;
+    let neededSessions = sessions?.filter(session => session.play_title.toLowerCase().includes(play.title.toLowerCase()));
 
-    let neededSessions = sessions.filter(session => session.play_title.toLowerCase().includes(play.title.toLowerCase()));
+
+
+    if (!sessions) return null;
 
     return (
         <div className={styles.playDescription}>
@@ -33,20 +37,19 @@ export default function PlayDescription({ play, selectedSession, onChangeSession
                         <p className={styles.description}>{play.description}</p>
 
                         <div className={styles.meta}>
-                            <div className={styles.duration}><img src={time} alt="Продолжиьтельность"/> {hours}ч {minutes}мин</div>
+                            <div className={styles.duration}><img src={time} alt="Продолжиьтельность" /> {hours}ч {minutes}мин</div>
                             <div className={styles.price}>Стоимость билета: {price}₽</div>
                         </div>
                     </div>
 
                     <div className={styles.actorsInfo}>
                         <h3 className={styles.actorsTitle}>Актёры</h3>
-                        <div className={styles.actorsList}>
-                            {play.actors?.map(actor => (
-                                <div className={styles.actor} key={actor.actor_id}>
-                                    {actor.actor_fio}
-                                </div>
-                            ))}
-                        </div>
+                            {selectedSession ? (
+                                <PlayActor selectedSession={selectedSession} />
+
+                            ) : (
+                                <div className={styles.actors}>Выберите дату и время, чтобы отобразить актеров</div>
+                            )}
                     </div>
                 </div>
             </div>

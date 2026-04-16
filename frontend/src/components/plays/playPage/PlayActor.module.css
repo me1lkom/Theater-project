@@ -1,0 +1,14 @@
+.actorsList {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+}
+
+.actor {
+    background: var(--code-bg);
+    padding: var(--space-xs) var(--space-md);
+    border-radius: var(--radius-lg);
+    font-size: var(--font-sm);
+    color: var(--text-h);
+}

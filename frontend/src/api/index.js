@@ -146,6 +146,11 @@ export async function getAvailableSeats(session_id) {
     return response.data;
 }
 
+export async function getActorsBySession(session_id) {
+    const response = await apiClient.get(`/actors-roles/${session_id}/`);
+    return response.data;
+}
+
 
 // –– Запросы пользователь
 export async function getMe() {

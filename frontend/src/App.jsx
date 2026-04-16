@@ -27,20 +27,22 @@ function App() {
     <BrowserRouter>
       <div className="App">
         <Header />
-        <Routes>
-          <Route path="/" element={<MainPage />} />
-          <Route path="/play/:id" element={<PlayPage />} />
-          <Route path="/auth" element={<AuthPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/payment" element={<PaymentPage />} />
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/panorama" element={<PanoramaPage />} />
-          <Route path="/statistics" element={
-            <AdminRoute>
-              <StatisticsPage />
-            </AdminRoute>
-          } />
-        </Routes>
+        <main style={{ flex: 1 }}>
+          <Routes>
+            <Route path="/" element={<MainPage />} />
+            <Route path="/play/:id" element={<PlayPage />} />
+            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/payment" element={<PaymentPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/panorama" element={<PanoramaPage />} />
+            <Route path="/statistics" element={
+              <AdminRoute>
+                <StatisticsPage />
+              </AdminRoute>
+            } />
+          </Routes>
+        </main>
         <Footer />
       </div>
     </BrowserRouter>
