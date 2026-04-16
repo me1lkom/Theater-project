@@ -236,7 +236,7 @@ def session_with_actors(request, session_id):
     session = Session.objects.get(pk=session_id)
 
     # Возавращает акторов с ролями по сеансам
-    # GET api/actors-roles/
+    # GET api/actors-roles/1/
 
     serializer = SessionWithActorsSerializer(session)
     return Response(serializer.data)

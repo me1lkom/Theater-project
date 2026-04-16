@@ -12,7 +12,7 @@ urlpatterns = [
 
     path('genres/', views.GenreView.as_view(), name='genre-list'),
 
-    path('actors-roles/', views.session_with_actors, name='actors-roles'),
+    path('actors-roles/<int:session_id>/', views.session_with_actors, name='actors-roles'),
 
     path('sessions/', views.SessionListView.as_view(), name='session-list'), # только будующие сеансы
     path('sessions/<int:pk>/', views.SessionDetailView.as_view(), name='session-detail'),
