@@ -487,7 +487,9 @@ class Profile(models.Model):
 
     phone = models.CharField(
         max_length=20,
-        blank=True,
+        unique=True,     
+        blank=False,
+        null=False,      
         verbose_name='Телефон'
     )
     

@@ -1,6 +1,6 @@
 from rest_framework import generics
-from .models import Play, Session, Seat, Panorama, Ticket, Basket, TicketStatus, ActionLog, Profile, TheaterHall, Sector, PanoramaLink, Genre, AIPrediction
-from .serializers import PlaySerializer, SessionSerializer, SeatSerializer, PanoramaSerializer, RegisterSerializer, SectorSerializer, BulkSeatSerializer, ActionLogSerializer, PanoramaLinkSerializer, TicketStatusSerializer, GenreSerializer, BulkBuySerializer, BulkBasketSerializer, SessionWithActorsSerializer
+from .models import Play, Session, Seat, Panorama, Ticket, Basket, TicketStatus, ActionLog, Profile, TheaterHall, Sector, PanoramaLink, Genre, AIPrediction, Actor
+from .serializers import PlaySerializer, SessionSerializer, SeatSerializer, PanoramaSerializer, RegisterSerializer, SectorSerializer, BulkSeatSerializer, ActionLogSerializer, PanoramaLinkSerializer, TicketStatusSerializer, GenreSerializer, BulkBuySerializer, BulkBasketSerializer, SessionWithActorsSerializer, ActorSerializer, SessionActor
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
@@ -242,18 +242,209 @@ def session_with_actors(request, session_id):
     return Response(serializer.data)
 
 
+@api_view(['GET', 'POST', 'PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def manage_actors(request, actor_id=None):
+    
+    # GET    /api/actors/manage/           - список всех актеров
+    # GET    /api/actors/manage/{id}/      - детали актера
+    # POST   /api/actors/manage/           - создать актера
+    # PUT    /api/actors/manage/{id}/      - обновить актера
+    # DELETE /api/actors/manage/{id}/      - удалить актера
+
+    if request.method in ['POST', 'PUT', 'DELETE']:
+        if not is_admin_or_manager(request.user):
+            return Response(
+                {'error': 'Недостаточно прав. Требуется роль администратора или руководителя'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+    if request.method == 'GET':
+        if actor_id:
+            try:
+                actor = Actor.objects.get(pk=actor_id)
+                serializer = ActorSerializer(actor)
+                return Response(serializer.data)
+            except Actor.DoesNotExist:
+                return Response(
+                    {'error': 'Актер не найден'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+        else:
+            actors = Actor.objects.all().order_by('actor_fio')
+            serializer = ActorSerializer(actors, many=True)
+            return Response(serializer.data)
+    
+    if request.method == 'POST':
+        serializer = ActorSerializer(data=request.data)
+        if serializer.is_valid():
+            actor = serializer.save()
+            
+            ActionLog.objects.create(
+                user_id=request.user.id,
+                action_type='CREATE_ACTOR',
+                description=f'Создан актер: {actor.actor_fio}'
+            )
+            
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    if request.method in ['PUT', 'PATCH']:
+        try:
+            actor = Actor.objects.get(pk=actor_id)
+        except Actor.DoesNotExist:
+            return Response(
+                {'error': 'Актер не найден'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        serializer = ActorSerializer(actor, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            
+            ActionLog.objects.create(
+                user_id=request.user.id,
+                action_type='UPDATE_ACTOR',
+                description=f'Обновлен актер: {actor.actor_fio}'
+            )
+            
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    if request.method == 'DELETE':
+        try:
+            actor = Actor.objects.get(pk=actor_id)
+        except Actor.DoesNotExist:
+            return Response(
+                {'error': 'Актер не найден'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        if SessionActor.objects.filter(actor=actor).exists():
+            return Response(
+                {'error': f'Нельзя удалить актера {actor.actor_fio}, так как он участвует в сеансах'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        actor_name = actor.actor_fio
+        actor.delete()
+        
+        ActionLog.objects.create(
+            user_id=request.user.id,
+            action_type='DELETE_ACTOR',
+            description=f'Удален актер: {actor_name}'
+        )
+        
+        return Response({'success': True})
+
+
+@api_view(['GET', 'POST', 'PUT', 'PATCH', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def manage_genres(request, genre_id=None):
+
+    
+    # GET           /api/genres/manage/           - список всех жанров
+    # GET           /api/genres/manage/{id}/      - детали жанра
+    # POST          /api/genres/manage/           - создать жанр
+    # PUT/PATCH     /api/genres/manage/{id}/      - обновить жанр
+    # DELETE        /api/genres/manage/{id}/      - удалить жанр
+
+    if request.method in ['POST', 'PUT', 'DELETE']:
+        if not is_admin_or_manager(request.user):
+            return Response(
+                {'error': 'Недостаточно прав. Требуется роль администратора или руководителя'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+    
+    if request.method == 'GET':
+        if genre_id:
+            try:
+                genre = Genre.objects.get(pk=genre_id)
+                serializer = GenreSerializer(genre)
+                return Response(serializer.data)
+            except Genre.DoesNotExist:
+                return Response(
+                    {'error': 'Жанр не найден'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+        else:
+            genres = Genre.objects.all().order_by('name')
+            serializer = GenreSerializer(genres, many=True)
+            return Response(serializer.data)
+
+    if request.method == 'POST':
+        serializer = GenreSerializer(data=request.data)
+        if serializer.is_valid():
+            genre = serializer.save()
+            
+            ActionLog.objects.create(
+                user_id=request.user.id,
+                action_type='CREATE_GENRE',
+                description=f'Создан жанр: {genre.name}'
+            )
+            
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    if request.method in ['PUT', 'PATCH']:
+        try:
+            genre = Genre.objects.get(pk=genre_id)
+        except Genre.DoesNotExist:
+            return Response(
+                {'error': 'Жанр не найден'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        serializer = GenreSerializer(genre, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            
+            ActionLog.objects.create(
+                user_id=request.user.id,
+                action_type='UPDATE_GENRE',
+                description=f'Обновлен жанр: {genre.name}'
+            )
+            
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    if request.method == 'DELETE':
+        try:
+            genre = Genre.objects.get(pk=genre_id)
+        except Genre.DoesNotExist:
+            return Response(
+                {'error': 'Жанр не найден'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        if genre.plays.exists():
+            return Response(
+                {'error': f'Нельзя удалить жанр "{genre.name}", так как он используется в спектаклях'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        genre_name = genre.name
+        genre.delete()
+        
+        ActionLog.objects.create(
+            user_id=request.user.id,
+            action_type='DELETE_GENRE',
+            description=f'Удален жанр: {genre_name}'
+        )
+        
+        return Response({'success': True})
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def buy_tickets_bulk(request):
 
     # Покупка нескольких билетов одной операцией
     # Обычный пользователь: покупает только для себя
-    # Кассир: может купить для любого пользователя (указав user_id)
+    # Кассир: может купить для любого пользователя (указав user_id или phone)
     # POST /api/tickets/buy/bulk/
 
     current_user = request.user
     
-    # Валидация входных данных
     serializer = BulkBuySerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -261,32 +452,49 @@ def buy_tickets_bulk(request):
     session_id = serializer.validated_data['session_id']
     seat_ids = serializer.validated_data['seat_ids']
     target_user_id = serializer.validated_data.get('user_id')
+    phone = serializer.validated_data.get('phone')  # ← добавляем телефон
+    
+    buyer_user_id = None
+    buyer_info = None
 
-    if target_user_id:
-        # Если указан user_id, проверяем, что текущий пользователь - кассир или админ
+    if phone:
+        if not is_admin_or_cashier(current_user):
+            return Response(
+                {'error': 'Только кассир или администратор могут покупать билеты по телефону'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        try:
+            profile = Profile.objects.get(phone=phone)
+            buyer_user_id = profile.user.id
+            buyer_info = f"для пользователя {profile.user.username} (телефон: {phone})"
+        except Profile.DoesNotExist:
+            return Response(
+                {'error': f'Пользователь с телефоном {phone} не найден'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+    elif target_user_id:
         if not is_admin_or_cashier(current_user):
             return Response(
                 {'error': 'Только кассир или администратор могут покупать билеты для других пользователей'},
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        # Проверяем, что целевой пользователь существует
         try:
             target_user = User.objects.get(pk=target_user_id)
+            buyer_user_id = target_user_id
+            buyer_info = f"для пользователя {target_user.username} (ID: {target_user_id})"
         except User.DoesNotExist:
             return Response(
                 {'error': 'Пользователь не найден'},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
-        buyer_user_id = target_user_id
-        buyer_info = f"для пользователя {target_user.username} (ID: {target_user_id})"
+
     else:
-        # Если user_id не указан, покупаем для себя
         buyer_user_id = current_user.id
-        buyer_info = f"для себя"
-    
-    # Проверяем, существует ли сеанс
+        buyer_info = "для себя"
+
     try:
         session = Session.objects.get(pk=session_id)
     except Session.DoesNotExist:
@@ -294,8 +502,7 @@ def buy_tickets_bulk(request):
             {'error': 'Сеанс не найден'},
             status=status.HTTP_404_NOT_FOUND
         )
-    
-    # Проверяем, что все места существуют
+
     seats = Seat.objects.filter(pk__in=seat_ids)
     if seats.count() != len(seat_ids):
         return Response(
@@ -303,7 +510,6 @@ def buy_tickets_bulk(request):
             status=status.HTTP_404_NOT_FOUND
         )
     
-    # Проверяем, что все места свободны
     busy_seats = []
     available_seats = []
     
@@ -328,8 +534,7 @@ def buy_tickets_bulk(request):
             'error': 'Некоторые места уже заняты',
             'busy_seats': busy_seats
         }, status=status.HTTP_400_BAD_REQUEST)
-    
-    # Проверяем брони в корзине
+
     busy_baskets = []
     for seat in available_seats[:]:
         existing_basket = Basket.objects.filter(
@@ -339,7 +544,6 @@ def buy_tickets_bulk(request):
         ).first()
         
         if existing_basket:
-            # Если бронь принадлежит тому, кто покупает - удалим позже
             if existing_basket.user_id != buyer_user_id:
                 busy_baskets.append({
                     'seat_id': seat.seat_id,
@@ -353,15 +557,13 @@ def buy_tickets_bulk(request):
             'error': 'Некоторые места забронированы другими пользователями',
             'busy_seats': busy_baskets
         }, status=status.HTTP_400_BAD_REQUEST)
-    
-    # Удаляем корзину для этих мест (если есть)
+
     Basket.objects.filter(
         session=session,
         seat__in=available_seats,
         user_id=buyer_user_id
     ).delete()
     
-    # Получаем статус "продан"
     try:
         sold_status = TicketStatus.objects.get(name='продан')
     except TicketStatus.DoesNotExist:
@@ -369,8 +571,7 @@ def buy_tickets_bulk(request):
             {'error': 'Статус "продан" не найден в системе'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-    
-    # Создаем билеты
+
     tickets = []
     for seat in available_seats:
         ticket = Ticket.objects.create(
@@ -383,7 +584,6 @@ def buy_tickets_bulk(request):
         )
         tickets.append(ticket)
     
-    # Логируем действие
     ActionLog.objects.create(
         user_id=current_user.id,
         action_type='BUY_TICKETS_BULK',
@@ -972,7 +1172,7 @@ def update_profile(request):
     # Изменение профиля
     # PUT /api/auth/profile/
     # PATCH /api/auth/profile/
-    #PUT - полное обновление, PATCH - частичное обновление
+    # PUT - полное обновление, PATCH - частичное обновление
     user = request.user
     
     try:

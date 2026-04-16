@@ -13,6 +13,11 @@ urlpatterns = [
     path('genres/', views.GenreView.as_view(), name='genre-list'),
 
     path('actors-roles/<int:session_id>/', views.session_with_actors, name='actors-roles'),
+    path('actors/manage/', views.manage_actors, name='manage-actors'),
+    path('actors/manage/<int:actor_id>/', views.manage_actors, name='manage-actor-detail'),
+
+    path('genres/manage/', views.manage_genres, name='manage-genres'),
+    path('genres/manage/<int:genre_id>/', views.manage_genres, name='manage-genre-detail'), 
 
     path('sessions/', views.SessionListView.as_view(), name='session-list'), # только будующие сеансы
     path('sessions/<int:pk>/', views.SessionDetailView.as_view(), name='session-detail'),

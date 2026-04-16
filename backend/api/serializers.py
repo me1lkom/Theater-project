@@ -158,15 +158,14 @@ class BulkBuySerializer(serializers.Serializer):
         min_length=1,
         max_length=20
     )
-    user_id = serializers.IntegerField(
-        required=False,  # необязательный для обычных пользователей
-        help_text="ID пользователя, для которого покупаются билеты (только для кассира)"
-    )
+    phone = serializers.CharField(required=False, max_length=20)  # ← добавляем
     
-    def validate_seat_ids(self, value):
-        if len(value) != len(set(value)):
-            raise serializers.ValidationError("Места не должны повторяться")
-        return value
+    def validate(self, data):
+        if data.get('user_id') and data.get('phone'):
+            raise serializers.ValidationError(
+                "Укажите только один способ идентификации: user_id или phone"
+            )
+        return data
     
 class BulkBasketSerializer(serializers.Serializer):
 
