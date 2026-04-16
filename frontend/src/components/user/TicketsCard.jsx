@@ -1,18 +1,42 @@
-export default function TicketsCard({ ticket, onReturnClick }) {
-    return (
-        <div className="ticket-card">
-            {ticket.status == "продан" && (
-                <>
-                    <div>{ticket.play_title}</div>
-                    <div>{ticket.date}</div>
-                    <div>{ticket.time}</div>
-                    <div>{ticket.row} {ticket.seat}</div>
-                    <div>{ticket.ptice}</div>
+import styles from './TicketsCard.module.css'
 
-                    <button onClick={() => onReturnClick(ticket.ticket_id)} className="return-button">Вернуть билет</button>
+export default function TicketsCard({ ticket, onReturnClick }) {
+    const reversed = ticket.date?.split('-').reverse().join('-');
+
+
+    return (
+        <div className={styles.ticketCard}>
+            {ticket.status === "продан" && (
+                <>
+                    <div className={styles.title}>{ticket.play_title}</div>
+
+                    <div className={styles.infoGrid}>
+                        <div className={styles.infoItem}>
+                            <span className={styles.label}>Дата:</span>
+                            <span className={styles.value}>{reversed}</span>
+                        </div>
+                        <div className={styles.infoItem}>
+                            <span className={styles.label}>Время:</span>
+                            <span className={styles.value}>{ticket.time}</span>
+                        </div>
+                        <div className={styles.infoItem}>
+                            <span className={styles.label}>Ряд / Место:</span>
+                            <span className={styles.value}>{ticket.row} / {ticket.seat}</span>
+                        </div>
+                        <div className={styles.infoItem}>
+                            <span className={styles.label}>Цена:</span>
+                            <span className={styles.value}>{ticket.price} ₽</span>
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={() => onReturnClick(ticket.ticket_id)}
+                        className={styles.returnButton}
+                    >
+                        Вернуть билет
+                    </button>
                 </>
             )}
-
         </div>
     )
 }

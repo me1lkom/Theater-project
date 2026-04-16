@@ -1,0 +1,31 @@
+.container {
+    max-width: 800px;
+    margin: var(--space-xl) auto;
+    padding: var(--space-xl);
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.contact {
+    text-align: center;
+}
+
+.contact h2 {
+    font-size: var(--font-xxl);
+    color: var(--text-h);
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-sm);
+    border-bottom: 2px solid var(--text-h);
+    display: inline-block;
+}
+
+.contact p {
+    font-size: var(--font-md);
+    color: var(--text-h);
+    margin: var(--space-md) 0;
+    line-height: 1.6;
+    border-bottom: 2px dotted var(--border);
+
+}
+

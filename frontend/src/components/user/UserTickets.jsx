@@ -3,12 +3,12 @@ import { useMyTickets } from '../../hooks/useMyTickets';
 import { useReturnTicket } from '../../hooks/useReturnTicket';
 import TicketsCard from './TicketsCard';
 import ReturnModal from './ReturnModal';
-
+import styles from './UserTickets.module.css';
 
 export default function UserTickets() {
-    const { tickets, loading, error, refetch } = useMyTickets(); 
+    const { tickets, loading, error, refetch } = useMyTickets();
 
-const { returnTicket, error: returnError } = useReturnTicket();
+    const { returnTicket, error: returnError } = useReturnTicket();
 
     const [selectedTicketId, setSelectedTicketId] = useState(null);
     const [showModal, setShowModal] = useState(false);
@@ -39,14 +39,30 @@ const { returnTicket, error: returnError } = useReturnTicket();
     if (loading) return <div>Загрузка билетов...</div>;
     if (error) return <div>Ошибка: {error}</div>;
 
+    const filteredTickets = tickets.filter(ticket => {
+       return ticket.status === 'продан'
+    });
+
+    let ticketFlag = filteredTickets?.length > 0;
+
     return (
-        <div className="tickets-data">
-            {tickets?.map(ticket => 
-                <TicketsCard key={ticket.ticket_id} ticket={ticket} onReturnClick={handleReturnClick} />
-            )}
+        <div className={styles.ticketsSection}>
+            <h2 className={styles.sectionTitle}>Мои билеты</h2>
+            <div className={`${styles.ticketsGrid} ${ticketFlag === true ? styles.ticketsGridOn : styles.ticketsGridOff}`}>
+                {filteredTickets?.length > 0? (
+                    <>
+                        {console.log(tickets?.length)}
+                        {tickets?.map(ticket => (
+                            <TicketsCard key={ticket.ticket_id} ticket={ticket} onReturnClick={handleReturnClick} />
+                        ))}
+                    </>
+                ) : (
+                    <p className={styles.emptyMessage}>У вас пока нет билетов</p>
+                )}
+            </div>
 
             {showModal && (
-               <ReturnModal
+                <ReturnModal
                     ticketId={selectedTicketId}
                     onConfirm={handleConfirmReturn}
                     onCancel={handleCancelReturn}

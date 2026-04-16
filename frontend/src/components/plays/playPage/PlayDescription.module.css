@@ -74,19 +74,6 @@
     padding-bottom: var(--space-md);
 }
 
-.actorsList {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-sm);
-}
-
-.actor {
-    background: var(--code-bg);
-    padding: var(--space-xs) var(--space-md);
-    border-radius: var(--radius-lg);
-    font-size: var(--font-sm);
-    color: var(--text-h);
-}
 
 
 /* Выбор мест */

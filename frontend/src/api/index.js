@@ -146,6 +146,11 @@ export async function getAvailableSeats(session_id) {
     return response.data;
 }
 
+export async function getActorsBySession(session_id) {
+    const response = await apiClient.get(`/actors-roles/${session_id}/`);
+    return response.data;
+}
+
 
 // –– Запросы пользователь
 export async function getMe() {
@@ -217,7 +222,7 @@ export async function getMLInfo() {
 }
 
 export async function getPredictForSession(session_id) {
-    const response = await apiClient.get(`/ml/demand-predict/?session_id=${session_id}`);
+    const response = await apiClient.post(`/ml/demand-predict/?session_id=${session_id}`);
     return response.data;
 }
 
