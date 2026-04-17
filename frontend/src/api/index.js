@@ -230,3 +230,25 @@ export async function modelTraining() {
     const response = await apiClient.post('/ml/train/');
     return response.data;
 }
+
+// –– Логгирование 
+export async function getLogs() {
+    const response = await apiClient.get('/admin/logs/');
+    return response.data;
+}
+
+export async function getLogByFilter(filter) {
+    const response = await apiClient.get(`/admin/logs/?action_type=${filter}`);
+    return response.data;
+}
+
+export async function getLogTypes() {
+    const response = await apiClient.get('/admin/logs/types/');
+    return response.data;
+}
+
+// –– Бэкап
+export async function getBackup() {
+    const response = await apiClient.get('/backup/');
+    return response.data;
+}

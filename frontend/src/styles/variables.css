@@ -13,7 +13,10 @@
     --accent-bg: rgba(170, 59, 255, 0.1);
     --accent-border: rgba(170, 59, 255, 0.5);
     --social-bg: rgba(244, 243, 236, 0.5);
-    
+    --error-color: #ff0000;
+    --success-color: #00b700;
+    --warning-color: #ffa500;
+    --act-color: #9c27b0;
     /* Тени */
     --shadow: rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
     

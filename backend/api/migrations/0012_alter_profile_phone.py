@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0011_remove_play_genres_play_genre'),
+        ('api', '0010_sessionactor_remove_aiprediction_actual_tickets_and_more'),
     ]
 
     operations = [

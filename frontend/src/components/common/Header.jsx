@@ -16,9 +16,10 @@ export default function Header() {
     navigate(`/profile`);
   };
 
-  const handleStatisticClick = () => {
-    navigate(`/statistics`);
+  const handleAdminClick = () => {
+    navigate(`/admin`);
   }
+
 
   return (
     <header className={styles.header}>
@@ -56,13 +57,13 @@ export default function Header() {
         )}
 
         {user?.role === 'admin' && (
-          <button
-            className={`${styles.actions__button} ${styles['actions__button--admin']}`}
-            onClick={handleStatisticClick}
-            aria-label="Статистика"
-          >
-            Статистика
-          </button>
+            <button
+              className={`${styles.actions__button} ${styles['actions__button--admin']}`}
+              onClick={handleAdminClick}
+              aria-label="Админ панель"
+            >
+              Админ панель
+            </button>
         )}
       </div>
     </header>

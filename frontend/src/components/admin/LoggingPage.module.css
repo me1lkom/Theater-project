@@ -1,0 +1,153 @@
+.loggingContainer {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: var(--space-lg);
+}
+
+.title {
+    font-size: var(--font-xxl);
+    color: var(--text-h);
+    margin-bottom: var(--space-lg);
+    text-align: center;
+}
+
+.controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+    padding: var(--space-md);
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.select {
+    padding: var(--space-sm) var(--space-md);
+    font-size: var(--font-sm);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    color: var(--text-h);
+    cursor: pointer;
+    min-width: 200px;
+}
+
+.select:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.refreshButton {
+    padding: var(--space-sm) var(--space-lg);
+    font-size: var(--font-sm);
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.refreshButton:hover {
+    opacity: 0.9;
+}
+
+.logTable {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.logTable thead {
+    background: var(--bg-inv);
+}
+
+.logTable th {
+    padding: var(--space-md);
+    text-align: left;
+    font-weight: 600;
+    color: var(--text);
+    border-bottom: 2px solid var(--border);
+}
+
+.logTable td {
+    padding: var(--space-sm) var(--space-md);
+    color: var(--text-s);
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+.logTable tbody tr:hover {
+    background: var(--accent-bg);
+}
+
+.typeDelete {
+    color: var(--error-color) !important;
+    font-weight: 600;
+}
+
+.typeCreate {
+    color: var(--success-color) !important;
+    font-weight: 600;
+}
+
+.typeUpdate {
+    color: var(--warning-color) !important;
+    font-weight: 600;
+}
+
+.typeBuy {
+    color: var(--accent) !important;
+    font-weight: 600;
+}
+
+.typePredict {
+    color: var(--act-color) !important;
+    font-weight: 600;
+}
+
+.loading {
+    text-align: center;
+    padding: var(--space-xl);
+    color: var(--text);
+}
+
+.error {
+    text-align: center;
+    padding: var(--space-xl);
+    color: var(--error-color);
+}
+
+.empty {
+    text-align: center;
+    padding: var(--space-xl);
+    color: var(--text);
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+}
+
+.autoRefreshButton {
+    padding: var(--space-sm) var(--space-lg);
+    font-size: var(--font-sm);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s;
+        color: var(--text-h);
+
+}
+
+.autoRefreshButton.active {
+    background: var(--success-color);
+    border-color: var(--success-color);
+}
+
+.autoRefreshButton:hover {
+    border-color: var(--accent);
+}

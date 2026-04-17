@@ -1,0 +1,19 @@
+.container {
+    max-width: 1200px;
+    padding: var(--space-lg);
+}
+
+
+.buttonsContainer {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.buttonsContainer button {
+    margin-right: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--bg-inv);
+    color: var(--text);
+    border-radius: var(--radius-md);
+}
