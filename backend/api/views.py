@@ -1583,7 +1583,8 @@ def action_log(request):
     action_type = request.query_params.get('action_type')
     date_from = request.query_params.get('date_from')
     date_to = request.query_params.get('date_to')
-    
+    limit = request.query_params.get('limit')
+
     logs = ActionLog.objects.all().order_by('-action_date')
     
     if user_id:
@@ -1594,8 +1595,9 @@ def action_log(request):
         logs = logs.filter(action_date__gte=date_from)
     if date_to:
         logs = logs.filter(action_date__lte=date_to)
-    
-    logs = logs[:100] # только 100 записей
+    if limit:
+        limit = int(limit)
+        logs = logs[:limit]
     
     result = []
     for log in logs:
@@ -2162,14 +2164,20 @@ def action_log_list(request):
 @permission_classes([IsAuthenticated])
 def action_types(request):
     if not is_admin_or_manager(request.user):
-        return Response(
-            {'error': 'Недостаточно прав'},
-            status=status.HTTP_403_FORBIDDEN
-        )
+        return Response({'error': 'Недостаточно прав'}, status=403)
+        
+    types = set(ActionLog.objects.exclude(
+        action_type__isnull=True
+    ).exclude(
+        action_type=''
+    ).values_list('action_type', flat=True))
     
-    types = ActionLog.objects.values_list('action_type', flat=True).distinct() # получаем уникальные типы действий
+    clean_types = set()
+    for t in types:
+        if t:
+            clean_types.add(t.strip().upper())
     
-    return Response(list(types))
+    return Response(sorted(list(clean_types)))
 
 @api_view(['GET', 'POST', 'PUT', 'DELETE'])
 @permission_classes([IsAuthenticated])
@@ -2519,8 +2527,6 @@ def demand_predict(request):
             status=status.HTTP_403_FORBIDDEN
         )
     
-
-
     session_id = request.query_params.get('session_id')
     if not session_id:
         return Response({'error': 'Не указан session_id'}, status=400)
@@ -2540,7 +2546,7 @@ def demand_predict(request):
     if predicted is None:
         return Response({'error': 'Ошибка при прогнозировании'}, status=500)
     
-    total_seats = Seat.objects.count() or 200
+    total_seats = Seat.objects.count() or 300
     predicted = min(predicted, total_seats)
     
     prediction, created = AIPrediction.objects.update_or_create(
@@ -2562,8 +2568,10 @@ def demand_predict(request):
         'success': True,
         'created': created,
         'session_id': session.session_id,
+        'play_id': session.play_id,
         'play': session.play.title,
         'date': session.date,
+        'time': session.time,
         'prediction': {
             'predicted_tickets': prediction.predicted_tickets,
             'prediction_date': prediction.prediction_date
@@ -2615,7 +2623,7 @@ def get_predictions(request):
     if date_to:
         predictions = predictions.filter(session__date__lte=date_to)
 
-    order_by = request.query_params.get('order_by', 'session__date')
+    order_by = request.query_params.get('order_by', 'prediction_id')
     predictions = predictions.order_by(order_by)
     
     limit = request.query_params.get('limit', 5)
