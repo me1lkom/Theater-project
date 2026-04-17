@@ -231,6 +231,16 @@ export async function modelTraining() {
     return response.data;
 }
 
+export async function HistoryPredictions() {
+    const response = await apiClient.get(`/ml/predictions/`);
+    return response.data;
+}
+ 
+export async function PastSessions(play_id) {
+    const response = await apiClient.get(`/sessions/past/?play_id=${play_id}`);
+    return response.data;
+}
+
 // –– Логгирование 
 export async function getLogs() {
     const response = await apiClient.get('/admin/logs/');

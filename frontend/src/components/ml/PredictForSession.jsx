@@ -1,48 +1,74 @@
 import { useState } from 'react';
 import { useGetPredictForSession } from '../../hooks/useGetPredictForSession';
-import  GraphPredict  from './GraphPredict';
-
+import GraphPredict from './GraphPredict';
+import styles from './PredictForSession.module.css';
+import { useSessions } from "../../hooks/useSessions";
+import PastSessionsStatistic from './PastSessionsStatistic';
 
 export default function PredictForSession() {
-    const [sessionId, setSessionId] = useState('');
     const { predict, prediction, loading, error } = useGetPredictForSession();
-    
 
+    const { sessions } = useSessions();
+    const [selectedSession, setSelectedSession] = useState(null);
 
-    const handlePredict = async (e) => {
-        e.preventDefault();
-        if (!sessionId) return;
-        await prediction(sessionId);
+    const handlePredict = async () => {
+        if (!selectedSession) return;
+        await prediction(selectedSession.session_id);
     }
 
-
-
     return (
-
-        <div>
-            <form onSubmit={handlePredict}>
-                <input type='number' placeholder='session_id' value={sessionId} onChange={(e) => setSessionId(e.target.value)} />
-                <button type='submit'> {loading ? 'Загрузка...' : 'Прогноз'}</button>
-            </form>
-
-            {loading && <div>Загрузка прогноза...</div>}
-
-            {error && <div>Ошибка: {error}</div>}
-
-            {predict && (
-                <div>
-                    <h3>Результат прогноза:</h3>
-                    <p>Успех: {predict.success ? 'Да' : 'Нет'}</p>
-                    <p>ID сеанса: {predict.session_id}</p>
-                    <p>Спектакль: {predict.play?.title}</p>
-                    <p>Дата: {predict.date}</p>
-                    <p>Время: {predict.time}</p>
-                    <p>Прогноз продаж: {predict.prediction?.predicted_tickets} / {predict.prediction?.total_seats}</p>
-                    <p>Заполняемость: {predict.prediction?.predicted_occupancy}%</p>
+        <div className={styles.PredictForSession}>
+            <div className={styles.leftColumn}>
+                <div className={styles.sessionsList}>
+                    {sessions?.map(session => (
+                        <div
+                            key={session.session_id}
+                            className={`${styles.sessionCard} ${selectedSession?.session_id === session.session_id ? styles.selected : ''}`}
+                            onClick={() => setSelectedSession(session)}
+                        >
+                            <div className={styles.sessionTitle}>{session.play_title}</div>
+                            <div className={styles.sessionDateTime}>
+                                {session.date} {session.time}
+                            </div>
+                        </div>
+                    ))}
                 </div>
-            )}
 
-            <GraphPredict dataSet={predict} />
+                <button
+                    className={styles.predictButton}
+                    onClick={handlePredict}
+                    disabled={!selectedSession || loading}
+                >
+                    {loading ? 'Загрузка...' : 'Прогноз'}
+                </button>
+            </div>
+
+            <div className={styles.rightColumn}>
+                {loading && <div>Загрузка прогноза...</div>}
+                {error && <div className={styles.error}>Ошибка: {error}</div>}
+
+                {predict && (
+                    <>
+                        <div className={styles.result}>
+                            <h3>Результат прогноза:</h3>
+                            <p>ID сеанса: {predict.session_id}</p>
+                            <p>Спектакль: {predict.play}</p>
+                            <p>Дата: {predict.date}</p>
+                            <p>Время: {predict.time}</p>
+                            <p>Прогноз продаж: {predict.prediction?.predicted_tickets} / 300</p>
+                            {/* <p>Заполняемость: {predict.prediction?.predicted_occupancy}%</p> */}
+                        </div>
+                        <GraphPredict dataSet={predict} />
+
+                        // Как должно быть
+                        {/* <PastSessionsStatistic play_id={predict.play_id} /> */}
+
+                        // Временно
+                        <PastSessionsStatistic play_id={selectedSession.play} predict={predict} />
+
+                    </>
+                )}
+            </div>
         </div>
     )
 }

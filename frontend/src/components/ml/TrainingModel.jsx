@@ -1,6 +1,7 @@
 import { useModelTraining } from '../../hooks/useModelTraining';
 import { useGetMLInfo } from '../../hooks/useGetMLInfo';
 import GraphTrainingModel from './GraphTrainingModel';
+import styles from './TrainingModel.module.css';
 
 export default function TrainingModel() {
     const { info, loading, error } = useGetMLInfo();
@@ -19,9 +20,10 @@ export default function TrainingModel() {
     if (error) return <div>Ошибка: {error}</div>;
 
     return (
-        <div>
+        <div className={styles.TrainingModel}>
+            <h2>Обучение модели</h2>
             {info.is_trained == true ? (
-                <div>
+                <div className={`${styles.status} ${styles.modelTrained}`}>
                     <p>Статус модели: уже обучена</p>
                     <button onClick={handleTrainingModel} disabled={loadingTraining}>
                         {loadingTraining ? 'Обучение...' : 'Обучить модель заново'}
@@ -29,7 +31,7 @@ export default function TrainingModel() {
                 </div>
 
             ) : (
-                <div>
+                <div className={`${styles.status} ${styles.modelNotTrained}`}>
                     <p>Статус модели: не обучена</p>
                     <button onClick={handleTrainingModel} disabled={loadingTraining}>
                         {loadingTraining ? 'Обучение...' : 'Обучить заново'}
@@ -38,11 +40,11 @@ export default function TrainingModel() {
             )}
 
             {data && (
-                <div>
+                <div className={styles.result}>
                     <h3>Результат обучения:</h3>
                     <p>{data.message}</p>
                     {data.metrics && (
-                        <div>
+                        <div className={styles.resultInfo}>
                             <p>R²: {data.metrics.r2}</p>
                             <p>MAE: {data.metrics.mae}</p>
                         </div>
