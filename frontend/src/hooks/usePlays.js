@@ -6,23 +6,23 @@ export function usePlays() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // Выносим функцию загрузки наружу
+    const fetchPlays = async () => {
+        try {
+            setLoading(true);
+            const data = await getPlays();
+            setPlays(data);
+            setError(null);
+        } catch (err) {
+            setError(err.message || 'Ошибка загрузки данных.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-
-        const fetchPlays = async () => {
-            try {
-                setLoading(true);
-                const data = await getPlays();
-                setPlays(data);
-                setError(null);
-            } catch (err) {
-                setError(err.message || 'Ошибка загрузки данных.');
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchPlays();
     }, []);
 
-    return { plays, loading, error }
+    return { plays, loading, error, refetch: fetchPlays };
 }

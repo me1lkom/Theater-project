@@ -6,21 +6,24 @@ export function useSessions() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    useEffect(() => {
-        const fetchSessions = async () => {
-            try {
-                setLoading(true);
-                const data = await getSessions();
-                setSessions(data);
-                setError(null);
-            } catch (err) {
-                setError(err.message || 'Ошибка загрузки сессий');
-            } finally {
-                setLoading(false);
-            }
+
+    const fetchSessions = async () => {
+        try {
+            setLoading(true);
+            const data = await getSessions();
+            setSessions(data);
+            setError(null);
+        } catch (err) {
+            setError(err.message || 'Ошибка загрузки сессий');
+        } finally {
+            setLoading(false);
         }
+    }
+
+    useEffect(() => {
+
         fetchSessions();
     }, [])
 
-    return { sessions, loading, error }
+    return { sessions, loading, error, refetch: fetchSessions }
 }

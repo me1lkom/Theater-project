@@ -262,3 +262,65 @@ export async function getBackup() {
     const response = await apiClient.get('/backup/');
     return response.data;
 }
+
+// –– Управление данными
+    // - спектакли
+export async function createPlay(data) {
+    const response = await apiClient.post('/plays/manage/', data);
+    return response.data;
+}
+
+export async function changePlay(play_id, data) {
+    const response = await apiClient.put(`/plays/manage/${play_id}/`, data);
+    return response.data;
+}
+
+export async function deletePlay(play_id) {
+    const response = await apiClient.delete(`/plays/manage/${play_id}/`);
+    return response.data;
+}
+    // - сеансы
+export async function createSession(data) {
+    const response = await apiClient.post('/sessions/manage/', data);
+    return response.data;
+}
+
+export async function changeSession(session_id, data) {
+    const response = await apiClient.put(`/sessions/manage/${session_id}/`, data);
+    return response.data;
+}
+
+export async function deleteSession(session_id) {
+    const response = await apiClient.delete(`/sessions/manage/${session_id}/`);
+    return response.data;
+}
+    // - жанры
+export async function createGenre(data) {
+    const response = await apiClient.post('/genres/manage/', data);
+    return response.data
+}
+
+export async function changeGenre(genre_id, data) {
+    const response = await apiClient.put(`/genres/manage/${genre_id}/`, data);
+    return response.data;
+}
+
+export async function deleteGenre(genre_id) {
+    const response = await apiClient.delete(`/genres/manage/${genre_id}/`);
+    return response.data;
+}
+    // - актеры
+export async function createActor(data) {
+    const response = await apiClient.post('/actors/manage/', data);
+    return response.data
+}
+
+export async function changeActor(actor_id, data) {
+    const response = await apiClient.put(`/actors/manage/${actor_id}/`, data);
+    return response.data;
+}
+
+export async function deleteActor(actor_id) {
+    const response = await apiClient.delete(`/actors/manage/${actor_id}/`);
+    return response.data;
+}
