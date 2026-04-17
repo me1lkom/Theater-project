@@ -242,8 +242,8 @@ export async function PastSessions(play_id) {
 }
 
 // –– Логгирование 
-export async function getLogs() {
-    const response = await apiClient.get('/admin/logs/');
+export async function getLogs(count) {
+    const response = await apiClient.get(`/admin/logs/?limit=${count}`);
     return response.data;
 }
 

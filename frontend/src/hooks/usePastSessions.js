@@ -10,7 +10,7 @@ export function usePastSessions(play_id) {
         if (!play_id) return;
         const fetchSessions = async() => {
             try {
-                console.log('Запрос к PastSessions начат')
+                // console.log('Запрос к PastSessions начат')
                 setLoading(true);
                 const data = await PastSessions(play_id);
                 setSessions(data);
@@ -25,6 +25,6 @@ export function usePastSessions(play_id) {
         fetchSessions();
     }, [play_id])
 
-    console.log('Запрос к PastSessions выполнен', {data})
+    // console.log('Запрос к PastSessions выполнен', {data})
     return { data, loading, error };
 }

@@ -4,11 +4,14 @@ import { useLogTypes } from '../../hooks/useLogTypes';
 import styles from "./LoggingPage.module.css";
 
 export default function LoggingPage() {
-    const { logs, loading, error, filter, setFilter, refetch } = useLogs();
+    const [limit, setLimit] = useState(50);
+    const { logs, loading, error, filter, setFilter, refetch } = useLogs(limit);
     const { logTypes, loading: typesLoading } = useLogTypes();
     const [autoRefresh, setAutoRefresh] = useState(false);
 
     const uniqueLogTypes = logTypes ? [...new Set(logTypes)] : [];
+
+
 
     useEffect(() => {
         if (!autoRefresh) return;
@@ -29,6 +32,12 @@ export default function LoggingPage() {
         if (actionType.startsWith('ADD')) return styles.typeBuy;
         return '';
     };
+
+    const handleMoreLogs = () => {
+        setLimit(prev => prev + 50);  // увеличиваем лимит на 50
+    };
+
+
 
     return (
         <div className={styles.loggingContainer}>
@@ -62,30 +71,40 @@ export default function LoggingPage() {
             {error && <div className={styles.error}>Ошибка: {error}</div>}
 
             {!loading && !error && (
-                <table className={styles.logTable}>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Пользователь</th>
-                            <th>Тип</th>
-                            <th>Описание</th>
-                            <th>Дата</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {logs.map(log => (
-                            <tr key={log.log_id}>
-                                <td>{log.log_id}</td>
-                                <td>{log.user}</td>
-                                <td className={getTypeClass(log.action_type)}>
-                                    {log.action_type}
-                                </td>
-                                <td>{log.description}</td>
-                                <td>{new Date(log.action_date).toLocaleString()}</td>
+                <>
+                    <table className={styles.logTable}>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Пользователь</th>
+                                <th>Тип</th>
+                                <th>Описание</th>
+                                <th>Дата</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {logs.map(log => (
+                                <tr key={log.log_id}>
+                                    <td>{log.log_id}</td>
+                                    <td>{log.user}</td>
+                                    <td className={getTypeClass(log.action_type)}>
+                                        {log.action_type}
+                                    </td>
+                                    <td>{log.description}</td>
+                                    <td>{new Date(log.action_date).toLocaleString()}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                    {logs.length >= limit && (
+                        <button
+                            className={styles.moreButton}
+                            onClick={handleMoreLogs}
+                        >
+                            Показать ещё (+50)
+                        </button>
+                    )}
+                </>
             )}
 
             {logs.length === 0 && !loading && !error && (

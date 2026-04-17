@@ -4,16 +4,18 @@ import GraphPredict from './GraphPredict';
 import styles from './PredictForSession.module.css';
 import { useSessions } from "../../hooks/useSessions";
 import PastSessionsStatistic from './PastSessionsStatistic';
+import { useHistoryPredictions } from '../../hooks/useHistoryPredictions';
 
 export default function PredictForSession() {
     const { predict, prediction, loading, error } = useGetPredictForSession();
-
+    const { refetch } = useHistoryPredictions();
     const { sessions } = useSessions();
     const [selectedSession, setSelectedSession] = useState(null);
 
     const handlePredict = async () => {
         if (!selectedSession) return;
         await prediction(selectedSession.session_id);
+        refetch();
     }
 
     return (
@@ -60,12 +62,7 @@ export default function PredictForSession() {
                         </div>
                         <GraphPredict dataSet={predict} />
 
-                        // Как должно быть
-                        {/* <PastSessionsStatistic play_id={predict.play_id} /> */}
-
-                        // Временно
-                        <PastSessionsStatistic play_id={selectedSession.play} predict={predict} />
-
+                        <PastSessionsStatistic play_id={predict.play_id} />
                     </>
                 )}
             </div>
