@@ -13,8 +13,10 @@ import ContactPage from "./pages/userPages/ContactPage";
 import PanoramaPage from "./pages/userPages/PanoramaPage";
 import StatisticsPage from "./pages/adminPages/StatisticsPage";
 import { AdminRoute } from "./components/common/AdminRoute";
+import { AuthenticatedRoute } from "./components/common/AuthenticatedRoute";
 import DataManagementPage from "./pages/adminPages/DataManagementPage";
 import AdminMainPage from "./pages/adminPages/AdminMainPage";
+
 function App() {
   const hydrate = useAuthStore((state) => state.hydrate);
 
@@ -32,8 +34,17 @@ function App() {
             <Route path="/" element={<MainPage />} />
             <Route path="/play/:id" element={<PlayPage />} />
             <Route path="/auth" element={<AuthPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/payment" element={<PaymentPage />} />
+
+            <Route path="/profile" element={
+              <AuthenticatedRoute>
+                <ProfilePage />
+              </AuthenticatedRoute>
+            } />
+            <Route path="/payment" element={
+              <AuthenticatedRoute>
+                <PaymentPage />
+              </AuthenticatedRoute>
+            } />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/panorama" element={<PanoramaPage />} />
             <Route path="/admin" element={

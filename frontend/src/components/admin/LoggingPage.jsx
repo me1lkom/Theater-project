@@ -32,7 +32,7 @@ export default function LoggingPage() {
 
     return (
         <div className={styles.loggingContainer}>
-            <h1 className={styles.title}>Журнал событий</h1>
+            <h2 className={styles.title}>Журнал событий</h2>
 
             <div className={styles.controls}>
                 <select
