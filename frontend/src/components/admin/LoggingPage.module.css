@@ -40,13 +40,13 @@
 }
 
 .refreshButton {
-    padding: var(--space-sm) var(--space-lg);
-    font-size: var(--font-sm);
-    background: var(--accent);
-    color: white;
+    padding: var(--space-sm) var(--space-md);
+    background: var(--bg);
+    color: var(--text-h);
     border: none;
     border-radius: var(--radius-sm);
     cursor: pointer;
+    font-size: var(--font-sm);
     transition: opacity 0.2s;
 }
 
@@ -139,8 +139,7 @@
     border-radius: var(--radius-sm);
     cursor: pointer;
     transition: all 0.2s;
-        color: var(--text-h);
-
+    color: var(--text-h);
 }
 
 .autoRefreshButton.active {

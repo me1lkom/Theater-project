@@ -1,0 +1,43 @@
+.HistoryPredictions {
+    border: 2px dotted var(--bg-inv);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+}
+
+.historyTable {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.historyTable thead {
+    background: var(--bg-inv);
+}
+
+.historyTable th {
+    padding: var(--space-md);
+    text-align: left;
+    font-weight: 600;
+    color: var(--text);
+    border-bottom: 2px solid var(--border);
+}
+
+.historyTable td {
+    padding: var(--space-sm) var(--space-md);
+    color: var(--text-s);
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+.historyTable tbody tr:hover {
+    background: var(--accent-bg);
+}
+
+.historyTitle {
+    color: var(--text-h);
+    text-align: center;
+    padding-bottom: var(--space-md);
+}
