@@ -9,12 +9,15 @@ export function useRegister() {
     const navigate = useNavigate();
     const setUser = useAuthStore(state => state.setUser);
 
-    const registerUser = async (username, password, password2, email, first_name, last_name) => {
+    const registerUser = async (username, password, password2, email, first_name, last_name, phone) => {
+        console.log(username, password, password2, email, first_name, last_name, phone);
+
         setLoading(true);
         setError(null);
 
         try {
-            const response = await register({ username, password, password2, email, first_name, last_name })
+            const response = await register({ username, password, password2, email, first_name, last_name, phone })
+            console.log(response);
             if (response.success) {
                 const response = await getMe();
                 setUser(response);

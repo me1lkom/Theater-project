@@ -10,6 +10,7 @@ export default function AuthPage() {
 
     const [password2, setPassword2] = useState('');
     const [email, setEmail] = useState('');
+    const [phone, setPhone] = useState('');
     const [first_name, setFirstName] = useState('');
     const [last_name, setLastName] = useState('');
 
@@ -23,7 +24,7 @@ export default function AuthPage() {
 
     const handleSubmitRegister = async (e) => {
         e.preventDefault();
-        await registerUser(username, password, password2, email, first_name, last_name);
+        await registerUser(username, password, password2, email, first_name, last_name, phone);
     }
 
 
@@ -67,6 +68,7 @@ export default function AuthPage() {
                         <input type='password' placeholder='Пароль' value={password} onChange={(e) => setPassword(e.target.value)} />
                         <input type='password' placeholder='Подтверждение пароля' value={password2} onChange={(e) => setPassword2(e.target.value)} />
                         <input type='email' placeholder='Email' value={email} onChange={(e) => setEmail(e.target.value)} />
+                        <input type='text' placeholder='Номер телефона' value={phone} onChange={(e) => setPhone(e.target.value)} />
                         <input type='text' placeholder='Имя' value={first_name} onChange={(e) => setFirstName(e.target.value)} />
                         <input type='text' placeholder='Фамилия' value={last_name} onChange={(e) => setLastName(e.target.value)} />
                         <button type='submit' disabled={loading}>
