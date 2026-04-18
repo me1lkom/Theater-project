@@ -58,43 +58,48 @@ class SessionSerializer(serializers.ModelSerializer):
         fields = ['session_id', 'play', 'play_title', 'hall', 'hall_name', 'date', 'time']
 
 class RegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(
-        write_only=True, 
-        required=True, 
-        validators=[validate_password], 
-        style={'input_type': 'password'}
-    )
-    password2 = serializers.CharField(
-        write_only=True, 
-        required=True, 
-        style={'input_type': 'password'}
-    )
-
-    phone = serializers.CharField(
-        required=True,
-        allow_blank=False,
-        max_length=20,
-        help_text="Номер телефона"
-    )
-
+    password2 = serializers.CharField(write_only=True, required=True)
+    phone = serializers.CharField(required=False, allow_blank=True)
+    
     class Meta:
         model = User
-        fields = ['username', 'password', 'password2', 'email', 'first_name', 'last_name', 'phone']
-
-    def validate(self, attrs):
-        if attrs['password'] != attrs['password2']:
-            raise serializers.ValidationError({'password': 'Пароли не совпадают'})
-        return attrs
+        fields = ('username', 'email', 'password', 'password2', 'first_name', 'last_name', 'phone')
+        extra_kwargs = {
+            'password': {'write_only': True},
+            'email': {'required': True},
+            'first_name': {'required': False},
+            'last_name': {'required': False},
+        }
+    
+    def validate(self, data):
+        # Проверяем совпадение паролей
+        if data['password'] != data['password2']:
+            raise serializers.ValidationError({"password": "Пароли не совпадают"})
+        return data
+    
+    def validate_username(self, value):
+        # Проверяем уникальность username
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("Пользователь с таким именем уже существует")
+        return value
+    
+    def validate_email(self, value):
+        # Проверяем уникальность email
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Пользователь с таким email уже существует")
+        return value
     
     def create(self, validated_data):
-        validated_data.pop('password2')
-        phone = validated_data.pop('phone')
+        # Извлекаем phone и password2
+        phone = validated_data.pop('phone', '')
+        validated_data.pop('password2')  # Удаляем password2, он не нужен для создания
+        
+        # Создаем пользователя
         user = User.objects.create_user(**validated_data)
         
-        profile, created = Profile.objects.get_or_create(user=user)
-        profile.phone = phone
-        profile.save()
-
+        # Создаем профиль с телефоном
+        Profile.objects.create(user=user, phone=phone)
+        
         return user
 
 class HallSerializer(serializers.ModelSerializer):

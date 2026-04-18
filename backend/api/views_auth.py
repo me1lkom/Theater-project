@@ -52,8 +52,7 @@ def login_cookie(request):
             {'error': 'Неверные учетные данные'},
             status=status.HTTP_401_UNAUTHORIZED
         )
-    
-    # ✅ Получаем или создаем профиль
+
     try:
         profile = user.profile
     except Profile.DoesNotExist:
@@ -195,22 +194,25 @@ def register_cookie(request):
     serializer = RegisterSerializer(data=request.data)
     
     if serializer.is_valid():
-        user = serializer.save()
+        # Serializer уже содержит все данные, включая first_name, last_name, phone
+        user = serializer.save()  # Здесь уже должен создаваться Profile с phone
         
-        # ✅ Получаем профиль (он уже создан в сериализаторе)
-        try:
-            profile = user.profile
-        except Profile.DoesNotExist:
-            profile = Profile.objects.create(user=user)
-        
-        RedisTokenStorage.revoke_all_user_tokens(user.id)
-        
+        # Создаем токены
         refresh = RefreshToken.for_user(user)
         access_token = str(refresh.access_token)
         refresh_token = str(refresh)
         
-        logger.info(f"Регистрация пользователя {user.username}, сохраняем refresh токен")
-        RedisTokenStorage.save_refresh_token(user.id, refresh_token)
+        # Сохраняем refresh токен в Redis
+        RedisTokenStorage.save_refresh_token(str(user.id), refresh_token)
+        
+        logger.info(f"Регистрация пользователя {user.username}")
+        
+        # Получаем profile для ответа
+        try:
+            profile = user.profile
+            phone = profile.phone or ''
+        except Profile.DoesNotExist:
+            phone = ''
         
         response = Response({
             'success': True,
@@ -220,10 +222,11 @@ def register_cookie(request):
                 'email': user.email,
                 'first_name': user.first_name,
                 'last_name': user.last_name,
-                'phone': profile.phone,
+                'phone': phone,
             }
         }, status=status.HTTP_201_CREATED)
         
+        # Устанавливаем cookies
         set_cookie(
             response,
             settings.SIMPLE_JWT.get('AUTH_COOKIE', 'access_token'),
@@ -240,8 +243,9 @@ def register_cookie(request):
         
         return response
     
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+    # Выводим подробную ошибку для отладки
+    logger.error(f"Ошибка регистрации: {serializer.errors}")
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)    
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
