@@ -2,6 +2,7 @@ import styles from './DataManagementPage.module.css';
 import ControlPlayData from '../../components/admin/ControlPlayData';
 import ControlSessionData from '../../components/admin/ControlSessionData';
 import ControlActorData from '../../components/admin/ControlActorData';
+import ControlGenreData from '../../components/admin/ControlGenreData';
 
 export default function DataManagementPage() {
     return (
@@ -15,6 +16,9 @@ export default function DataManagementPage() {
 
             <h2>Управление актерами</h2>
             <ControlActorData />
+
+            <h2>Управление жанрами</h2>
+            <ControlGenreData />
         </div>
     )
 }

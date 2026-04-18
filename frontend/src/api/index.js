@@ -300,6 +300,11 @@ export async function createGenre(data) {
     return response.data
 }
 
+export async function getGenreById(genre_id) {
+    const response = await apiClient.get(`/genres/manage/${genre_id}/`);
+    return response.data;
+}
+
 export async function changeGenre(genre_id, data) {
     const response = await apiClient.put(`/genres/manage/${genre_id}/`, data);
     return response.data;

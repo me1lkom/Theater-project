@@ -6,22 +6,22 @@ export function useGenres() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    useEffect(() => {
-        const fetchGenres = async () => {
-            try {
-                setLoading(true);
-                const data = await getGenres();
-                setGenres(data);
-                setError(null);
-            } catch (err) {
-                setError(err.message || 'Ошибка загрузки жанров.')
-            } finally {
-                setLoading(false);
-            }
-        };
+    const fetchGenres = async () => {
+        try {
+            setLoading(true);
+            const data = await getGenres();
+            setGenres(data);
+            setError(null);
+        } catch (err) {
+            setError(err.message || 'Ошибка загрузки жанров.')
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
         fetchGenres();
     }, [])
 
-    return { genres, loading, error };
+    return { genres, loading, error, refetch: fetchGenres };
 }
