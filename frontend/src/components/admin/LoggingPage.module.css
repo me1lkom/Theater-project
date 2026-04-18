@@ -150,3 +150,16 @@
 .autoRefreshButton:hover {
     border-color: var(--accent);
 }
+
+
+.moreButton {
+    padding: var(--space-sm) var(--space-lg);
+    font-size: var(--font-sm);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-h);
+    margin-top: var(--space-sm);
+}

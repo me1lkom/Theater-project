@@ -34,7 +34,7 @@ export default function LoggingPage() {
     };
 
     const handleMoreLogs = () => {
-        setLimit(prev => prev + 50);  // увеличиваем лимит на 50
+        setLimit(prev => prev + 50);
     };
 
 

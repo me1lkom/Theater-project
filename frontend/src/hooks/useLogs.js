@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getLogs, getLogByFilter } from '../api/index';
 
-export function useLogs(count) {
+export function useLogs(limit) {
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -10,8 +10,9 @@ export function useLogs(count) {
     const fetchLogs = async () => {
         setLoading(true);
         try {
+            console.log(limit);
             const data = filter === 'all' 
-                ? await getLogs(count) 
+                ? await getLogs(limit) 
                 : await getLogByFilter(filter);
             setLogs(data);
             setError(null);
@@ -24,7 +25,7 @@ export function useLogs(count) {
 
     useEffect(() => {
         fetchLogs();
-    }, [filter]);
+    }, [filter, limit]);
 
     return { logs, loading, error, filter, setFilter, refetch: fetchLogs };
 }
