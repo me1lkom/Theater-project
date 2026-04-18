@@ -52,7 +52,7 @@
     margin-top: var(--space-md);
     padding: var(--space-sm);
     background: var(--error-color);
-    color: var(--text-h);
+    color: var(--text);
     border: none;
     border-radius: var(--radius-sm);
     cursor: pointer;
