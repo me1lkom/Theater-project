@@ -1,5 +1,6 @@
 import { useGetMe } from '../../hooks/useGetMe';
 import { useState } from 'react';
+import styles from './UserForm.module.css';
 
 export default function UserForm({ onSubmit }) {
     const [first_name, setFirstName] = useState('');
@@ -65,9 +66,9 @@ export default function UserForm({ onSubmit }) {
     return (
 
 
-        <div>
-            <button onClick={handleFillMe}>Взять данные из кабинета</button>
-            <form onSubmit={handleSubmit}>
+        <div className={styles.userForm}>
+            <button onClick={handleFillMe} className={styles.fillButton}>Взять данные из кабинета</button>
+            <form onSubmit={handleSubmit} className={styles.form}>
                 <input type='text' placeholder='Имя *' value={first_name} onChange={(e) => setFirstName(e.target.value)} required/>
                 <input type='text' placeholder='Фамилия *' value={last_name} onChange={(e) => setLastName(e.target.value)} required/>
                 <input type='tel' placeholder='Телефон *' value={phone} onChange={(e) => setPhone(e.target.value)} required/>

@@ -1,7 +1,6 @@
-// import { useState } from 'react';
 import DataInfo from '../../components/payment/DataInfo';
 import { useLocation } from 'react-router-dom';
-
+import styles from './PaymentPage.module.css';
 
 export default function PaymentPage() {
 
@@ -9,7 +8,7 @@ export default function PaymentPage() {
     const { sessionId, selectedSeats } = location.state || {};
 
     return(
-        <div className="container">
+        <div className={styles.container}>
             <DataInfo sessionId={sessionId} selectedSeats={selectedSeats} />
         </div>
     )
