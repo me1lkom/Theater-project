@@ -1,6 +1,8 @@
 import styles from './DataManagementPage.module.css';
 import ControlPlayData from '../../components/admin/ControlPlayData';
 import ControlSessionData from '../../components/admin/ControlSessionData';
+import ControlActorData from '../../components/admin/ControlActorData';
+
 export default function DataManagementPage() {
     return (
         <div className={styles.container}>
@@ -10,6 +12,9 @@ export default function DataManagementPage() {
 
             <h2>Управление данными о сеансах</h2>
             <ControlSessionData />
+
+            <h2>Управление актерами</h2>
+            <ControlActorData />
         </div>
     )
 }

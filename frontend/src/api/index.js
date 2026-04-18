@@ -310,6 +310,15 @@ export async function deleteGenre(genre_id) {
     return response.data;
 }
     // - актеры
+export async function getActors() {
+    const response = await apiClient.get('/actors/manage/');
+    return response.data;
+}
+export async function getActorById(actor_id) {
+    const response = await apiClient.get(`/actors/manage/${actor_id}`);
+    return response.data;
+}
+
 export async function createActor(data) {
     const response = await apiClient.post('/actors/manage/', data);
     return response.data
