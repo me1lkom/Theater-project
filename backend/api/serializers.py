@@ -57,9 +57,14 @@ class SessionSerializer(serializers.ModelSerializer):
         model = Session
         fields = ['session_id', 'play', 'play_title', 'hall', 'hall_name', 'date', 'time']
 
+from rest_framework import serializers
+from django.contrib.auth.models import User
+from django.db import IntegrityError
+from .models import Profile
+
 class RegisterSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(write_only=True, required=True)
-    phone = serializers.CharField(required=False, allow_blank=True)
+    phone = serializers.CharField(required=False, allow_blank=True, max_length=20)
     
     class Meta:
         model = User
@@ -67,32 +72,32 @@ class RegisterSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'password': {'write_only': True},
             'email': {'required': True},
-            'first_name': {'required': False},
-            'last_name': {'required': False},
+            'first_name': {'required': False, 'allow_blank': True},
+            'last_name': {'required': False, 'allow_blank': True},
         }
     
     def validate(self, data):
-        # Проверяем совпадение паролей
+        # Проверка паролей
         if data['password'] != data['password2']:
             raise serializers.ValidationError({"password": "Пароли не совпадают"})
+        
+        # Убираем проверку телефона отсюда - она будет в view
         return data
     
     def validate_username(self, value):
-        # Проверяем уникальность username
         if User.objects.filter(username=value).exists():
             raise serializers.ValidationError("Пользователь с таким именем уже существует")
         return value
     
     def validate_email(self, value):
-        # Проверяем уникальность email
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError("Пользователь с таким email уже существует")
         return value
     
     def create(self, validated_data):
-        # Извлекаем phone и password2
+        # Извлекаем phone
         phone = validated_data.pop('phone', '')
-        validated_data.pop('password2')  # Удаляем password2, он не нужен для создания
+        validated_data.pop('password2')
         
         # Создаем пользователя
         user = User.objects.create_user(**validated_data)
@@ -101,7 +106,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         Profile.objects.create(user=user, phone=phone)
         
         return user
-
+    
 class HallSerializer(serializers.ModelSerializer):
     class Meta:
         model = TheaterHall
