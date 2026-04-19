@@ -64,18 +64,29 @@ export default function ControlSessionData() {
                 </div>
 
                 <div className={styles.actionList}>
-                    <button
-                        onClick={() => {
-                            if (isFormOpen) {
+                    {!selectedSession ? (
+                        <button
+                            onClick={() => {
+                                if (isFormOpen) {
+                                    setIsFormOpen(false);
+                                    setSelectedSession(null);
+                                } else {
+                                    setSelectedSession(null);
+                                    setIsFormOpen(true);
+                                }
+                            }}
+                            className={styles.createButton}>Создать</button>
+
+                    ) : (
+
+                        <button
+                            onClick={() => {
                                 setIsFormOpen(false);
                                 setSelectedSession(null);
-                            } else {
-                                setSelectedSession(null);
-                                setIsFormOpen(true);
-                            }
-                        }}
-                        className={styles.createButton}>Создать</button>
+                            }}
+                            className={styles.createButton}>Отмена</button>
 
+                    )}
                     {selectedSession ? (
                         <>
                             <button onClick={() => setIsFormOpen(true)} className={styles.changeButton}>Изменить</button>

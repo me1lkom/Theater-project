@@ -51,8 +51,8 @@ export default function UserTickets() {
             <div className={`${styles.ticketsGrid} ${ticketFlag === true ? styles.ticketsGridOn : styles.ticketsGridOff}`}>
                 {filteredTickets?.length > 0? (
                     <>
-                        {console.log(tickets?.length)}
-                        {tickets?.map(ticket => (
+                        {console.log(filteredTickets)}
+                        {filteredTickets?.map(ticket => (
                             <TicketsCard key={ticket.ticket_id} ticket={ticket} onReturnClick={handleReturnClick} />
                         ))}
                     </>

@@ -95,7 +95,7 @@ export default function PlayForm({ Data, genres, onSubmit, onClose }) {
                 onChange={handleGenreChange}
                 className={styles.genreSelect}
             >
-                <option value="">Не выбран</option>
+                <option value="">Выберите жанр</option>
                 {genres?.map(genre => (
                     <option key={genre.genre_id} value={genre.genre_id}>
                         {genre.name}

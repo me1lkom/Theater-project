@@ -61,18 +61,29 @@ export default function ControlPlayData() {
                 </div>
 
                 <div className={styles.actionList}>
-                    <button
-                        onClick={() => {
-                            if (isFormOpen) {
+                    {!selectedGenre ? (
+                        <button
+                            onClick={() => {
+                                if (isFormOpen) {
+                                    setIsFormOpen(false);
+                                    setSelectedGenre(null);
+                                } else {
+                                    setSelectedGenre(null);
+                                    setIsFormOpen(true);
+                                }
+                            }}
+                            className={styles.createButton}>Создать</button>
+
+                    ) : (
+
+                        <button
+                            onClick={() => {
                                 setIsFormOpen(false);
                                 setSelectedGenre(null);
-                            } else {
-                                setSelectedGenre(null);
-                                setIsFormOpen(true);
-                            }
-                        }}
-                        className={styles.createButton}>Создать</button>
+                            }}
+                            className={styles.createButton}>Отмена</button>
 
+                    )}
                     {selectedGenre ? (
                         <>
                             <button onClick={() => setIsFormOpen(true)} className={styles.changeButton}>Изменить</button>

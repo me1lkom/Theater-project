@@ -57,15 +57,13 @@ export default function Header() {
         )}
 
         {user?.role === 'admin' && (
-          <>
-            <button
-              className={`${styles.actions__button} ${styles['actions__button--admin']}`}
-              onClick={handleAdminClick}
-              aria-label="Админ панель"
-            >
-              Админ панель
-            </button>
-          </>
+          <button
+            className={`${styles.actions__button} ${styles['actions__button--admin']}`}
+            onClick={handleAdminClick}
+            aria-label="Админ панель"
+          >
+            Админ панель
+          </button>
         )}
       </div>
     </header>

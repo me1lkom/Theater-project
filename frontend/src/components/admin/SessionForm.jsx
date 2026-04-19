@@ -60,7 +60,7 @@ export default function PlayForm({ Data, plays, onSubmit, onClose }) {
                 className={styles.playSelect}
                 required
             >
-                <option value="">Не выбран</option>
+                <option value="">Выберите спектакль</option>
                 {plays?.map(play => (
                     <option key={play.play_id} value={play.play_id}>
                         {play.title}
