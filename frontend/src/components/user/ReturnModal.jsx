@@ -8,7 +8,7 @@ export default function ReturnModal({  ticketId, onConfirm, onCancel }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!reason.trim()) {
-            alert('Пожалуйста, укажите причину возврата');
+            // alert('Пожалуйста, укажите причину возврата');
             return;
         }
 

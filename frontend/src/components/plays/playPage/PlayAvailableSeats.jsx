@@ -183,7 +183,7 @@ export default function PlayAvailableSeats({ sessionId }) {
         const result = await addTicketToBasket(sessionId, selectedSeats);
 
         if (result.success) {
-            alert(`${selectedSeats.length} мест(а) забронировано`);
+            // alert(`${selectedSeats.length} мест(а) забронировано`);
             navigate('/payment', {
                 state: {
                     sessionId: sessionId,

@@ -15,9 +15,9 @@ export default function MainPage() {
 
     let matchByGenre = true;
     if (selectedGenre !== 'all') {
-      matchByGenre = play.genres?.some(
-        genre => genre.genre_id === Number(selectedGenre)
-      );
+      if (play.genre != null && selectedGenre != play.genre) {
+        matchByGenre = false;
+      } 
     }
 
     return matchByTitle && matchByGenre;

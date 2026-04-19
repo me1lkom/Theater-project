@@ -25,7 +25,7 @@ export default function UserTickets() {
             setShowModal(false);
             setSelectedTicketId(null);
             if (refetch) refetch();
-            alert('Билет успешно возвращен');
+            // alert('Билет успешно возвращен');
         } else {
             alert(`Ошибка при возврате билета ${returnError}`);
         }
