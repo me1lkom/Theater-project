@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getActorsBySession } from '../api/index';
+import { getErrorMessage } from '../utils/getErrorMessage';
 
 export function useGetActorsBySession(session_id) {
     const [data, setActors] = useState(null);
@@ -14,7 +15,8 @@ export function useGetActorsBySession(session_id) {
                 setActors(response);
                 setError(null);
             } catch (err) {
-                setError(err.message || 'Ошибка загрузки данных.');
+                const errorMessage = getErrorMessage(err);
+                setError(errorMessage);
             } finally {
                 setLoading(false);
             }

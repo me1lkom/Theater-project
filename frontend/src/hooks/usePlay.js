@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { getPlayById } from "../api/index";
+import { getErrorMessage } from '../utils/getErrorMessage';
 
 export function usePlay(id) {
     const [play, setPlay] = useState(null);
@@ -15,7 +16,8 @@ export function usePlay(id) {
                 setPlay(data);
                 setError(null);
             } catch (err) {
-                setError(err.message || 'Ошибка загрузки спектаклся по id.');
+                const errorMessage = getErrorMessage(err);
+                setError(errorMessage);
             } finally {
                 setLoading(false);
             }
@@ -26,3 +28,5 @@ export function usePlay(id) {
 
     return { play, loading, error };
 }
+
+

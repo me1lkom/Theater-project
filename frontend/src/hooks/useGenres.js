@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getGenres } from '../api/index';
+import { getErrorMessage } from '../utils/getErrorMessage';
 
 export function useGenres() {
     const [genres, setGenres] = useState(null);
@@ -13,7 +14,8 @@ export function useGenres() {
             setGenres(data);
             setError(null);
         } catch (err) {
-            setError(err.message || 'Ошибка загрузки жанров.')
+            const errorMessage = getErrorMessage(err);
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }

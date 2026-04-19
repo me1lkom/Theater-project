@@ -56,6 +56,8 @@ export default function Header() {
           </button>
         )}
 
+        {/* {console.log(user?.role)} */}
+
         {user?.role === 'admin' && (
           <button
             className={`${styles.actions__button} ${styles['actions__button--admin']}`}

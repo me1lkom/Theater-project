@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { getMe } from "../api/index"; 
+import { getMe } from "../api/index";
+import { getErrorMessage } from '../utils/getErrorMessage';
 
 export function useGetMe() {
     const [me, setMe] = useState(null);
@@ -14,7 +15,8 @@ export function useGetMe() {
                 setMe(response);
                 setError(null);
             } catch (err) {
-                setError(err.message || 'Ошибка получение данных о себе');
+                const errorMessage = getErrorMessage(err);
+                setError(errorMessage);
             } finally {
                 setLoading(false);
             }

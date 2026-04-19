@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getMLInfo } from '../api/index';
+import { getErrorMessage } from '../utils/getErrorMessage';
 
 export function useGetMLInfo() {
     const [info, setInfo] = useState(null);
@@ -14,7 +15,8 @@ export function useGetMLInfo() {
                 setInfo(data);
                 setError(null);
             } catch (err) {
-                setError(err.message || 'Ошибка загрузки данных.');
+                const errorMessage = getErrorMessage(err);
+                setError(errorMessage);
             } finally {
                 setLoading(false);
             }

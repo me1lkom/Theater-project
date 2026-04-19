@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { HistoryPredictions } from "../api/index";
+import { getErrorMessage } from '../utils/getErrorMessage';
 
 export function useHistoryPredictions() {
     const [data, setData] = useState(null);
@@ -15,7 +16,8 @@ export function useHistoryPredictions() {
             setData(data);
             setError(null);
         } catch (err) {
-            setError(err.message || 'Ошибка загрузки спектаклся по id.');
+            const errorMessage = getErrorMessage(err);
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }

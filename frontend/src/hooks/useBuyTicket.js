@@ -1,5 +1,6 @@
 import { buyTicket  } from "../api/index";
 import { useState } from "react";
+import { getErrorMessage } from '../utils/getErrorMessage';
 
 export function useBuyTicket() {
     const [loading, setLoading] = useState(false);
@@ -14,18 +15,11 @@ export function useBuyTicket() {
             setLoading(false);
             setError(null);
             return { success: true };
-        } catch(err) {
-            // Получаем сообщение от бэкенда
-            const backendMessage = err.response?.data?.error ||   // ← "error" поле
-                                   err.response?.data?.message || // ← или "message"
-                                   err.message;                   // ← fallback
-            
-            console.error('Ошибка от бэкенда:', backendMessage);
-            console.error('Полный ответ:', err.response?.data);
-            
-            setError(backendMessage);
-            return { success: false, error: backendMessage };
-        } finally {
+        } catch (err) {
+            const errorMessage = getErrorMessage(err);
+            setError(errorMessage);
+            return { success: false, error: errorMessage };
+        }  finally {
             setLoading(false);
         }
     }

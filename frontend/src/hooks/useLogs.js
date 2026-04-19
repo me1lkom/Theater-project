@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getLogs, getLogByFilter } from '../api/index';
+import { getErrorMessage } from '../utils/getErrorMessage';
 
 export function useLogs(limit) {
     const [logs, setLogs] = useState([]);
@@ -11,13 +12,14 @@ export function useLogs(limit) {
         setLoading(true);
         try {
             console.log(limit);
-            const data = filter === 'all' 
-                ? await getLogs(limit) 
+            const data = filter === 'all'
+                ? await getLogs(limit)
                 : await getLogByFilter(filter);
             setLogs(data);
             setError(null);
         } catch (err) {
-            setError(err.message || 'Ошибка загрузки логов');
+            const errorMessage = getErrorMessage(err);
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }

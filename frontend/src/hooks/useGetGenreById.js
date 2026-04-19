@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { getGenreById } from '../api/index';
+import { getErrorMessage } from '../utils/getErrorMessage';
 
 export function useGetGenreById(genre_id) {
     const [genre, setGenre] = useState(null);
@@ -16,7 +17,8 @@ export function useGetGenreById(genre_id) {
                 setGenre(response);
                 setError(null);
             } catch (err) {
-                setError(err.message || 'Ошибка при получении жанра.')
+                const errorMessage = getErrorMessage(err);
+                setError(errorMessage);
             } finally {
                 setLoading(false);
             }

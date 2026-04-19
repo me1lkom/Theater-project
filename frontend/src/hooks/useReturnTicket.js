@@ -1,5 +1,6 @@
 import { postReturnTicket } from "../api/index";
 import { useState } from 'react';
+import { getErrorMessage } from '../utils/getErrorMessage';
 
 export function useReturnTicket() {
     const [loading, setLoading] = useState(false);
@@ -15,8 +16,9 @@ export function useReturnTicket() {
             setError(null);
             return { success: true };
         } catch (err) {
-            setError(err.message || 'Ошибка возврата билета.');
-            return { success: false };
+            const errorMessage = getErrorMessage(err);
+            setError(errorMessage);
+            return { success: false, error: errorMessage };
         } finally {
             setLoading(false);
         }

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { modelTraining } from '../api/index';
+import { getErrorMessage } from '../utils/getErrorMessage';
 
 export function useModelTraining() {
     const [loading, setLoading] = useState(false);
@@ -16,11 +17,13 @@ export function useModelTraining() {
             console.log(`MLINFTraining, ответ ${response}`)
             return { success: true, data: response };
         } catch (err) {
-            setError(err.message || 'Ошибка обучения модели.');
+            const errorMessage = getErrorMessage(err);
+            setError(errorMessage);
+            return { success: false, error: errorMessage };
         } finally {
             setLoading(false);
         }
     };
 
-    return { train, data, loading, error,  };
+    return { train, data, loading, error, };
 }

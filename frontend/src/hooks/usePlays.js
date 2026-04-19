@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { getPlays } from '../api/index';
+import { getErrorMessage } from '../utils/getErrorMessage';
 
 export function usePlays() {
     const [plays, setPlays] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Выносим функцию загрузки наружу
     const fetchPlays = async () => {
         try {
             setLoading(true);
@@ -14,7 +14,8 @@ export function usePlays() {
             setPlays(data);
             setError(null);
         } catch (err) {
-            setError(err.message || 'Ошибка загрузки данных.');
+            const errorMessage = getErrorMessage(err);
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }

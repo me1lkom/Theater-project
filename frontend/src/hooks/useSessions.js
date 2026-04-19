@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getSessions } from '../api/index';
+import { getErrorMessage } from '../utils/getErrorMessage';
 
 export function useSessions() {
     const [sessions, setSessions] = useState(null);
@@ -14,7 +15,8 @@ export function useSessions() {
             setSessions(data);
             setError(null);
         } catch (err) {
-            setError(err.message || 'Ошибка загрузки сессий');
+            const errorMessage = getErrorMessage(err);
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }

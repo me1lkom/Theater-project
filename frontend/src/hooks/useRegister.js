@@ -2,6 +2,7 @@ import { register, getMe } from '../api/index';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import useAuthStore from '../store/useAuthStore';
+import { getErrorMessage } from '../utils/getErrorMessage';
 
 export function useRegister() {
     const [loading, setLoading] = useState(false);
@@ -19,15 +20,20 @@ export function useRegister() {
             const response = await register({ username, password, password2, email, first_name, last_name, phone })
             console.log(response);
             if (response.success) {
+                // getMe костыль - в респонсе не лежит роль
                 const response = await getMe();
                 setUser(response);
                 navigate('/');
                 return { success: true };
             } else {
-                setError(response.message || 'Ошибка регистрации');
+                const errorMsg = getErrorMessage({ response: { data: response } });
+                setError(errorMsg);
+                return { success: false, error: errorMsg };
             }
         } catch (err) {
-            setError(err.message || 'Ошибка соединения с сервером');
+            const errorMsg = getErrorMessage(err);
+            setError(errorMsg);
+            return { success: false, error: errorMsg };
         } finally {
             setLoading(false);
         }

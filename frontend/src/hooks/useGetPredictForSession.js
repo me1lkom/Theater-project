@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { getPredictForSession } from "../api/index";
+import { getErrorMessage } from '../utils/getErrorMessage';
 
 export function useGetPredictForSession() {
     const [predict, setPredict] = useState(null);
@@ -15,7 +16,9 @@ export function useGetPredictForSession() {
             setPredict(data);
             return { success: true, data: data };
         } catch (err) {
-            setError(err.message || 'Ошибка загрузки прогноза.');
+            const errorMessage = getErrorMessage(err);
+            setError(errorMessage);
+            return { success: false, error: errorMessage };
         } finally {
             setLoading(false);
         }

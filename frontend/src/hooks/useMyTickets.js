@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getMyTickets } from '../api/index';
+import { getErrorMessage } from '../utils/getErrorMessage';
 
 export function useMyTickets() {
     const [tickets, setTickets] = useState(null);
@@ -13,7 +14,8 @@ export function useMyTickets() {
             setTickets(data);
             setError(null);
         } catch (err) {
-            setError(err.message);
+            const errorMessage = getErrorMessage(err);
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { getSeats } from "../api/index";
+import { getErrorMessage } from '../utils/getErrorMessage';
 
 export function useSeats() {
     const [seats, setSeats] = useState(null);
@@ -14,7 +15,8 @@ export function useSeats() {
                 setSeats(data);
                 setError(null);
             } catch (err) {
-                setError(err.message || 'Ошибка загрузки спектаклся по id.');
+                const errorMessage = getErrorMessage(err);
+                setError(errorMessage);
             } finally {
                 setLoading(false);
             }

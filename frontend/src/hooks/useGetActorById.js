@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { getActorById } from '../api/index';
+import { getErrorMessage } from '../utils/getErrorMessage';
 
 export function useGetActorById(actor_id) {
     const [actor, setActors] = useState(null);
@@ -16,7 +17,8 @@ export function useGetActorById(actor_id) {
                 setActors(response);
                 setError(null);
             } catch (err) {
-                setError(err.message || 'Ошибка при получении актеров.')
+                const errorMessage = getErrorMessage(err);
+                setError(errorMessage);
             } finally {
                 setLoading(false);
             }

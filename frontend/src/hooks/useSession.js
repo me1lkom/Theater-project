@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { getSessionById } from '../api/index';
+import { getErrorMessage } from '../utils/getErrorMessage';
 
-export function useSession(id){
+export function useSession(id) {
     const [session, setSession] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -13,8 +14,9 @@ export function useSession(id){
                 const data = await getSessionById(id);
                 setSession(data);
                 setError(null);
-            } catch(err) {
-                setError(err.message || `Ошибка загрузки сеанса.`)
+            } catch (err) {
+                const errorMessage = getErrorMessage(err);
+                setError(errorMessage);
             } finally {
                 setLoading(false);
             }

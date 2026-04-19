@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getLogTypes } from '../api/index';
+import { getErrorMessage } from '../utils/getErrorMessage';
 
 export function useLogTypes() {
     const [logTypes, setLogTypes] = useState([]);
@@ -12,7 +13,8 @@ export function useLogTypes() {
                 const data = await getLogTypes();
                 setLogTypes(data);
             } catch (err) {
-                setError(err.message);
+                const errorMessage = getErrorMessage(err);
+                setError(errorMessage);
             } finally {
                 setLoading(false);
             }

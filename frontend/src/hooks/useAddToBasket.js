@@ -1,5 +1,6 @@
 import { addToBasket, getMyBasket, removeFromBasket } from "../api/index";
 import { useState } from "react";
+import { getErrorMessage } from '../utils/getErrorMessage';
 
 export function useAddToBasket() {
     const [loading, setLoading] = useState(false);
@@ -17,7 +18,7 @@ export function useAddToBasket() {
                 console.log(`Зашел, ${basket.count}`)
                 const availableBasket = basket.baskets;
 
-                
+
 
                 for (const item of availableBasket) {
                     await removeFromBasket(item.basket_id);
@@ -31,8 +32,9 @@ export function useAddToBasket() {
             setError(null);
             return { success: true };
         } catch (err) {
-            setError(err.message || 'Ошибка добавления в корзину');
-            return { success: false };
+            const errorMessage = getErrorMessage(err);
+            setError(errorMessage);
+            return { success: false, error: errorMessage };
         } finally {
             setLoading(false);
         }

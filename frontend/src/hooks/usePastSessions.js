@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { PastSessions } from '../api/index';
+import { getErrorMessage } from '../utils/getErrorMessage';
 
 export function usePastSessions(play_id) {
     const [data, setSessions] = useState(null);
@@ -8,7 +9,7 @@ export function usePastSessions(play_id) {
 
     useEffect(() => {
         if (!play_id) return;
-        const fetchSessions = async() => {
+        const fetchSessions = async () => {
             try {
                 // console.log('Запрос к PastSessions начат')
                 setLoading(true);
@@ -16,7 +17,8 @@ export function usePastSessions(play_id) {
                 setSessions(data);
                 setError(null);
             } catch (err) {
-                setError(err.message || 'Ошибка загрузки сессий.');
+                const errorMessage = getErrorMessage(err);
+                setError(errorMessage);
             } finally {
                 setLoading(false);
             }
