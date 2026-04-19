@@ -4,12 +4,15 @@ import { useAddToBasket } from '../../../hooks/useAddToBasket';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './PlayAvailableSeats.module.css';
+import useAuthStore from '../../../store/useAuthStore';
 
 export default function PlayAvailableSeats({ sessionId }) {
     const { seats, loading, error } = useSeats();
     const { availableSeats } = useAvailableSeats(sessionId);
     const [selectedSeats, setSelectedSeats] = useState([]);
     const { addTicketToBasket } = useAddToBasket();
+
+    const { isAuthenticated } = useAuthStore();
 
     const svgRef = useRef(null);
     const initialized = useRef(false);
@@ -81,10 +84,12 @@ export default function PlayAvailableSeats({ sessionId }) {
                 rect.classList.add('taken');
                 rect.setAttribute('fill', '#666');
                 rect.setAttribute('opacity', '0.5');
+                rect.setAttribute('cursor', 'default')
+
             } else {
                 if (seatData.sector_name === 'Партер') rect.setAttribute('fill', '#2ecc71');
                 else if (seatData.sector_name === 'Амфитеатр') rect.setAttribute('fill', '#3498db');
-                else if (seatData.sector_name === 'Балкон') rect.setAttribute('fill', '#e67e22');
+                rect.setAttribute('cursor', 'pointer')
                 rect.removeAttribute('opacity');
             }
 
@@ -156,6 +161,12 @@ export default function PlayAvailableSeats({ sessionId }) {
     }, [seats, availableSeats]);
 
     const handleBooking = async () => {
+        if (!isAuthenticated) {
+            alert('Небходимо войти в аккаунт, чтобы купить билет(ы)')
+            return;
+        }
+
+
         if (selectedSeats.length === 0) {
             alert('Выберите места');
             return;
@@ -164,6 +175,8 @@ export default function PlayAvailableSeats({ sessionId }) {
             alert('Нельзя забронировать более 5 мест за раз');
             return;
         }
+
+
 
         console.log(`Попытка отправить sessionId: ${sessionId}, seatIds:`, selectedSeats);
 

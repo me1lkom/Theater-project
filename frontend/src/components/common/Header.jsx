@@ -57,6 +57,7 @@ export default function Header() {
         )}
 
         {user?.role === 'admin' && (
+          <>
             <button
               className={`${styles.actions__button} ${styles['actions__button--admin']}`}
               onClick={handleAdminClick}
@@ -64,6 +65,7 @@ export default function Header() {
             >
               Админ панель
             </button>
+          </>
         )}
       </div>
     </header>
