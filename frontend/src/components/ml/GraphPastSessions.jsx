@@ -3,7 +3,9 @@ import styles from './GraphPastSessions.module.css';
 
 export default function GraphPastSessions({ dataSet, predict }) {
 
-
+    console.log('дата сет', dataSet);
+    console.log('прогноз', predict);
+    
     const dates = dataSet?.map(session => session.date) || [];
     const soldTickets = dataSet?.map(session => session.statistics.sold_tickets) || [];
     // const occupancy = dataSet?.map(session => session.statistics.occupancy) || [];
@@ -13,7 +15,7 @@ export default function GraphPastSessions({ dataSet, predict }) {
     const predictionValue = predict?.prediction?.predicted_tickets;
 
     // console.log(predictionDate, predictionValue)
-    // console.log(dates, soldTickets, occupancy)
+    // console.log(dates, soldTickets)
 
     var optionSeats = {
         title: {
@@ -61,7 +63,7 @@ export default function GraphPastSessions({ dataSet, predict }) {
 
     var optionOccupancy = {
         title: {
-            text: 'Продажи билетов (столбчатая диаграмма)'
+            text: 'Продажи билетов'
         },
         legend: {
             data: ['Фактические продажи', 'Прогноз'],

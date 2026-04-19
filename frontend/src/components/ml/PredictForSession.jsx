@@ -62,7 +62,7 @@ export default function PredictForSession() {
                         </div>
                         <GraphPredict dataSet={predict} />
 
-                        <PastSessionsStatistic play_id={predict.play_id} />
+                        <PastSessionsStatistic play_id={predict.play_id} predict={predict}/>
                     </>
                 )}
             </div>
