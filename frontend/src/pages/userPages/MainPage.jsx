@@ -10,11 +10,7 @@ export default function MainPage() {
   const [selectedGenre, setSelectedGenre] = useState('all');
   const navigate = useNavigate();
 
-  if (loading) return <div>Загрузка...</div>;
-  if (error) return <div>Ошибка: {error}</div>;
-  if (!plays || plays.length === 0) return <div>Спектаклей не найдено</div>;
-
-  const filteredPlays = plays.filter(play => {
+  const filteredPlays = plays?.filter(play => {
     const matchByTitle = play.title.toLowerCase().includes(searchQuery.toLowerCase());
 
     let matchByGenre = true;
@@ -34,17 +30,29 @@ export default function MainPage() {
 
   return (
     <div className="container">
-      <PlayFilter
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        selectedGenre={selectedGenre}
-        onGenreChange={setSelectedGenre}
-      />
+      {loading && <div className="loading loadingCenter">Загрузка...</div>}
+      {error && <div className="error errorCenter">Ошибка: {error}</div>}
+      {!loading && !error && (!plays || plays.length === 0) &&
+        <div className="loading loadingCenter">Спектаклей не найдено</div>
+      }
 
-      <PlayList
-        plays={filteredPlays}
-        onPlayClick={handlePlayClick}
-      />
+      {!loading && !error && plays?.length > 0 && (
+        <>
+
+          <PlayFilter
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            selectedGenre={selectedGenre}
+            onGenreChange={setSelectedGenre}
+          />
+
+          <PlayList
+            plays={filteredPlays}
+            onPlayClick={handlePlayClick}
+          />
+        </>
+      )}
     </div>
+
   );
 }

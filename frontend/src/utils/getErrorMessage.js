@@ -8,8 +8,15 @@ export function getErrorMessage(err) {
 
     if (data.errors && typeof data.errors === 'object') {
         const firstField = Object.keys(data.errors)[0];
-        if (firstField && firstField.length > 0) {
+        if (firstField && data.errors[firstField]?.length > 0) {
             return data.errors[firstField][0];
+        }
+    }
+
+    if (typeof data === 'object' && !data.detail && !data.message && !data.error) {
+        const firstField = Object.keys(data)[0];
+        if (firstField && Array.isArray(data[firstField]) && data[firstField].length > 0) {
+            return data[firstField][0];
         }
     }
 

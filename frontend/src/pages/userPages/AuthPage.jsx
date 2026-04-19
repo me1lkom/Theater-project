@@ -14,8 +14,10 @@ export default function AuthPage() {
     const [first_name, setFirstName] = useState('');
     const [last_name, setLastName] = useState('');
 
-    const { loginUser, loading, error } = useLogin();
-    const { registerUser } = useRegister();
+    const { loginUser, loading: loginLoading, error: loginError } = useLogin();
+    const { registerUser, loading: registerLoading, error: registerError } = useRegister();
+    const loading = isLogin ? loginLoading : registerLoading;
+    const error = isLogin ? loginError : registerError;
 
     const handleSubmitLogin = async (e) => {
         e.preventDefault();
@@ -27,15 +29,8 @@ export default function AuthPage() {
         await registerUser(username, password, password2, email, first_name, last_name, phone);
     }
 
-
-
-
-
     return (
         <div className={styles.container}>
-            {loading && <div className={styles.loading}>Загрузка...</div>}
-            {error && <div className={styles.error}>Ошибка: {error}</div>}
-
             <div className={styles.header}>
                 <h1>{isLogin ? 'Вход' : 'Регистрация'}</h1>
                 <p>Войдите или создайте учетную запись, чтобы управлять своими бронированиями</p>
@@ -54,8 +49,8 @@ export default function AuthPage() {
             {isLogin ? (
                 <>
                     <form onSubmit={handleSubmitLogin} className={styles.authForm}>
-                        <input type='text' placeholder='Логин' value={username} onChange={(e) => setUsername(e.target.value)} />
-                        <input type='password' placeholder='Пароль' value={password} onChange={(e) => setPassword(e.target.value)} />
+                        <input type='text' placeholder='Логин' value={username} onChange={(e) => setUsername(e.target.value)} required />
+                        <input type='password' placeholder='Пароль' value={password} onChange={(e) => setPassword(e.target.value)} required />
                         <button type='submit' disabled={loading}>
                             {loading ? 'Вход...' : 'Войти'}
                         </button>
@@ -64,19 +59,22 @@ export default function AuthPage() {
             ) : (
                 <>
                     <form onSubmit={handleSubmitRegister} className={styles.authForm}>
-                        <input type='text' placeholder='Логин' value={username} onChange={(e) => setUsername(e.target.value)} />
-                        <input type='password' placeholder='Пароль' value={password} onChange={(e) => setPassword(e.target.value)} />
+                        <input type='text' placeholder='Логин' value={username} onChange={(e) => setUsername(e.target.value)} required />
+                        <input type='password' placeholder='Пароль' value={password} onChange={(e) => setPassword(e.target.value)} required />
                         <input type='password' placeholder='Подтверждение пароля' value={password2} onChange={(e) => setPassword2(e.target.value)} />
-                        <input type='email' placeholder='Email' value={email} onChange={(e) => setEmail(e.target.value)} />
-                        <input type='text' placeholder='Номер телефона' value={phone} onChange={(e) => setPhone(e.target.value)} />
-                        <input type='text' placeholder='Имя' value={first_name} onChange={(e) => setFirstName(e.target.value)} />
-                        <input type='text' placeholder='Фамилия' value={last_name} onChange={(e) => setLastName(e.target.value)} />
+                        <input type='email' placeholder='Email' value={email} onChange={(e) => setEmail(e.target.value)} required />
+                        <input type='text' placeholder='Номер телефона' value={phone} onChange={(e) => setPhone(e.target.value)} required />
+                        <input type='text' placeholder='Имя' value={first_name} onChange={(e) => setFirstName(e.target.value)} required />
+                        <input type='text' placeholder='Фамилия' value={last_name} onChange={(e) => setLastName(e.target.value)} required />
                         <button type='submit' disabled={loading}>
                             {loading ? 'Регистрация...' : 'Зарегистрироваться'}
                         </button>
                     </form>
                 </>
             )}
+
+            {loading && <div className="loading loadingCenter">Загрузка...</div>}
+            {error && <div className="error errorCenter">Ошибка: {error}</div>}
         </div>
     );
 }

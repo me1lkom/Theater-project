@@ -80,3 +80,40 @@ button {
     background: none;
     font-family: inherit;
 }
+
+.error {
+    color: var(--error-color);
+    background: var(--error-bg);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-sm);
+    margin: var(--space-sm) 0;
+}
+
+.errorCenter {
+    text-align: center;
+}
+
+.errorLarge {
+    padding: var(--space-md);
+    font-size: var(--font-md);
+}
+
+
+.loading {
+    color: var(--warning-color);
+    background: var(--warning-bg);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-sm);
+    margin: var(--space-sm) 0;
+}
+
+.loadingCenter {
+    text-align: center;
+}
+
+.loadingLarge {
+    padding: var(--space-md);
+    font-size: var(--font-md);
+}

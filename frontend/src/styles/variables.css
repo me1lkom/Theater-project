@@ -14,6 +14,8 @@
     --error-color: #ff0000;
     --success-color: #00b700;
     --warning-color: #ffa500;
+    --error-bg: #cc525233;
+    --warning-bg: #d9a5434a;
 
     /* --act-color: #9c27b0;
     --accent: #aa3bff;
