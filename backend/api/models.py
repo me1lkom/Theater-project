@@ -206,10 +206,7 @@ class Panorama(models.Model):
         verbose_name='Название'
     )
 
-    image_url = models.CharField(
-        max_length=500, 
-        verbose_name='URL изображения'
-    )
+    image = models.ImageField(upload_to='panoramas/')
     
     class Meta:
         verbose_name = 'Панорама' 

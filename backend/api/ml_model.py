@@ -99,7 +99,7 @@ class SalesPredictor:
     def train(self, session_data, historical_sales):
 
         if len(session_data) < 10:
-            self.is_trained = False  # ← СБРАСЫВАЕМ!
+            self.is_trained = False
             return False, {
                 'error': f'Недостаточно данных. Нужно минимум 10 сеансов, получено: {len(session_data)}'
             }
