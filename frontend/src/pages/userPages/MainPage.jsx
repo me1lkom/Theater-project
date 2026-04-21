@@ -15,7 +15,7 @@ export default function MainPage() {
 
     let matchByGenre = true;
     if (selectedGenre !== 'all') {
-      if (play.genre != null && selectedGenre != play.genre) {
+      if (play.genre != '' && selectedGenre != play.genre) {
         matchByGenre = false;
       } 
     }
