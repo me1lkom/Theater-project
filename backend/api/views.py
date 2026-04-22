@@ -271,7 +271,7 @@ def manage_actors(request, actor_id=None):
                     status=status.HTTP_404_NOT_FOUND
                 )
         else:
-            actors = Actor.objects.all().order_by('actor_fio')
+            actors = Actor.objects.all().order_by('actor_id')
             serializer = ActorSerializer(actors, many=True)
             return Response(serializer.data)
     

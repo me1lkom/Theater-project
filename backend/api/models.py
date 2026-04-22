@@ -23,6 +23,7 @@ class Actor(models.Model):
     class Meta:
         verbose_name = 'Актер'
         verbose_name_plural = 'Актеры'
+        ordering = ['actor_id']
 
     def __str__(self):
         return self.actor_fio
@@ -38,6 +39,7 @@ class Genre(models.Model):
     class Meta:
         verbose_name = "Жанр"
         verbose_name_plural = "Жанры"
+        ordering = ['genre_id']
 
 class Play(models.Model):
     play_id = models.AutoField(primary_key=True)
@@ -75,7 +77,7 @@ class Play(models.Model):
     class Meta:
         verbose_name = 'Спекталь'
         verbose_name_plural = 'Спектакли'
-        ordering = ['title']
+        ordering = ['play_id']
 
     def __str__(self):
         return self.title
@@ -107,6 +109,7 @@ class SessionActor(models.Model):
         verbose_name = 'Актер в сеансе'
         verbose_name_plural = 'Актеры в сеансах'
         unique_together = ['session', 'actor', 'actor_role_name']
+        ordering = ['session_actor_id']
     
     def __str__(self):
         return f'{self.actor.actor_fio} - {self.actor_role_name} (сеанс {self.session_id})'
