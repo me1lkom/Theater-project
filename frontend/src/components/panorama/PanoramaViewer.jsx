@@ -41,7 +41,11 @@ export default function PanoramaViewer({ defaultImageUrl, imageUrl }) {
             panorama: preloadedImage,
             caption: '...',
             loadingTxt: 'Загрузка...',
-            navbar: true,
+            navbar: [
+                'zoom',
+                'move',
+                'caption',
+            ],
             defaultZoomLvl: 30,
         });
 
