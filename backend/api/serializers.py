@@ -48,14 +48,21 @@ class PanoramaSerializer(serializers.ModelSerializer):
         fields = ['panorama_id', 'seat_id', 'title',]
         read_only_fields = ['panorama_id']
 
+class SessionActorSerializer(serializers.ModelSerializer):
+    actor_name = serializers.CharField(source='actor.actor_fio', read_only=True)
+    
+    class Meta:
+        model = SessionActor
+        fields = ['actor_id', 'actor_name', 'actor_role_name']
 
 class SessionSerializer(serializers.ModelSerializer):   
     play_title = serializers.CharField(source='play.title', read_only=True)
     hall_name = serializers.CharField(source='hall.name', read_only=True)
-    
+    actors = SessionActorSerializer(many=True, read_only=True)
+
     class Meta:
         model = Session
-        fields = ['session_id', 'play', 'play_title', 'hall', 'hall_name', 'date', 'time']
+        fields = ['session_id', 'play', 'play_title', 'hall', 'hall_name', 'date', 'time', 'actors']
 
 from rest_framework import serializers
 from django.contrib.auth.models import User
@@ -77,11 +84,9 @@ class RegisterSerializer(serializers.ModelSerializer):
         }
     
     def validate(self, data):
-        # Проверка паролей
         if data['password'] != data['password2']:
             raise serializers.ValidationError({"password": "Пароли не совпадают"})
-        
-        # Убираем проверку телефона отсюда - она будет в view
+
         return data
     
     def validate_username(self, value):
@@ -95,14 +100,11 @@ class RegisterSerializer(serializers.ModelSerializer):
         return value
     
     def create(self, validated_data):
-        # Извлекаем phone
         phone = validated_data.pop('phone', '')
         validated_data.pop('password2')
-        
-        # Создаем пользователя
+
         user = User.objects.create_user(**validated_data)
-        
-        # Создаем профиль с телефоном
+
         Profile.objects.create(user=user, phone=phone)
         
         return user
@@ -192,12 +194,7 @@ class BulkBasketSerializer(serializers.Serializer):
             raise serializers.ValidationError("Места не должны повторяться")
         return value
     
-class SessionActorSerializer(serializers.ModelSerializer):
-    actor_name = serializers.CharField(source='actor.actor_fio', read_only=True)
-    
-    class Meta:
-        model = SessionActor
-        fields = ['actor_id', 'actor_name', 'actor_role_name']
+
 
 class SessionWithActorsSerializer(serializers.ModelSerializer):
     session_actors = SessionActorSerializer(many=True, read_only=True)

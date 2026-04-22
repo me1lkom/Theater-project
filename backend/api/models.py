@@ -288,7 +288,7 @@ class Session(models.Model):
     class Meta:
         verbose_name = 'Сеанс'
         verbose_name_plural = 'Сеансы'
-        ordering = ['date','time']
+        ordering = ['session_id']
         unique_together = ['hall', 'date', 'time']
 
     def __str__(self):

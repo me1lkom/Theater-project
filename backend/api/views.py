@@ -1338,7 +1338,8 @@ def manage_sessions(request, session_id=None):
         play_id = data.get('play_id')
         date_str = data.get('date')
         time_str = data.get('time')
-        
+        actors_data = data.get('actors', [])
+
         if not all([play_id, date_str, time_str]):
             return Response(
                 {'error': 'Не указаны все необходимые данные (play_id, date, time)'},
@@ -1390,6 +1391,16 @@ def manage_sessions(request, session_id=None):
             date=session_date,
             time=session_time
         )
+
+        for actor_data in actors_data:
+            actor_id = actor_data.get('actor_id')
+            role = actor_data.get('role')
+            if actor_id and role:
+                SessionActor.objects.create(
+                    session=session,
+                    actor_id=actor_id,
+                    actor_role_name=role
+                )        
         
         ActionLog.objects.create(
             user_id=request.user.id,
@@ -1455,6 +1466,18 @@ def manage_sessions(request, session_id=None):
         
         session.save()
         
+        if 'actors' in data:
+            session.session_actors.all().delete()
+            for actor_data in data['actors']:
+                actor_id = actor_data.get('actor_id')
+                role = actor_data.get('role')
+                if actor_id and role:
+                    SessionActor.objects.create(
+                        session=session,
+                        actor_id=actor_id,
+                        actor_role_name=role
+                    )
+
         ActionLog.objects.create(
             user_id=request.user.id,
             action_type='UPDATE_SESSION',
@@ -2221,7 +2244,6 @@ def manage_panoramas(request, panorama_id=None):
         if serializer.is_valid():
             panorama = serializer.save()
             
-            # Исправлено: сообщение про место, а не про сектор
             ActionLog.objects.create(
                 user_id=request.user.id,
                 action_type='CREATE_PANORAMA',
@@ -2788,11 +2810,11 @@ def model_info(request):
 
 
 @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated])
 def download_sql_backup(request):
 
-    # if not is_admin_or_manager(request.user):
-    #     return Response({'error': 'Недостаточно прав'}, status=403)
+    if not is_admin_or_manager(request.user):
+        return Response({'error': 'Недостаточно прав'}, status=403)
     
     try:
         db_settings = settings.DATABASES['default']
