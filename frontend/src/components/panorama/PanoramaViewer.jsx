@@ -9,8 +9,11 @@ export default function PanoramaViewer({ defaultImageUrl, imageUrl }) {
     const [imageLoaded, setImageLoaded] = useState(false);
     const [preloadedImage, setPreloadedImage] = useState(null);
 
+    let seatRow = String(imageUrl).slice(11, 15).split('-');
+
     useEffect(() => {
         if (!defaultImageUrl) return;
+
 
         console.log(`Начинаем предзагрузку изображения:, ${defaultImageUrl}`);
 
@@ -36,9 +39,10 @@ export default function PanoramaViewer({ defaultImageUrl, imageUrl }) {
         viewerRef.current = new Viewer({
             container: containerRef.current,
             panorama: preloadedImage,
-            caption: 'Панорама',
+            caption: '...',
             loadingTxt: 'Загрузка...',
             navbar: true,
+            defaultZoomLvl: 30,
         });
 
         return () => {
@@ -53,7 +57,10 @@ export default function PanoramaViewer({ defaultImageUrl, imageUrl }) {
         if (!viewerRef.current) return;
         if (!imageUrl) return;
 
+
+
         console.log(`Переключаем панораму на:, ${imageUrl}`);
+        viewerRef.current.setOption('caption', ('Ряд: ' + seatRow[0] + ' Место: ' + seatRow[1]));
         viewerRef.current.setPanorama(imageUrl);
     }, [imageUrl]);
 

@@ -2,7 +2,7 @@ import { useSeats } from '../../hooks/useSeats';
 import { useState, useEffect, useRef } from 'react';
 import styles from './HallPlan.module.css';
 
-export default function HallPlan({ onClick }) {
+export default function HallPlan({ placesWithPanoramas, onClick }) {
     const { seats, loading, error } = useSeats();
     const [selectedSeat, setSelectedSeat] = useState(null);
 
@@ -34,11 +34,24 @@ export default function HallPlan({ onClick }) {
             rect.setAttribute('data-seat', seatData.seat_number);
             rect.classList.add('seat');
 
-            if (seatData.sector_name === 'Партер') rect.setAttribute('fill', '#2ecc71');
-            else if (seatData.sector_name === 'Амфитеатр') rect.setAttribute('fill', '#3498db');
-            else if (seatData.sector_name === 'Балкон') rect.setAttribute('fill', '#e67e22');
-            rect.setAttribute('cursor', 'pointer')
-            rect.removeAttribute('opacity');
+            const seatRow = String(seatData.row_number) + '-' + String(seatData.seat_number)
+            // console.log(seatRow);
+
+
+            if (!placesWithPanoramas.includes(seatRow)) {
+                rect.classList.add('taken');
+                rect.setAttribute('fill', '#666');
+                rect.setAttribute('opacity', '0.5');
+                rect.setAttribute('cursor', 'default')
+
+            } else {
+                if (seatData.sector_name === 'Партер') rect.setAttribute('fill', '#2ecc71');
+                else if (seatData.sector_name === 'Амфитеатр') rect.setAttribute('fill', '#3498db');
+                else if (seatData.sector_name === 'Балкон') rect.setAttribute('fill', '#e67e22');
+                rect.setAttribute('cursor', 'pointer')
+                rect.removeAttribute('opacity');
+            }
+
 
             if (!rect.parentNode.querySelector(`.seat-number-${seatData.seat_id}`)) {
                 const x = parseFloat(rect.getAttribute('x'));
@@ -57,6 +70,13 @@ export default function HallPlan({ onClick }) {
             }
 
             rect.onclick = () => {
+
+                const isTaken = rect.classList.contains('taken');
+
+                if (isTaken) {
+                    return;
+                }
+
                 console.log('Обработка клика');
                 const seatId = parseInt(rect.getAttribute('data-seat-id'));
                 const row = rect.getAttribute('data-row');

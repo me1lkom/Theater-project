@@ -1,3 +1,9 @@
+.container {
+    max-width: 1200px;
+    margin: var(--space-xl) auto;
+    padding: var(--space-lg);
+}
+
 .button {
     padding: var(--space-sm) var(--space-md);
     border: none;
