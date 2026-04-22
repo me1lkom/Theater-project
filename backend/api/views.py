@@ -2645,7 +2645,7 @@ def get_predictions(request):
     if date_to:
         predictions = predictions.filter(session__date__lte=date_to)
 
-    order_by = request.query_params.get('order_by', 'prediction_id')
+    order_by = request.query_params.get('order_by', '-prediction_id')
     predictions = predictions.order_by(order_by)
     
     limit = request.query_params.get('limit', 5)
