@@ -9,10 +9,6 @@ export default function LoggingPage() {
     const { logTypes, loading: typesLoading } = useLogTypes();
     const [autoRefresh, setAutoRefresh] = useState(false);
 
-    const uniqueLogTypes = logTypes ? [...new Set(logTypes)] : [];
-
-
-
     useEffect(() => {
         if (!autoRefresh) return;
 
@@ -30,6 +26,8 @@ export default function LoggingPage() {
         if (actionType.startsWith('BUY')) return styles.typeBuy;
         if (actionType.startsWith('SESSION_PREDICT')) return styles.typePredict;
         if (actionType.startsWith('ADD')) return styles.typeBuy;
+        if (actionType.startsWith('RETURN')) return styles.typeReturn;
+        if (actionType.startsWith('DOWNLOAD')) return styles.typeDownload;
         return '';
     };
 
@@ -50,7 +48,7 @@ export default function LoggingPage() {
                     onChange={(e) => setFilter(e.target.value)}
                 >
                     <option value="all">Все типы</option>
-                    {!typesLoading && uniqueLogTypes.map(type => (
+                    {!typesLoading && logTypes.map(type => (
                         <option key={type} value={type}>{type}</option>
                     ))}
                 </select>

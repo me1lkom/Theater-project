@@ -26,14 +26,14 @@ export function useRegister() {
                 navigate('/');
                 return { success: true };
             } else {
-                const errorMsg = getErrorMessage({ response: { data: response } });
-                setError(errorMsg);
-                return { success: false, error: errorMsg };
+                const errorMessage = getErrorMessage({ response: { data: response } });
+                setError(errorMessage);
+                return { success: false, error: errorMessage };
             }
         } catch (err) {
-            const errorMsg = getErrorMessage(err);
-            setError(errorMsg);
-            return { success: false, error: errorMsg };
+            const errorMessage = getErrorMessage(err);
+            setError(errorMessage);
+            return { success: false, error: errorMessage };
         } finally {
             setLoading(false);
         }

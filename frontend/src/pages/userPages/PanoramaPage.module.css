@@ -1,0 +1,9 @@
+.button {
+    padding: var(--space-sm) var(--space-md);
+    border: none;
+    background: var(--bg-inv);
+    color: var(--text);
+    font-size: var(--font-md);
+    border-radius: var(--radius-md);
+    margin-top: var(--space-md);
+}

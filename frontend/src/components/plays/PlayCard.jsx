@@ -34,7 +34,7 @@ export default function PlayCard({ play, onClick }) {
     <article className={styles.playCard} onClick={() => onClick(play.play_id)}>
       <div className={styles.posterContainer}>
         <img src={play.poster_url} alt={play.title} />
-        <div className={styles.genre}>{play.genre_name}</div>
+        {play.genre ? (<div className={styles.genre}>{play.genre_name}</div>) : (null)}
       </div>
       <div className={styles.infoContainer}>
         <div className={styles['info-all']}>

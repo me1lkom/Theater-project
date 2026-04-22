@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-
 import logo from "../../assets/logo.svg";
 import max from "../../assets/icon/max.svg";
 import tg from "../../assets/icon/tg.svg";
@@ -11,7 +10,9 @@ export default function Footer() {
     <footer className={styles.footer}>
       <div className={styles.leftBlock}>
         <div className={styles.logo}>
-          <img src={logo} alt="logo" />
+          <Link to="/">
+            <img src={logo} alt="Логотип театра" />
+          </Link>
         </div>
         <div className={styles.social}>
           <a href="#"><img src={max} alt="max" /></a>

@@ -19,7 +19,6 @@ const addToQueue = (resolve, reject) => {
     failedQueue.push({ resolve, reject });
 };
 
-// Функция для очистки и редиректа
 const redirectToLogin = async () => {
     const { logout } = useAuthStore.getState();
     await logout();
@@ -50,19 +49,16 @@ apiClient.interceptors.response.use(
                                originalRequest.url?.includes('/auth/register') ||
                                originalRequest.url?.includes('/auth/refresh');
 
-        // Если не 401 и есть авторирация, пропускаем ошибку
         if (error.response?.status !== 401 || isAuthEndpoint) {
             return Promise.reject(error);
         }
         
-        // Если ошибка от эндпоинта /auth/refresh/, то редирект на логин
         if (originalRequest.url === '/auth/refresh/') {
             console.log('Refresh token expired or invalid, redirecting to login');
             await redirectToLogin();
             return Promise.reject(error);
         }
         
-        // Если уже обновляем токен, добавляем новый запрос в очередь
         if (isRefreshing) {
             console.log('Обновление токена');
             return new Promise((resolve, reject) => {
@@ -75,7 +71,6 @@ apiClient.interceptors.response.use(
             });
         }
         
-        // Первый запрос с 401 - запускаем обновление токена
         originalRequest._retry = true;
         isRefreshing = true;
         
@@ -87,17 +82,14 @@ apiClient.interceptors.response.use(
             
             processQueue(null);
             
-            // Повторяем исходный запрос
             console.log('Повторение исходных запросов');
             return apiClient(originalRequest);
             
         } catch (refreshError) {
             console.log(`Токен не обновлён:', ${refreshError}`);
             
-            // Обрабатываем очередь с ошибкой
             processQueue(refreshError, null);
             
-            // Редирект на логин
             await redirectToLogin();
             
             return Promise.reject(refreshError);

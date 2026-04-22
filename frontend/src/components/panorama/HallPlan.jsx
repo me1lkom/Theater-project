@@ -1,51 +1,17 @@
-import { useAvailableSeats } from '../../../hooks/useAvailableSeats';
-import { useSeats } from '../../../hooks/useSeats';
-import { useAddToBasket } from '../../../hooks/useAddToBasket';
+import { useSeats } from '../../hooks/useSeats';
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import styles from './PlayAvailableSeats.module.css';
-import useAuthStore from '../../../store/useAuthStore';
+import styles from './HallPlan.module.css';
 
-export default function PlayAvailableSeats({ sessionId }) {
+export default function HallPlan({ onClick }) {
     const { seats, loading, error } = useSeats();
-    const { availableSeats } = useAvailableSeats(sessionId);
-    const [selectedSeats, setSelectedSeats] = useState([]);
-    const { addTicketToBasket } = useAddToBasket();
+    const [selectedSeat, setSelectedSeat] = useState(null);
 
-    const { isAuthenticated } = useAuthStore();
 
     const svgRef = useRef(null);
     const initialized = useRef(false);
-    const navigate = useNavigate();
 
-    const resetSeats = () => {
-        if (!svgRef.current) return;
-
-        const svg = svgRef.current;
-        const rectangles = svg.querySelectorAll('rect');
-
-        rectangles.forEach(rect => {
-            rect.classList.remove('seat', 'selected', 'taken');
-
-            rect.removeAttribute('data-seat-id');
-            rect.removeAttribute('data-sector');
-            rect.removeAttribute('data-row');
-            rect.removeAttribute('data-seat');
-
-            rect.removeAttribute('fill');
-            rect.removeAttribute('opacity');
-            rect.style.fill = '';
-            rect.style.opacity = '';
-
-            rect.onclick = null;
-        });
-
-        const numbers = svg.querySelectorAll('.seat-number');
-        numbers.forEach(num => num.remove());
-    };
 
     const initSeatMap = () => {
-        if (!seats || !availableSeats) return;
         if (!svgRef.current) return;
 
         const svg = svgRef.current;
@@ -58,8 +24,6 @@ export default function PlayAvailableSeats({ sessionId }) {
 
         console.log(`Найдено мест:', ${seatRects.length}`);
 
-        const freeSeatIds = new Set(availableSeats.map(s => s.seat_id));
-
         seatRects.forEach((rect, index) => {
             const seatData = seats[index];
             if (!seatData) return;
@@ -70,19 +34,11 @@ export default function PlayAvailableSeats({ sessionId }) {
             rect.setAttribute('data-seat', seatData.seat_number);
             rect.classList.add('seat');
 
-            if (!freeSeatIds.has(seatData.seat_id)) {
-                rect.classList.add('taken');
-                rect.setAttribute('fill', '#666');
-                rect.setAttribute('opacity', '0.5');
-                rect.setAttribute('cursor', 'default')
-
-            } else {
-                if (seatData.sector_name === 'Партер') rect.setAttribute('fill', '#2ecc71');
-                else if (seatData.sector_name === 'Амфитеатр') rect.setAttribute('fill', '#3498db');
-                else if (seatData.sector_name === 'Балкон') rect.setAttribute('fill', '#e67e22');
-                rect.setAttribute('cursor', 'pointer')
-                rect.removeAttribute('opacity');
-            }
+            if (seatData.sector_name === 'Партер') rect.setAttribute('fill', '#2ecc71');
+            else if (seatData.sector_name === 'Амфитеатр') rect.setAttribute('fill', '#3498db');
+            else if (seatData.sector_name === 'Балкон') rect.setAttribute('fill', '#e67e22');
+            rect.setAttribute('cursor', 'pointer')
+            rect.removeAttribute('opacity');
 
             if (!rect.parentNode.querySelector(`.seat-number-${seatData.seat_id}`)) {
                 const x = parseFloat(rect.getAttribute('x'));
@@ -101,98 +57,52 @@ export default function PlayAvailableSeats({ sessionId }) {
             }
 
             rect.onclick = () => {
-
-
+                console.log('Обработка клика');
                 const seatId = parseInt(rect.getAttribute('data-seat-id'));
-                
-                const isTaken = rect.classList.contains('taken');
+                const row = rect.getAttribute('data-row');
+                const seat = rect.getAttribute('data-seat');
 
-                if (isTaken) {
-                    alert('Это место уже занято');
-                    return;
-                }
+                setSelectedSeat(prev => {
+                    const oldSeatId = prev;
 
-                const isSelected = rect.classList.contains('selected');
+                    console.log('oldSeatId', oldSeatId);
+                    console.log('seatId', seatId);
 
-                if (isSelected) {
-                    rect.classList.remove('selected');
+                    if (oldSeatId === seatId) return oldSeatId;
 
-                    const sector = rect.getAttribute('data-sector');
-                    if (sector === 'Партер') rect.setAttribute('fill', '#2ecc71');
-                    else if (sector === 'Амфитеатр') rect.setAttribute('fill', '#3498db');
-                    else if (sector === 'Балкон') rect.setAttribute('fill', '#e67e22');
-                    setSelectedSeats(prev => prev.filter(id => id !== seatId));
-                } else {
-                    console.log(selectedSeats.length)
                     rect.classList.add('selected');
                     rect.setAttribute('fill', '#f1c40f');
-                    setSelectedSeats(prev => [...prev, seatId]);
-                }
+
+                    if (oldSeatId == null) return seatId;
+
+                    const oldRect = document.querySelector(`[data-seat-id="${oldSeatId}"]`);
+                    oldRect.classList.remove('selected');
+                    const sector = oldRect.getAttribute('data-sector');
+                    if (sector === 'Партер') oldRect.setAttribute('fill', '#2ecc71');
+                    else if (sector === 'Амфитеатр') oldRect.setAttribute('fill', '#3498db');
+                    else if (sector === 'Балкон') oldRect.setAttribute('fill', '#e67e22');
+                    console.log('Снимаем выделение с места', oldRect);
+
+                    return seatId;
+                });
+
+                onClick({ seatId, row, seat });
             };
         });
     };
 
-    useEffect(() => {
-        if (!sessionId) return;
 
-        resetSeats();
-        setSelectedSeats([]);
-        initialized.current = false;
-
-    }, [sessionId]);
 
     useEffect(() => {
-        if (!seats || !availableSeats) return;
         if (!svgRef.current) return;
         if (initialized.current) return;
 
         initSeatMap();
         initialized.current = true;
 
-    }, [seats, availableSeats]);
-
-    const handleBooking = async () => {
-        if (!isAuthenticated) {
-            alert('Небходимо войти в аккаунт, чтобы купить билет(ы)');
-            navigate('/auth')
-            return;
-        }
+    }, [seats]);
 
 
-        if (selectedSeats.length === 0) {
-            alert('Выберите места');
-            return;
-        }
-        if (selectedSeats.length > 5) {
-            alert('Нельзя забронировать более 5 мест за раз');
-            return;
-        }
-
-
-
-        console.log(`Попытка отправить sessionId: ${sessionId}, seatIds:`, selectedSeats);
-
-        const result = await addTicketToBasket(sessionId, selectedSeats);
-
-        if (result.success) {
-            // alert(`${selectedSeats.length} мест(а) забронировано`);
-            navigate('/payment', {
-                state: {
-                    sessionId: sessionId,
-                    selectedSeats: selectedSeats
-                }
-            });
-        } else {
-            alert(`Ошибка бронирования: ${result.error}`);
-        }
-    }
-
-
-    if (!sessionId) return (
-        <div className={styles.seatsInfo}>
-            <div>Сначала выберите дату и время, чтобы увидеть занятые места</div>
-        </div>
-    )
 
     if (loading) return <div>Загрузка схемы зала...</div>;
     if (error) return <div>Ошибка: {error}</div>;
@@ -523,15 +433,6 @@ export default function PlayAvailableSeats({ sessionId }) {
                         </clipPath>
                     </defs>
                 </svg>
-            </div>
-
-            <div className={styles.infoPanel}>
-                <div>
-                    Выбрано мест: <strong className={styles.selectedCount}>{selectedSeats.length}</strong>
-                </div>
-                <button className={styles.buyButton} onClick={handleBooking} disabled={selectedSeats.length === 0}>
-                    Купить
-                </button>
             </div>
         </div>
     );
