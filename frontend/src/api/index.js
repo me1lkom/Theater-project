@@ -22,7 +22,7 @@ const addToQueue = (resolve, reject) => {
 const redirectToLogin = async () => {
     const { logout } = useAuthStore.getState();
     await logout();
-    
+
     if (!window.location.pathname.includes('/auth')) {
         window.location.href = '/auth';
     }
@@ -30,7 +30,7 @@ const redirectToLogin = async () => {
 
 export const apiClient = axios.create({
     baseURL: "http://localhost:8000/api",
-    withCredentials: true, 
+    withCredentials: true,
     headers: {
         "Content-Type": "application/json",
         "accept": "application/json",
@@ -42,23 +42,23 @@ apiClient.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
-        
+
         console.log(`Ошибка, поймана интерцептором: ${error.response?.status}, ${originalRequest.url}`);
-        
-        const isAuthEndpoint = originalRequest.url?.includes('/auth/login') || 
-                               originalRequest.url?.includes('/auth/register') ||
-                               originalRequest.url?.includes('/auth/refresh');
+
+        const isAuthEndpoint = originalRequest.url?.includes('/auth/login') ||
+            originalRequest.url?.includes('/auth/register') ||
+            originalRequest.url?.includes('/auth/refresh');
 
         if (error.response?.status !== 401 || isAuthEndpoint) {
             return Promise.reject(error);
         }
-        
+
         if (originalRequest.url === '/auth/refresh/') {
             console.log('Refresh token expired or invalid, redirecting to login');
             await redirectToLogin();
             return Promise.reject(error);
         }
-        
+
         if (isRefreshing) {
             console.log('Обновление токена');
             return new Promise((resolve, reject) => {
@@ -70,30 +70,30 @@ apiClient.interceptors.response.use(
                 return Promise.reject(err);
             });
         }
-        
+
         originalRequest._retry = true;
         isRefreshing = true;
-        
+
         console.log('Обновляем токен');
-        
+
         try {
             await apiClient.post('/auth/refresh/');
             console.log('Токен обновлён');
-            
+
             processQueue(null);
-            
+
             console.log('Повторение исходных запросов');
             return apiClient(originalRequest);
-            
+
         } catch (refreshError) {
             console.log(`Токен не обновлён:', ${refreshError}`);
-            
+
             processQueue(refreshError, null);
-            
+
             await redirectToLogin();
-            
+
             return Promise.reject(refreshError);
-            
+
         } finally {
             isRefreshing = false;
             console.log('Refresh flag reset');
@@ -147,6 +147,11 @@ export async function getActorsBySession(session_id) {
 // –– Запросы пользователь
 export async function getMe() {
     const response = await apiClient.get('/auth/me/')
+    return response.data;
+}
+
+export async function changingMyInfo(credentials) {
+    const response = await apiClient.patch('/auth/profile/', credentials);
     return response.data;
 }
 
@@ -227,7 +232,7 @@ export async function HistoryPredictions() {
     const response = await apiClient.get(`/ml/predictions/`);
     return response.data;
 }
- 
+
 export async function PastSessions(play_id) {
     const response = await apiClient.get(`/sessions/past/?play_id=${play_id}`);
     return response.data;
@@ -256,7 +261,7 @@ export async function getBackup() {
 }
 
 // –– Управление данными
-    // - спектакли
+// - спектакли
 export async function createPlay(data) {
     const response = await apiClient.post('/plays/manage/', data);
     return response.data;
@@ -271,7 +276,7 @@ export async function deletePlay(play_id) {
     const response = await apiClient.delete(`/plays/manage/${play_id}/`);
     return response.data;
 }
-    // - сеансы
+// - сеансы
 export async function createSession(data) {
     const response = await apiClient.post('/sessions/manage/', data);
     return response.data;
@@ -286,7 +291,7 @@ export async function deleteSession(session_id) {
     const response = await apiClient.delete(`/sessions/manage/${session_id}/`);
     return response.data;
 }
-    // - жанры
+// - жанры
 export async function createGenre(data) {
     const response = await apiClient.post('/genres/manage/', data);
     return response.data
@@ -306,7 +311,7 @@ export async function deleteGenre(genre_id) {
     const response = await apiClient.delete(`/genres/manage/${genre_id}/`);
     return response.data;
 }
-    // - актеры
+// - актеры
 export async function getActors() {
     const response = await apiClient.get('/actors/manage/');
     return response.data;
