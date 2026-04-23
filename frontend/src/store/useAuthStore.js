@@ -4,6 +4,7 @@ const useAuthStore = create((set) => ({
     user: null,
     isAuthenticated: false,
     isLoading: true,
+    theme: 'light',
 
     setUser: (user) => {
         set({ user: user, isAuthenticated: true, isLoading: false });
@@ -24,6 +25,11 @@ const useAuthStore = create((set) => ({
 
     },
 
+    toggleTheme: () => set((state) => {
+        const newTheme = state.theme === 'light' ? 'dark' : 'light';
+        localStorage.setItem('theme', newTheme);
+        return { theme: newTheme };
+    }),
 
     hydrate: () => {
         const savedUser = localStorage.getItem('user');

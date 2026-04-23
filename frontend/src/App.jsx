@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import "./App.css";
+import './styles/variables.css'
 import Header from "./components/common/Header";
 import Footer from "./components/common/Footer";
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
@@ -20,10 +21,22 @@ import AdminMainPage from "./pages/adminPages/AdminMainPage";
 function App() {
   const hydrate = useAuthStore((state) => state.hydrate);
 
-  useEffect(() => {
-    hydrate()
-  }, []);
+  const theme = useAuthStore((state) => state.theme);
 
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  useEffect(() => {
+    hydrate();
+    
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    } else {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+  }, []);
 
   return (
     <BrowserRouter>

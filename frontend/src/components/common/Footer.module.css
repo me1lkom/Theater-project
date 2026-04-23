@@ -13,9 +13,10 @@
     align-items: stretch;
 }
 
-.logo img {
+.logo svg {
     height: 40px;
     width: auto;
+    fill: var(--text-h);
 }
 
 .social {
