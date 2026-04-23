@@ -3,27 +3,51 @@ import { useGetActors } from '../../hooks/useGetActors';
 import { createActor, changeActor, deleteActor } from '../../api/index';
 import ActorForm from './ActorForm';
 import styles from './ControlActorData.module.css';
+import DataFilter from './DataFilter';
 
+import Swal from 'sweetalert2'
+import withReactContent from 'sweetalert2-react-content'
 
 export default function ControlPlayData() {
     const { actors, loading, error, refetch } = useGetActors();
 
+    const [searchQuery, setSearchQuery] = useState('');
+
+
     const [selectedActor, setSelectedActor] = useState(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
 
-    const handlePlayDelete = async () => {
-        let question = confirm('Вы хотите удалить этого актера?');
-        if (question) {
-            await deleteActor(selectedActor.actor_id);
-            await refetch();
-            setSelectedActor(null);
-            setIsFormOpen(false);
-            alert('Спектакль успешно удален.')
-        } else {
-            setSelectedActor(null);
-            console.log('Отмена действия');
-        }
+    const MySwal = withReactContent(Swal);
 
+    const handlePlayDelete = async () => {
+        MySwal.fire({
+            icon: "error",
+            title: <p>Вы хотите удалить этого актера?</p>,
+            showConfirmButton: true,
+            showDenyButton: true,
+            denyButtonText: `Отмена`,
+            confirmButtonText: `Да, удалить`,
+            reverseButtons: true
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                await deleteActor(selectedActor.actor_id);
+                await refetch();
+                setSelectedActor(null);
+                setIsFormOpen(false);
+
+                MySwal.fire({
+                    title: 'Актёр успешно удалён!',
+                    icon: 'success',
+                    showConfirmButton: false,
+                    timer: 1500,
+                    toast: true,
+                    position: 'top-right',
+                })
+            } else {
+                setSelectedActor(null);
+                console.log('Отмена действия');
+            }
+        })
     }
 
     const handlePlayChange = async (formData) => {
@@ -31,15 +55,35 @@ export default function ControlPlayData() {
         await refetch();
         setSelectedActor(null);
         setIsFormOpen(false);
-        alert('Спектакль успешно изменен.')
+        MySwal.fire({
+            title: 'Актёр успешно изменён!',
+            icon: 'success',
+            showConfirmButton: false,
+            timer: 1500,
+            toast: true,
+            position: 'top-right',
+        })
     }
 
     const handlePlayCreate = async (formData) => {
         await createActor(formData);
         await refetch();
         setIsFormOpen(false);
-        alert('Актер успешно создан.')
+        MySwal.fire({
+            title: 'Актёр успешно создан!',
+            icon: 'success',
+            showConfirmButton: false,
+            timer: 1500,
+            toast: true,
+            position: 'top-right',
+        })
     }
+
+    const filteredData = actors?.filter(actor => {
+        const matchByTitle = actor.actor_fio.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchByTitle;
+    });
+
 
     if (loading) return <div>Загрузка...</div>;
     if (error) return <div>Ошибка: {error}</div>;
@@ -47,8 +91,11 @@ export default function ControlPlayData() {
     return (
         <div className={styles.container}>
             <div className={styles.leftColumn}>
+                <DataFilter
+                    searchQuery={searchQuery}
+                    onSearchChange={setSearchQuery} />
                 <div className={styles.actorsList}>
-                    {actors?.map(actor => (
+                    {filteredData?.map(actor => (
                         <div
                             key={actor.actor_id}
                             className={`${styles.actorCard} ${selectedActor?.actor_id === actor.actor_id ? styles.selected : ''}`}

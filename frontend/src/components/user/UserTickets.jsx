@@ -5,6 +5,9 @@ import TicketsCard from './TicketsCard';
 import ReturnModal from './ReturnModal';
 import styles from './UserTickets.module.css';
 
+import Swal from 'sweetalert2'
+import withReactContent from 'sweetalert2-react-content'
+
 export default function UserTickets() {
     const { tickets, loading, error, refetch } = useMyTickets();
 
@@ -12,6 +15,8 @@ export default function UserTickets() {
 
     const [selectedTicketId, setSelectedTicketId] = useState(null);
     const [showModal, setShowModal] = useState(false);
+
+    const MySwal = withReactContent(Swal);
 
     const handleReturnClick = (ticketId) => {
         setSelectedTicketId(ticketId);
@@ -25,7 +30,14 @@ export default function UserTickets() {
             setShowModal(false);
             setSelectedTicketId(null);
             if (refetch) refetch();
-            // alert('Билет успешно возвращен');
+            MySwal.fire({
+                title: 'Билет успешно возвращен!',
+                icon: 'success',
+                showConfirmButton: false,
+                timer: 1500,
+                toast: true,
+                position: 'top-right',
+            })
         } else {
             alert(`Ошибка при возврате билета ${returnError}`);
         }

@@ -1,0 +1,14 @@
+.playFilter {
+    display: flex;
+    width: 100%;
+}
+
+.playFilter input{
+    background-color: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-sm);
+    color: var(--text-h);
+    outline:none;
+    width: 100%;
+}

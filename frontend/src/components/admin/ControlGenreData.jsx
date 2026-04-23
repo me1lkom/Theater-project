@@ -3,26 +3,51 @@ import { useGenres } from '../../hooks/useGenres';
 import { createGenre, changeGenre, deleteGenre } from '../../api/index';
 import GenreForm from './GenreForm';
 import styles from './ControlGenreData.module.css';
+import DataFilter from './DataFilter';
 
+import Swal from 'sweetalert2'
+import withReactContent from 'sweetalert2-react-content'
 
 export default function ControlPlayData() {
     const { genres, loading, error, refetch } = useGenres();
 
+    const [searchQuery, setSearchQuery] = useState('');
+
+
     const [selectedGenre, setSelectedGenre] = useState(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
 
+    const MySwal = withReactContent(Swal);
+
     const handlePlayDelete = async () => {
-        let question = confirm('Вы хотите удалить этот жанр?');
-        if (question) {
-            await deleteGenre(selectedGenre.genre_id);
-            await refetch();
-            setSelectedGenre(null);
-            setIsFormOpen(false);
-            alert('Жанр успешно удален.')
-        } else {
-            setSelectedGenre(null);
-            console.log('Отмена действия');
-        }
+        MySwal.fire({
+            icon: "error",
+            title: <p>Вы хотите удалить этот жанр?</p>,
+            showConfirmButton: true,
+            showDenyButton: true,
+            denyButtonText: `Отмена`,
+            confirmButtonText: `Да, удалить`,
+            reverseButtons: true
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                await deleteGenre(selectedGenre.genre_id);
+                await refetch();
+                setSelectedGenre(null);
+                setIsFormOpen(false);
+
+                MySwal.fire({
+                    title: 'Жанр успешно удалён!',
+                    icon: 'success',
+                    showConfirmButton: false,
+                    timer: 1500,
+                    toast: true,
+                    position: 'top-right',
+                })
+            } else {
+                setSelectedGenre(null);
+                console.log('Отмена действия');
+            }
+        })
 
     }
 
@@ -31,15 +56,34 @@ export default function ControlPlayData() {
         await refetch();
         setSelectedGenre(null);
         setIsFormOpen(false);
-        alert('Жанр успешно изменен.')
+        MySwal.fire({
+            title: 'Жанр успешно изменён!',
+            icon: 'success',
+            showConfirmButton: false,
+            timer: 1500,
+            toast: true,
+            position: 'top-right',
+        })
     }
 
     const handlePlayCreate = async (formData) => {
         await createGenre(formData);
         await refetch();
         setIsFormOpen(false);
-        alert('Актер успешно создан.')
+         MySwal.fire({
+            title: 'Жанр успешно создан!',
+            icon: 'success',
+            showConfirmButton: false,
+            timer: 1500,
+            toast: true,
+            position: 'top-right',
+        })
     }
+
+    const filteredData = genres?.filter(genre => {
+        const matchByTitle = genre.name.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchByTitle;
+    });
 
     if (loading) return <div>Загрузка...</div>;
     if (error) return <div>Ошибка: {error}</div>;
@@ -47,8 +91,11 @@ export default function ControlPlayData() {
     return (
         <div className={styles.container}>
             <div className={styles.leftColumn}>
+                <DataFilter
+                    searchQuery={searchQuery}
+                    onSearchChange={setSearchQuery} />
                 <div className={styles.genresList}>
-                    {genres?.map(genre => (
+                    {filteredData?.map(genre => (
                         <div
                             key={genre.genre_id}
                             className={`${styles.genreCard} ${selectedGenre?.genre_id === genre.genre_id ? styles.selected : ''}`}

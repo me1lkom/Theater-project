@@ -7,6 +7,7 @@ export default function PlayForm({ Data, genres, onSubmit, onClose }) {
     const { play } = usePlay(Data?.play_id);
     const isEdit = !!Data;
 
+
     const [formData, setFormData] = useState({
         title: '',
         duration: '',
