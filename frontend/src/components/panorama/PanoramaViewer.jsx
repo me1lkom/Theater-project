@@ -44,6 +44,7 @@ export default function PanoramaViewer({ defaultImageUrl, imageUrl }) {
                 'zoom',
                 'move',
                 'caption',
+                'fullscreen',
             ],
             defaultZoomLvl: 30,
         });
