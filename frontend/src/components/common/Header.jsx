@@ -1,9 +1,15 @@
 import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import useAuthStore from "../../store/useAuthStore";
-import logo from "../../assets/logo.svg";
+// import logo from "../../assets/logo.svg";
 import styles from './Header.module.css';
 
+
 export default function Header() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  const closeMenu = () => setIsMenuOpen(false);
+
   const navigate = useNavigate();
 
   const { toggleTheme } = useAuthStore();
@@ -45,49 +51,68 @@ export default function Header() {
         </Link>
       </div>
 
-      <nav className={styles.header__nav}>
+      <button className={styles.burger} onClick={toggleMenu}>
+        ☰
+      </button>
+
+
+      <nav className={`${styles.header__nav} ${isMenuOpen ? styles.open : ''}`}>
         <ul className={styles.nav__list}>
           <li><Link to="/">Афиша</Link></li>
           <li><Link to="/contact">Контакты</Link></li>
           <li><Link to="/panorama">Панорама</Link></li>
         </ul>
+
+        <ul className={styles.header__actions}>
+          <li>
+            <button className={styles.toggleTheme} onClick={themeToggle}>
+              Изменение темы
+            </button>
+          </li>
+
+
+          {isAuthenticated ? (
+            <li>
+              <button
+                className={styles.actions__button}
+                onClick={handleProfileClick}
+                aria-label="Профиль"
+              >
+                Профиль
+              </button>
+            </li>
+
+          ) : (
+            <li>
+              <button
+                className={`${styles.actions__button} ${styles.notAuth}`}
+                onClick={handleLoginClick}
+                aria-label="Войти"
+              >
+                Войти
+              </button>
+            </li>
+
+          )}
+
+          {/* {console.log(user?.role)} */}
+
+          {user?.role === 'admin' && (
+            <li>
+              <button
+                className={`${styles.actions__button} ${styles['actions__button--admin']}`}
+                onClick={handleAdminClick}
+                aria-label="Админ панель"
+              >
+                Админ панель
+              </button>
+            </li>
+
+          )}
+        </ul>
       </nav>
 
-      <div className={styles.header__actions}>
-        <button className={styles.toggleTheme} onClick={themeToggle}>
-          Изменение темы
-        </button>
 
-        {isAuthenticated ? (
-          <button
-            className={styles.actions__button}
-            onClick={handleProfileClick}
-            aria-label="Профиль"
-          >
-            Профиль
-          </button>
-        ) : (
-          <button
-            className={`${styles.actions__button} ${styles.notAuth}`}
-            onClick={handleLoginClick}
-            aria-label="Войти"
-          >
-            Войти
-          </button>
-        )}
-
-        {/* {console.log(user?.role)} */}
-
-        {user?.role === 'admin' && (
-          <button
-            className={`${styles.actions__button} ${styles['actions__button--admin']}`}
-            onClick={handleAdminClick}
-            aria-label="Админ панель"
-          >
-            Админ панель
-          </button>
-        )}
-      </div>
     </header>
   );
 }

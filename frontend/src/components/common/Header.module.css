@@ -11,12 +11,13 @@
     height: 40px;
     width: auto;
     fill: var(--text-h);
-};
+}
 
 .header__nav {
     flex: 1;
     display: flex;
-    justify-content: center;
+    gap: var(--space-md);
+    justify-content: right;
 }
 
 .nav__list {
@@ -26,17 +27,19 @@
     margin: 0;
     padding: 0;
     font-size: var(--font-md);
-    color: var(--text-h)
+    color: var(--text-h);
 }
 
 .header__actions {
     display: flex;
     justify-content: right;
     gap: var(--space-sm);
+    padding-left: var(--space-md);
+    list-style: none;
 }
 
-.actions__button, .toggleTheme  {
-    padding: var(--space-sm) var(--space-md);
+.actions__button,
+.toggleTheme {
     border: none;
     background: var(--bg);
     color: var(--text-h);
@@ -48,4 +51,78 @@
     border-radius: var(--radius-md);
     color: var(--text);
     font-size: var(--font-md);
+}
+
+.burger {
+    display: none;
+}
+
+@media (max-width: 900px) {
+    .header {
+        padding: var(--space-sm) var(--space-md);
+    }
+
+    .header__logo svg {
+        height: 35px;
+    }
+
+    .nav__list {
+        gap: var(--space-md);
+        font-size: var(--font-ms);
+    }
+
+    .actions__button {
+        padding: var(--space-xs) var(--space-sm);
+        font-size: var(--font-ms);
+    }
+}
+
+@media (max-width: 850px) {
+    .burger {
+        display: block;
+        cursor: pointer;
+        font-size: var(--font-xxl);
+        color: var(--text-h);
+    }
+
+    .header__nav {
+        background: var(--bg-card);
+        position: fixed;
+        top: 4.5%;
+        left: 0%;
+        width: 100%;
+        transform: translateY(-150%);
+        transition: transform 0.3s;
+        z-index: 1000;
+        flex-direction: column;
+    }
+
+    .header__nav.open {
+        transform: translateY(0);
+    }
+
+    .nav__list {
+        flex-direction: column;
+        align-items: center;
+        gap: var(--space-lg);
+        padding: var(--space-lg);
+    }
+
+    .nav__list li {
+        border-bottom: 2px dotted var(--text-h);
+    }
+
+    .header__actions {
+        flex-direction: column;
+        align-items: center;
+        gap: var(--space-lg);
+        padding: var(--space-lg);
+    }
+
+    .actions__button,
+    .toggleTheme {
+        background: var(--bg-card);
+        align-items: center;
+        border-bottom: 2px dotted var(--text-h);
+    }
 }
