@@ -82,3 +82,11 @@
 .buttons button:hover {
     opacity: 0.9;
 }
+
+
+
+.actors {
+    color: var(--text-h);
+    list-style: none;
+
+}

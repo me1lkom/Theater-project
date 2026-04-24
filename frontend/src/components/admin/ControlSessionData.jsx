@@ -6,6 +6,8 @@ import SessionForm from './SessionForm';
 import styles from './ControlSessionData.module.css';
 import DateFilter from './DateFilter';
 
+import { getErrorMessage } from '../../utils/getErrorMessage';
+
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 
@@ -22,6 +24,7 @@ export default function ControlSessionData() {
     const MySwal = withReactContent(Swal);
 
     const handleSessionDelete = async () => {
+        
         MySwal.fire({
             icon: "error",
             title: <p>Вы хотите удалить этот сеанс?</p>,
@@ -53,18 +56,28 @@ export default function ControlSessionData() {
     }
 
     const handleSessionChange = async (formData) => {
-        await changeSession(selectedSession.session_id, formData);
-        await refetch();
-        setSelectedSession(null);
-        setIsFormOpen(false);
-        MySwal.fire({
-            title: 'Сеанс успешно изменён!',
-            icon: 'success',
-            showConfirmButton: false,
-            timer: 1500,
-            toast: true,
-            position: 'top-right',
-        })
+        try {
+            await changeSession(selectedSession.session_id, formData);
+            await refetch();
+            setSelectedSession(null);
+            setIsFormOpen(false);
+            MySwal.fire({
+                title: 'Сеанс успешно изменён!',
+                icon: 'success',
+                showConfirmButton: false,
+                timer: 1500,
+                toast: true,
+                position: 'top-right',
+            })
+        } catch (err) {
+            MySwal.fire({
+                title: 'Сеанс не изменён',
+                text: getErrorMessage(err),
+                icon: 'error',
+                showConfirmButton: true,
+            })
+        }
+
     }
 
     const handleSessionCreate = async (formData) => {
