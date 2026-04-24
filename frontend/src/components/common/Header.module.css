@@ -16,13 +16,13 @@
 .header__nav {
     flex: 1;
     display: flex;
-    gap: var(--space-md);
-    justify-content: right;
+    gap: var(--space-xl);
+    justify-content: space-evenly;
 }
 
 .nav__list {
     display: flex;
-    gap: var(--space-lg);
+    gap: var(--space-xl);
     list-style: none;
     margin: 0;
     padding: 0;
@@ -33,8 +33,8 @@
 .header__actions {
     display: flex;
     justify-content: right;
-    gap: var(--space-sm);
-    padding-left: var(--space-md);
+    gap: var(--space-lg);
+    /* padding-left: var(--space-md); */
     list-style: none;
 }
 
@@ -44,6 +44,12 @@
     background: var(--bg);
     color: var(--text-h);
     font-size: var(--font-md);
+}
+
+.toggleTheme img {
+    height: 40px;
+    width: auto;
+    fill: var(--text-h);
 }
 
 .notAuth {

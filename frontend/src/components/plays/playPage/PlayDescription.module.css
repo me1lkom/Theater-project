@@ -42,7 +42,7 @@
 
 .description {
     text-align: left;
-    color: var(--text-h)
+    color: var(--text-h);
 }
 
 .duration {
@@ -58,30 +58,27 @@
 
 .price {
     text-align: right;
-    color: var(--text-h)
+    color: var(--text-h);
 }
-
 
 /* Актеры */
 .actorsInfo {
     background-color: var(--bg-card);
     border-radius: var(--radius-md);
     padding: var(--space-lg);
-    color: var(--text-h)
+    color: var(--text-h);
 }
 
 .actorsTitle {
     padding-bottom: var(--space-md);
 }
 
-
-
 /* Выбор мест */
 .seatsInfo {
     margin-top: var(--space-xl);
     padding-top: var(--space-lg);
     border-top: 1px solid var(--border);
-    color: var(--text-h)
+    color: var(--text-h);
 }
 
 .select {
@@ -98,4 +95,19 @@
 .select:focus {
     outline: none;
     border-color: var(--accent);
+}
+
+@media (max-width: 865px) {
+    .playInfo {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-around;
+    }
+    .poster {
+        width: 100%;
+    }
+    .playDetails {
+        width: 100%;
+    }
 }

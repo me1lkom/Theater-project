@@ -15,20 +15,24 @@ export default function Header() {
   const { toggleTheme } = useAuthStore();
 
   const themeToggle = () => {
+    closeMenu();
     toggleTheme();
   };
 
   const { user, isAuthenticated } = useAuthStore();
 
   const handleLoginClick = () => {
+    closeMenu();
     navigate(`/auth`)
   };
 
   const handleProfileClick = () => {
+    closeMenu();
     navigate(`/profile`);
   };
 
   const handleAdminClick = () => {
+    closeMenu();
     navigate(`/admin`);
   }
 
@@ -58,15 +62,16 @@ export default function Header() {
 
       <nav className={`${styles.header__nav} ${isMenuOpen ? styles.open : ''}`}>
         <ul className={styles.nav__list}>
-          <li><Link to="/">Афиша</Link></li>
-          <li><Link to="/contact">Контакты</Link></li>
-          <li><Link to="/panorama">Панорама</Link></li>
+          <li><Link to="/" onClick={() => closeMenu()}>Афиша</Link></li>
+          <li><Link to="/contact" onClick={() => closeMenu()}>Контакты</Link></li>
+          <li><Link to="/panorama" onClick={() => closeMenu()}>Панорама</Link></li>
         </ul>
 
         <ul className={styles.header__actions}>
           <li>
             <button className={styles.toggleTheme} onClick={themeToggle}>
-              Изменение темы
+              Тема
+              {/* <img src={themeDark} /> */}
             </button>
           </li>
 

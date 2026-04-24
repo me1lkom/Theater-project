@@ -1,14 +1,13 @@
 .container {
-    max-width: 800px;
-    margin: var(--space-xl) auto;
-    padding: var(--space-xl);
-    background: var(--bg-card);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-sm);
+    max-width: 1200px;
 }
 
 .contact {
-    text-align: center;
+    margin: var(--space-xl);
+    padding: var(--space-lg);
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
 }
 
 .contact h2 {
@@ -26,6 +25,4 @@
     margin: var(--space-md) 0;
     line-height: 1.6;
     border-bottom: 2px dotted var(--border);
-
 }
-
