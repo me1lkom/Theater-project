@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useSession } from '../../hooks/useSession';
+// import { useGetActors } from '../../hooks/useGetActors';
 import styles from './PlayForm.module.css';
 
 export default function PlayForm({ Data, plays, onSubmit, onClose }) {
 
     const { session } = useSession(Data?.session_id);
+    // const { actors } = useGetActors();
     const isEdit = !!Data;
 
 
@@ -85,6 +87,13 @@ export default function PlayForm({ Data, plays, onSubmit, onClose }) {
                 onChange={handleChange}
                 required
             />
+
+            {/* <div>
+                <h4>Актеры:</h4>
+                {session.actors?.map(actor => (
+                    <li key={actor.actor_id}>{actor.role}</li>
+                ))}
+            </div> */}
 
             <div className={styles.buttons}>
                 <button type="submit">Сохранить</button>

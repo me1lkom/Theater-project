@@ -6,6 +6,10 @@ import { useBuyTicket } from '../../hooks/useBuyTicket';
 import { useNavigate } from 'react-router-dom';
 import styles from './DataInfo.module.css';
 
+import Swal from 'sweetalert2'
+import withReactContent from 'sweetalert2-react-content'
+
+
 export default function DataInfo({ sessionId, selectedSeats }) {
     const { session, loading, error } = useSession(sessionId);
     const { play, loading: playLoading, error: playError } = usePlay(session?.play);
@@ -13,6 +17,7 @@ export default function DataInfo({ sessionId, selectedSeats }) {
     const { buyTickets } = useBuyTicket();
     const navigate = useNavigate();
 
+    const MySwal = withReactContent(Swal)
 
     const neededSeats = seats?.filter(seat => selectedSeats.includes(seat.seat_id));
 
@@ -43,7 +48,14 @@ export default function DataInfo({ sessionId, selectedSeats }) {
         const result = await buyTickets(payload.session_id, payload.seat_ids);
 
         if (result.success) {
-            alert('Билеты куплены!');
+
+            MySwal.fire({
+                icon: "success",
+                title: <p>Билеты успешно куплены</p>,
+                showConfirmButton: false,
+                timer: 1000
+            })
+
             navigate('/profile')
 
         } else {

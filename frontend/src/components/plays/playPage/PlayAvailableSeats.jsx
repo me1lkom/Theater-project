@@ -6,6 +6,9 @@ import { useNavigate } from 'react-router-dom';
 import styles from './PlayAvailableSeats.module.css';
 import useAuthStore from '../../../store/useAuthStore';
 
+import Swal from 'sweetalert2'
+import withReactContent from 'sweetalert2-react-content'
+
 export default function PlayAvailableSeats({ sessionId }) {
     const { seats, loading, error } = useSeats();
     const { availableSeats } = useAvailableSeats(sessionId);
@@ -18,7 +21,8 @@ export default function PlayAvailableSeats({ sessionId }) {
     const initialized = useRef(false);
     const navigate = useNavigate();
 
-    // Функция полной очистки мест
+    const MySwal = withReactContent(Swal)
+
     const resetSeats = () => {
         if (!svgRef.current) return;
 
@@ -26,31 +30,25 @@ export default function PlayAvailableSeats({ sessionId }) {
         const rectangles = svg.querySelectorAll('rect');
 
         rectangles.forEach(rect => {
-            // Удаляем классы
             rect.classList.remove('seat', 'selected', 'taken');
 
-            // Удаляем атрибуты
             rect.removeAttribute('data-seat-id');
             rect.removeAttribute('data-sector');
             rect.removeAttribute('data-row');
             rect.removeAttribute('data-seat');
 
-            // Сбрасываем стили
             rect.removeAttribute('fill');
             rect.removeAttribute('opacity');
             rect.style.fill = '';
             rect.style.opacity = '';
 
-            // Удаляем обработчик клика
             rect.onclick = null;
         });
 
-        // Удаляем текстовые номера мест
         const numbers = svg.querySelectorAll('.seat-number');
         numbers.forEach(num => num.remove());
     };
 
-    // Инициализация карты
     const initSeatMap = () => {
         if (!seats || !availableSeats) return;
         if (!svgRef.current) return;
@@ -58,7 +56,6 @@ export default function PlayAvailableSeats({ sessionId }) {
         const svg = svgRef.current;
         const rectangles = svg.querySelectorAll('rect');
 
-        // Отбираем только места, по их высоте и ширине
         const seatRects = Array.from(rectangles).filter(rect => {
             const y = parseFloat(rect.getAttribute('y'));
             return y >= 154 && y <= 914 && rect.getAttribute('width') === '30';
@@ -72,14 +69,12 @@ export default function PlayAvailableSeats({ sessionId }) {
             const seatData = seats[index];
             if (!seatData) return;
 
-            // Добавляем атрибуты
             rect.setAttribute('data-seat-id', seatData.seat_id);
             rect.setAttribute('data-sector', seatData.sector_name);
             rect.setAttribute('data-row', seatData.row_number);
             rect.setAttribute('data-seat', seatData.seat_number);
             rect.classList.add('seat');
 
-            // Ставим цвета в зависимости от статуса иил сектора
             if (!freeSeatIds.has(seatData.seat_id)) {
                 rect.classList.add('taken');
                 rect.setAttribute('fill', '#666');
@@ -89,16 +84,16 @@ export default function PlayAvailableSeats({ sessionId }) {
             } else {
                 if (seatData.sector_name === 'Партер') rect.setAttribute('fill', '#2ecc71');
                 else if (seatData.sector_name === 'Амфитеатр') rect.setAttribute('fill', '#3498db');
+                else if (seatData.sector_name === 'Балкон') rect.setAttribute('fill', '#e67e22');
                 rect.setAttribute('cursor', 'pointer')
                 rect.removeAttribute('opacity');
             }
 
-            // Добавляем номера поверх места, обращаясь к родителя и проверяя отсутствие такого номера
             if (!rect.parentNode.querySelector(`.seat-number-${seatData.seat_id}`)) {
                 const x = parseFloat(rect.getAttribute('x'));
                 const y = parseFloat(rect.getAttribute('y'));
                 const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                // Центрируем текст внутри квадратика
+
                 text.setAttribute('x', x + 15);
                 text.setAttribute('y', y + 19);
                 text.setAttribute('class', `seat-number seat-number-${seatData.seat_id}`);
@@ -110,14 +105,20 @@ export default function PlayAvailableSeats({ sessionId }) {
                 rect.parentNode.appendChild(text);
             }
 
-            // Обработчик клика
             rect.onclick = () => {
 
+
                 const seatId = parseInt(rect.getAttribute('data-seat-id'));
+
                 const isTaken = rect.classList.contains('taken');
 
                 if (isTaken) {
-                    alert('Это место уже занято');
+                    MySwal.fire({
+                        icon: "error",
+                        title: <p>Это место занято</p>,
+                        showConfirmButton: false,
+                        timer: 1000,
+                    });
                     return;
                 }
 
@@ -126,13 +127,13 @@ export default function PlayAvailableSeats({ sessionId }) {
                 if (isSelected) {
                     rect.classList.remove('selected');
 
-                    // Возвращаем цвет сектора
                     const sector = rect.getAttribute('data-sector');
                     if (sector === 'Партер') rect.setAttribute('fill', '#2ecc71');
                     else if (sector === 'Амфитеатр') rect.setAttribute('fill', '#3498db');
                     else if (sector === 'Балкон') rect.setAttribute('fill', '#e67e22');
                     setSelectedSeats(prev => prev.filter(id => id !== seatId));
                 } else {
+                    console.log(selectedSeats.length)
                     rect.classList.add('selected');
                     rect.setAttribute('fill', '#f1c40f');
                     setSelectedSeats(prev => [...prev, seatId]);
@@ -162,17 +163,28 @@ export default function PlayAvailableSeats({ sessionId }) {
 
     const handleBooking = async () => {
         if (!isAuthenticated) {
-            alert('Небходимо войти в аккаунт, чтобы купить билет(ы)')
+            MySwal.fire({
+                icon: "error",
+                title: <p>Необходимо войти в аккаунт</p>,
+                showConfirmButton: true,
+                showDenyButton: true,
+                denyButtonText: `Ок`,
+                confirmButtonText: `Войти`,
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    navigate('/auth')
+                }
+            })
             return;
         }
 
-
-        if (selectedSeats.length === 0) {
-            alert('Выберите места');
-            return;
-        }
         if (selectedSeats.length > 5) {
-            alert('Нельзя забронировать более 5 мест за раз');
+            MySwal.fire({
+                icon: "error",
+                title: <p>Выбрано слишком много мест</p>,
+                showConfirmButton: false,
+                timer: 1000,
+            });
             return;
         }
 
@@ -183,7 +195,6 @@ export default function PlayAvailableSeats({ sessionId }) {
         const result = await addTicketToBasket(sessionId, selectedSeats);
 
         if (result.success) {
-            // alert(`${selectedSeats.length} мест(а) забронировано`);
             navigate('/payment', {
                 state: {
                     sessionId: sessionId,

@@ -111,6 +111,18 @@
     font-weight: 600;
 }
 
+.typeReturn {
+    color: var(--act-color) !important;
+    font-weight: 600;
+}
+
+.typeDownload {
+    color: var(--act-color) !important;
+    font-weight: 600;
+}
+
+
+
 .loading {
     text-align: center;
     padding: var(--space-xl);

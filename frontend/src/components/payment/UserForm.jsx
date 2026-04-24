@@ -64,8 +64,6 @@ export default function UserForm({ onSubmit }) {
     }
 
     return (
-
-
         <div className={styles.userForm}>
             <button onClick={handleFillMe} className={styles.fillButton}>Взять данные из кабинета</button>
             <form onSubmit={handleSubmit} className={styles.form}>

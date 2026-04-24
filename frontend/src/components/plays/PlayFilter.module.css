@@ -5,22 +5,24 @@
     width: 100%;
 }
 
-.playFilter input{
+.playFilter input {
     background-color: var(--bg);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    padding: var(--space-xs);
+    padding: var(--space-sm);
     color: var(--text-h);
-    outline:none;
+    outline: none;
     width: 80%;
+    font-size: var(--font-md);
 }
 
 .playFilter select {
     background-color: var(--bg);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    padding: var(--space-xs);
+    padding: var(--space-sm);
     color: var(--text-h);
-    outline:none;
+    outline: none;
     width: 20%;
+    font-size: var(--font-md);
 }

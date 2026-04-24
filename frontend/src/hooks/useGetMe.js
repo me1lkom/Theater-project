@@ -7,23 +7,25 @@ export function useGetMe() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    useEffect(() => {
-        const fetchMe = async () => {
-            try {
-                setLoading(true);
-                const response = await getMe();
-                setMe(response);
-                setError(null);
-            } catch (err) {
-                const errorMessage = getErrorMessage(err);
-                setError(errorMessage);
-            } finally {
-                setLoading(false);
-            }
+    const fetchMe = async () => {
+        try {
+            setLoading(true);
+            const response = await getMe();
+            setMe(response);
+            setError(null);
+        } catch (err) {
+            const errorMessage = getErrorMessage(err);
+            setError(errorMessage);
+        } finally {
+            setLoading(false);
         }
+    };
+
+
+    useEffect(() => {
         fetchMe();
     }, [])
 
-    return { me, loading, error };
+    return { me, loading, error, refetch: fetchMe };
 }
 

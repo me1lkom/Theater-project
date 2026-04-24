@@ -4,28 +4,52 @@ import { usePlays } from '../../hooks/usePlays';
 import { createSession, changeSession, deleteSession } from '../../api/index';
 import SessionForm from './SessionForm';
 import styles from './ControlSessionData.module.css';
+import DateFilter from './DateFilter';
 
+import Swal from 'sweetalert2'
+import withReactContent from 'sweetalert2-react-content'
 
 export default function ControlSessionData() {
     const { sessions, loading, error, refetch } = useSessions();
     const { plays } = usePlays();
 
+    const [searchQuery, setSearchQuery] = useState('');
+
+
     const [selectedSession, setSelectedSession] = useState(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
 
-    const handleSessionDelete = async () => {
-        let question = confirm('Вы хотите удалить этот сеанс?');
-        if (question) {
-            await deleteSession(selectedSession.session_id);
-            await refetch();
-            setSelectedSession(null);
-            setIsFormOpen(false);
-            alert('Спектакль успешно удален.')
-        } else {
-            setSelectedSession(null);
-            console.log('Отмена действия');
-        }
+    const MySwal = withReactContent(Swal);
 
+    const handleSessionDelete = async () => {
+        MySwal.fire({
+            icon: "error",
+            title: <p>Вы хотите удалить этот сеанс?</p>,
+            showConfirmButton: true,
+            showDenyButton: true,
+            denyButtonText: `Отмена`,
+            confirmButtonText: `Да, удалить`,
+            reverseButtons: true
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                await deleteSession(selectedSession.session_id);
+                await refetch();
+                setSelectedSession(null);
+                setIsFormOpen(false);
+
+                MySwal.fire({
+                    title: 'Сеанс успешно удалён!',
+                    icon: 'success',
+                    showConfirmButton: false,
+                    timer: 1500,
+                    toast: true,
+                    position: 'top-right',
+                })
+            } else {
+                setSelectedSession(null);
+                console.log('Отмена действия');
+            }
+        })
     }
 
     const handleSessionChange = async (formData) => {
@@ -33,15 +57,35 @@ export default function ControlSessionData() {
         await refetch();
         setSelectedSession(null);
         setIsFormOpen(false);
-        alert('Спектакль успешно изменен.')
+        MySwal.fire({
+            title: 'Сеанс успешно изменён!',
+            icon: 'success',
+            showConfirmButton: false,
+            timer: 1500,
+            toast: true,
+            position: 'top-right',
+        })
     }
 
     const handleSessionCreate = async (formData) => {
         await createSession(formData);
         await refetch();
         setIsFormOpen(false);
-        alert('Спектакль успешно создан.')
+        MySwal.fire({
+            title: 'Сеанс успешно создан!',
+            icon: 'success',
+            showConfirmButton: false,
+            timer: 1500,
+            toast: true,
+            position: 'top-right',
+        })
     }
+
+
+    const filteredData = sessions?.filter(session => {
+        const matchByTitle = session.date.includes(searchQuery);
+        return matchByTitle;
+    });
 
     if (loading) return <div>Загрузка...</div>;
     if (error) return <div>Ошибка: {error}</div>;
@@ -49,8 +93,11 @@ export default function ControlSessionData() {
     return (
         <div className={styles.container}>
             <div className={styles.leftColumn}>
+                <DateFilter
+                    searchQuery={searchQuery}
+                    onSearchChange={setSearchQuery} />
                 <div className={styles.sessionList}>
-                    {sessions?.map(session => (
+                    {filteredData?.map(session => (
                         <div
                             key={session.session_id}
                             className={`${styles.sessionCard} ${selectedSession?.session_id === session.session_id ? styles.selected : ''}`}

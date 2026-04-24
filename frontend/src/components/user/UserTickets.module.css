@@ -9,6 +9,7 @@
 .ticketsGrid {
     gap: var(--space-lg);
     padding: var(--space-lg);
+    color: var(--text-h);
 }
 
 .ticketsGridOn {
