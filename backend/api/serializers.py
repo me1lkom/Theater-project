@@ -2,6 +2,8 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from .models import Play, Actor, Session, Seat, Panorama, PanoramaLink, Sector, TheaterHall, Genre, ActionLog, TicketStatus, Profile, SessionActor
+from django.db import IntegrityError
+from .models import Profile
 
 # cериализатор для модели Actor, превращает объект актера в JSON
 class ActorSerializer(serializers.ModelSerializer):
@@ -50,7 +52,7 @@ class PanoramaSerializer(serializers.ModelSerializer):
 
 class SessionActorSerializer(serializers.ModelSerializer):
     actor_name = serializers.CharField(source='actor.actor_fio', read_only=True)
-    
+
     class Meta:
         model = SessionActor
         fields = ['actor_id', 'actor_name', 'actor_role_name']
@@ -58,16 +60,11 @@ class SessionActorSerializer(serializers.ModelSerializer):
 class SessionSerializer(serializers.ModelSerializer):   
     play_title = serializers.CharField(source='play.title', read_only=True)
     hall_name = serializers.CharField(source='hall.name', read_only=True)
-    actors = SessionActorSerializer(many=True, read_only=True)
+    actors = SessionActorSerializer(source='session_actors', many=True, read_only=True)
 
     class Meta:
         model = Session
         fields = ['session_id', 'play', 'play_title', 'hall', 'hall_name', 'date', 'time', 'actors']
-
-from rest_framework import serializers
-from django.contrib.auth.models import User
-from django.db import IntegrityError
-from .models import Profile
 
 class RegisterSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(write_only=True, required=True)
