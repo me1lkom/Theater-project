@@ -1,6 +1,6 @@
-import DataInfo from '../../components/payment/user/DataInfo';
+import DataInfo from '../../components/payment/cashier/DataInfo';
 import { useLocation } from 'react-router-dom';
-import styles from './PaymentPage.module.css';
+import styles from './CashierPaymentPage.module.css';
 
 export default function PaymentPage() {
 

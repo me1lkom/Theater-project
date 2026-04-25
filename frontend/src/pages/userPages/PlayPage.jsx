@@ -1,7 +1,3 @@
-
-// import { useNavigate } from "react-router-dom";
-{/* Небходимо добавить вывод мест и перекидывание и перекидывание на оплату */ }
-
 import { useState } from "react";
 import { usePlay } from "../../hooks/usePlay";
 import { useParams } from "react-router-dom";

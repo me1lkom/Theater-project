@@ -17,7 +17,7 @@
 .posterContainer {
     position: relative;
     width: 100%;
-    aspect-ratio: 2 / 3;   /* ← фиксируем пропорции (ширина 2, высота 3) */
+    aspect-ratio: 2 / 3;
 }
 
 .posterContainer img {
@@ -40,7 +40,6 @@
     box-shadow: var(--shadow-sm);
 }
 
-/* Информация — отступы со всех сторон */
 .infoContainer {
     flex: 1;
     display: flex;
@@ -48,7 +47,6 @@
     padding: var(--space-md);
 }
 
-/* Контейнер информации */
 .infoContainer {
     flex: 1;
     display: flex;
@@ -57,7 +55,6 @@
     padding: var(--space-md);
 }
 
-/* Блок с заголовком и описанием */
 .info-all {
     margin-bottom: var(--space-md);
 }
@@ -75,7 +72,6 @@
     line-height: 1.4;
 }
 
-/* Блок с длительностью и ценой */
 .info-session {
     display: flex;
     justify-content: space-between;

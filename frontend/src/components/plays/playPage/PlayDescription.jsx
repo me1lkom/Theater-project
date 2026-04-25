@@ -20,8 +20,6 @@ export default function PlayDescription({ play, selectedSession, onChangeSession
 
     let neededSessions = sessions?.filter(session => session.play_title.toLowerCase().includes(play.title.toLowerCase()));
 
-
-
     if (!sessions) return null;
 
     return (
@@ -44,12 +42,12 @@ export default function PlayDescription({ play, selectedSession, onChangeSession
 
                     <div className={styles.actorsInfo}>
                         <h3 className={styles.actorsTitle}>Актёры</h3>
-                            {selectedSession ? (
-                                <PlayActor selectedSession={selectedSession} />
+                        {selectedSession ? (
+                            <PlayActor selectedSession={selectedSession} />
 
-                            ) : (
-                                <div className={styles.actors}>Выберите дату и время, чтобы отобразить актеров</div>
-                            )}
+                        ) : (
+                            <div className={styles.actors}>Выберите дату и время, чтобы отобразить актеров</div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -63,7 +61,13 @@ export default function PlayDescription({ play, selectedSession, onChangeSession
                         onChangeSession(value === '' ? null : Number(value));
                     }}
                 >
-                    <option value="">Выберите дату и время сеанса</option>
+                    <option value="">
+                        {neededSessions.length == 0 ? (
+                            <>Сеансы отсутствуют</>
+                        ) : (
+                            <>Выберите дату и время сеанса</>
+                        )}
+                    </option>
                     {neededSessions?.map(session => (
                         <option key={session.session_id} value={session.session_id}>
                             {session.date} {session.time}

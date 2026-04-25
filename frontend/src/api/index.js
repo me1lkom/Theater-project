@@ -202,6 +202,15 @@ export async function buyTicket(session_id, seat_ids) {
     return response.data;
 }
 
+export async function buyTicketCashier(session_id, seat_ids, phone) {
+    const response = await apiClient.post('/tickets/buy/bulk/', {
+        session_id: session_id,
+        seat_ids: seat_ids,
+        phone: phone
+    });
+    return response.data;
+}
+
 export async function getMyBasket() {
     const response = await apiClient.get('/basket/my/');
     return response.data;

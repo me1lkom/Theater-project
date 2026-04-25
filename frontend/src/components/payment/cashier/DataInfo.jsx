@@ -1,8 +1,9 @@
-import { useSession } from '../../hooks/useSession';
-import { usePlay } from '../../hooks/usePlay';
-import { useSeats } from '../../hooks/useSeats';
+import { useSession } from '../../../hooks/useSession';
+import { usePlay } from '../../../hooks/usePlay';
+import { useSeats } from '../../../hooks/useSeats';
 import UserForm from './UserForm';
-import { useBuyTicket } from '../../hooks/useBuyTicket';
+import { useBuyTicketCashier } from '../../../hooks/useBuyTicketCashier';
+import { useBuyTicket } from '../../../hooks/useBuyTicket';
 import { useNavigate } from 'react-router-dom';
 import styles from './DataInfo.module.css';
 
@@ -14,7 +15,8 @@ export default function DataInfo({ sessionId, selectedSeats }) {
     const { session, loading, error } = useSession(sessionId);
     const { play, loading: playLoading, error: playError } = usePlay(session?.play);
     const { seats } = useSeats();
-    const { buyTickets } = useBuyTicket();
+    const { buyTickets } = useBuyTicketCashier();
+    const { buyTickets: buyTicketsOnCashier } = useBuyTicket();
     const navigate = useNavigate();
 
     const MySwal = withReactContent(Swal)
@@ -35,17 +37,16 @@ export default function DataInfo({ sessionId, selectedSeats }) {
 
     const countTickets = selectedSeats.length;
 
-    const handleFormSubmit = async ({ user_data }) => {
-        console.log(`user_data: ${user_data}`);
+    const handleByOnCashier = async () => {
 
         const payload = {
             session_id: Number(sessionId),
-            seat_ids: selectedSeats.map(id => Number(id))
+            seat_ids: selectedSeats.map(id => Number(id)),
         };
 
-        console.log('Отправка на сервер:', payload.user_id, payload.session_id, payload.seat_ids);
+        console.log('Отправка на сервер:', payload.session_id, payload.seat_ids);
 
-        const result = await buyTickets(payload.session_id, payload.seat_ids);
+        const result = await buyTicketsOnCashier(payload.session_id, payload.seat_ids);
 
         if (result.success) {
 
@@ -56,7 +57,36 @@ export default function DataInfo({ sessionId, selectedSeats }) {
                 timer: 1000
             })
 
-            navigate('/profile')
+            navigate('/cashier')
+
+        } else {
+            alert(`Ошибка: ${result.error}`);
+        }
+    }
+
+    const handleFormSubmit = async ({ user_data }) => {
+        console.log(`user_data: ${user_data}`);
+
+        const payload = {
+            session_id: Number(sessionId),
+            seat_ids: selectedSeats.map(id => Number(id)),
+            phone: user_data.phone
+        };
+
+        console.log('Отправка на сервер:', payload.phone, payload.session_id, payload.seat_ids);
+
+        const result = await buyTickets(payload.session_id, payload.seat_ids, payload.phone);
+
+        if (result.success) {
+
+            MySwal.fire({
+                icon: "success",
+                title: <p>Билеты успешно куплены</p>,
+                showConfirmButton: false,
+                timer: 1000
+            })
+
+            navigate('/cashier-payment')
 
         } else {
             alert(`Ошибка: ${result.error}`);
@@ -92,7 +122,7 @@ export default function DataInfo({ sessionId, selectedSeats }) {
 
             <div className={styles.price}>К Оплате: {countTickets * play.price}</div>
 
-            <UserForm onSubmit={handleFormSubmit} />
+            <UserForm onSubmit={handleFormSubmit} OnCashier={handleByOnCashier} />
         </div>
     )
 }

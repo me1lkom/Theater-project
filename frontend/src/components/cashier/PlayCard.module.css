@@ -1,0 +1,81 @@
+.playCard {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    cursor: pointer;
+    transition:
+        transform 0.2s,
+        box-shadow 0.2s;
+    box-shadow: var(--shadow);
+}
+
+.playCard:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+}
+
+.infoContainer {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: var(--space-md);
+}
+
+
+.title {
+    font-size: var(--font-lg);
+    font-weight: 600;
+    color: var(--text-h);
+    margin-bottom: var(--space-xs);
+    display: grid;
+    align-items: center;
+}
+
+.timedate {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    color: var(--text-h);
+}
+
+.infoRow {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.icon {
+    width: 20px;
+    height: 20px;
+    display: block;
+}
+.price {
+    font-size: var(--font-sm);
+    font-weight: bolder;
+    color: var(--text-h);
+    display: grid;
+    align-items: center;
+}
+
+.seatsInfo {
+    display: grid;
+    align-items: center;
+}
+
+.select {
+    padding: var(--space-sm) var(--space-md);
+    font-size: var(--font-md);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg);
+    color: var(--text-h);
+    cursor: pointer;
+    min-width: 250px;
+}
+
+.select:focus {
+    outline: none;
+    border-color: var(--accent);
+}

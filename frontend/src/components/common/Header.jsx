@@ -36,6 +36,11 @@ export default function Header() {
     navigate(`/admin`);
   }
 
+  const handleCashierClick = () => {
+    closeMenu();
+    navigate(`/cashier`)
+  };
+
 
 
   return (
@@ -110,6 +115,19 @@ export default function Header() {
                 aria-label="Админ панель"
               >
                 Админ панель
+              </button>
+            </li>
+
+          )}
+
+          {user?.role === 'cashier' && (
+            <li>
+              <button
+                className={`${styles.actions__button} ${styles['actions__button--admin']}`}
+                onClick={handleCashierClick}
+                aria-label="Панель кассира"
+              >
+                Панель кассира
               </button>
             </li>
 

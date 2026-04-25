@@ -17,6 +17,9 @@ import { AdminRoute } from "./components/common/AdminRoute";
 import { AuthenticatedRoute } from "./components/common/AuthenticatedRoute";
 import DataManagementPage from "./pages/adminPages/DataManagementPage";
 import AdminMainPage from "./pages/adminPages/AdminMainPage";
+import { CashierRoute } from "./components/common/CashierRoute";
+import CashierMainPage from "./pages/cashierPages/CashierMainPage";
+import CashierPaymentPage from "./pages/cashierPages/CashierPaymentPage";
 
 function App() {
   const hydrate = useAuthStore((state) => state.hydrate);
@@ -29,7 +32,7 @@ function App() {
 
   useEffect(() => {
     hydrate();
-    
+
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme) {
       document.documentElement.setAttribute('data-theme', savedTheme);
@@ -74,6 +77,18 @@ function App() {
               <AdminRoute>
                 <DataManagementPage />
               </AdminRoute>
+            } />
+
+            <Route path="/cashier" element={
+              <CashierRoute>
+                <CashierMainPage />
+              </CashierRoute>
+            } />
+
+            <Route path="/cashier-payment" element={
+              <CashierRoute>
+                <CashierPaymentPage />
+              </CashierRoute>
             } />
           </Routes>
         </main>
