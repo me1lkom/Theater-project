@@ -86,7 +86,7 @@ export default function DataInfo({ sessionId, selectedSeats }) {
                 timer: 1000
             })
 
-            navigate('/cashier-payment')
+            navigate('/cashier')
 
         } else {
             alert(`Ошибка: ${result.error}`);
