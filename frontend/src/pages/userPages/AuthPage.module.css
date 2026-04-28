@@ -27,6 +27,7 @@
     padding: var(--space-sm) var(--space-md);
     border-radius: var(--radius-lg);
     transition: background-color 0.3s, color 0.3s;
+    color: var(--text);
 }
 
 .tabActive {
