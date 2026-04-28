@@ -265,7 +265,9 @@ export async function getLogTypes() {
 
 // –– Бэкап
 export async function getBackup() {
-    const response = await apiClient.get('/backup/');
+    const response = await apiClient.get('/backup/', {
+        responseType: 'blob',
+    });
     return response.data;
 }
 
