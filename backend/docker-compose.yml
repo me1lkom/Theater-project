@@ -59,6 +59,17 @@ services:
       sh -c "python manage.py migrate &&
              python manage.py runserver 0.0.0.0:8000"
 
+  frontend:
+    build: ../frontend
+    container_name: theater_frontend
+    ports:
+      - "8001:80"
+    depends_on:
+      - web
+    environment:
+      - VITE_API_URL=http://web:8000/api
+
+
 volumes:
   postgres_data:
   redis_data:
