@@ -14,6 +14,6 @@ export function AdminRoute({ children }) {
         return <Navigate to="/" />;
     }
 
-
+    
     return children;
 }
