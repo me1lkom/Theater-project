@@ -26,8 +26,77 @@ export default function AuthPage() {
 
     const handleSubmitRegister = async (e) => {
         e.preventDefault();
-        await registerUser(username, password, password2, email, first_name, last_name, phone);
-    }
+
+        if (!validateForm()) return;
+
+        setValidError('');
+
+        const cleanedPhone = cleanPhone(phone);
+
+        await registerUser(username, password, password2, email, first_name, last_name, cleanedPhone);
+    };
+
+    const [validError, setValidError] = useState('');
+
+    const cleanPhone = (phoneRaw) => {
+        let cleaned = phoneRaw.replace(/\D/g, '');
+
+        if (cleaned.startsWith('7') && cleaned.length === 11) {
+            cleaned = '8' + cleaned.slice(1);
+        }
+        else if (cleaned.length === 10 && !cleaned.startsWith('8')) {
+            cleaned = '8' + cleaned;
+        }
+
+        return cleaned;
+    };
+
+    const validateForm = () => {
+        if (!username.trim()) {
+            setValidError('Логин обязателен');
+            return false;
+        }
+        if (username.length < 3) {
+            setValidError('Логин должен быть не менее 3 символов');
+            return false;
+        }
+        if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+            setValidError('Логин может содержать только буквы, цифры и подчёркивание');
+            return false;
+        }
+
+        if (!password) {
+            setValidError('Пароль обязателен');
+            return false;
+        }
+        if (password.length < 6) {
+            setValidError('Пароль должен быть не менее 6 символов');
+            return false;
+        }
+
+        if (email.trim() && !/^[^\s@]+@([^\s@]+\.)+[^\s@]+$/.test(email)) {
+            setValidError('Некорректный email');
+            return false;
+        }
+
+        const cleanedPhone = cleanPhone(phone);
+        if (!cleanedPhone) {
+            setValidError('Телефон обязателен');
+            return false;
+        }
+        if (cleanedPhone.length !== 11) {
+            setValidError('Номер телефона должен содержать 11 цифр');
+            return false;
+        }
+        if (!cleanedPhone.startsWith('8')) {
+            setValidError('Номер телефона должен начинаться с 8');
+            return false;
+        }
+
+        return true;
+    };
+
+
 
     return (
         <div className={styles.container}>
@@ -74,7 +143,11 @@ export default function AuthPage() {
             )}
 
             {loading && <div className="loading loadingCenter">Загрузка...</div>}
-            {error && <div className="error errorCenter">Ошибка: {error}</div>}
+            {(error || validError) && (
+                <div className="error errorCenter">
+                    Ошибка: {validError || error}
+                </div>
+            )}
         </div>
     );
 }

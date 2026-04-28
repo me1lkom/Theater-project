@@ -1,6 +1,6 @@
 import { useAvailableSeats } from '../../../hooks/useAvailableSeats';
 import { useSeats } from '../../../hooks/useSeats';
-import { useAddToBasket } from '../../../hooks/useAddToBasket';
+// import { useAddToBasket } from '../../../hooks/useAddToBasket';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './PlayAvailableSeats.module.css';
@@ -14,7 +14,7 @@ export default function PlayAvailableSeats({ sessionId }) {
     const { seats, loading, error } = useSeats();
     const { availableSeats } = useAvailableSeats(sessionId);
     const [selectedSeats, setSelectedSeats] = useState([]);
-    const { addTicketToBasket } = useAddToBasket();
+    // const { addTicketToBasket } = useAddToBasket();
 
     const { isAuthenticated } = useAuthStore();
 
@@ -193,18 +193,26 @@ export default function PlayAvailableSeats({ sessionId }) {
 
         console.log(`Попытка отправить sessionId: ${sessionId}, seatIds:`, selectedSeats);
 
-        const result = await addTicketToBasket(sessionId, selectedSeats);
+        // const result = await addTicketToBasket(sessionId, selectedSeats);
 
-        if (result.success) {
-            navigate('/cashier-payment', {
-                state: {
-                    sessionId: sessionId,
-                    selectedSeats: selectedSeats
-                }
-            });
-        } else {
-            alert(`Ошибка бронирования: ${result.error}`);
-        }
+        // if (result.success) {
+        //     navigate('/cashier-payment', {
+        //         state: {
+        //             sessionId: sessionId,
+        //             selectedSeats: selectedSeats
+        //         }
+        //     });
+        // } else {
+        //     alert(`Ошибка бронирования: ${result.error}`);
+        // }
+
+
+        navigate('/cashier-payment', {
+            state: {
+                sessionId: sessionId,
+                selectedSeats: selectedSeats
+            }
+        });
     }
 
 
