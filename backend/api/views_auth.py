@@ -1,4 +1,4 @@
-from rest_framework import status, serializers  # ← ЭТО ВАЖНО!
+from rest_framework import status, serializers
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -6,7 +6,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
-from django.db import IntegrityError, transaction  # ← transaction тоже нужен
+from django.db import IntegrityError, transaction
 from .serializers import RegisterSerializer
 from .redis_utils import RedisTokenStorage
 from .models import Profile
