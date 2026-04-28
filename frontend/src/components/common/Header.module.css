@@ -5,6 +5,8 @@
     padding: var(--space-md) var(--space-lg);
     background: var(--bg);
     border-bottom: 1px solid var(--border);
+
+    position: relative;
 }
 
 .header__logo svg {
@@ -94,8 +96,8 @@
 
     .header__nav {
         background: var(--bg-card);
-        position: fixed;
-        top: 4.5%;
+        position: absolute;
+        top: 100%;
         left: 0%;
         width: 100%;
         transform: translateY(-150%);

@@ -1,5 +1,5 @@
-import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect} from "react";
 import useAuthStore from "../../store/useAuthStore";
 // import logo from "../../assets/logo.svg";
 import styles from './Header.module.css';
@@ -11,6 +11,10 @@ export default function Header() {
   const closeMenu = () => setIsMenuOpen(false);
 
   const navigate = useNavigate();
+  const location = useLocation();
+  useEffect(() => {
+    closeMenu();
+  }, [location]);
 
   const { toggleTheme } = useAuthStore();
 
