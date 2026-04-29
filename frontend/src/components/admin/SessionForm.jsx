@@ -3,11 +3,11 @@ import { useSession } from '../../hooks/useSession';
 import { useGetActors } from '../../hooks/useGetActors';
 import styles from './PlayForm.module.css';
 
-export default function PlayForm({ Data, plays, onSubmit, onClose  }) {
+export default function PlayForm({ Data, plays, onSubmit, onClose }) {
 
     const { session, error } = useSession(Data?.session_id);
     const { actors } = useGetActors();
-    const isEdit = !!Data;  
+    const isEdit = !!Data;
 
     const [formData, setFormData] = useState({
         play_id: '',
@@ -138,7 +138,6 @@ export default function PlayForm({ Data, plays, onSubmit, onClose  }) {
                                     </option>
                                 ))}
                             </select>
-                            -
                             <input
                                 name="role"
                                 placeholder="Роль"
@@ -146,8 +145,8 @@ export default function PlayForm({ Data, plays, onSubmit, onClose  }) {
                                 onChange={(e) => handleRoleChange(index, e)}
                                 required
                             />
-                            <button onClick={() => handleRemoveActor(index)}>Удалить</button>
 
+                            <button onClick={() => handleRemoveActor(index)}>Удалить</button>
                         </li>
                     ))
 
