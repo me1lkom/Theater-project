@@ -17,6 +17,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - theater_network
 
   redis:
     image: redis:7-alpine
@@ -31,12 +33,14 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - theater_network
 
   web:
-    build: .
+    build: ./backend
     container_name: theater_web
     volumes:
-      - .:/app
+      - ./backend:/app
       - media_volume:/app/media
     ports:
       - "8000:8000"
@@ -49,18 +53,20 @@ services:
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-      DB_HOST: ${DB_HOST}
+      DB_HOST: db
       DB_PORT: ${DB_PORT}
-      REDIS_HOST: ${REDIS_HOST}
+      REDIS_HOST: redis
       REDIS_PORT: ${REDIS_PORT}
       SECRET_KEY: ${SECRET_KEY}
       DEBUG: ${DEBUG}
     command: >
       sh -c "python manage.py migrate &&
              python manage.py runserver 0.0.0.0:8000"
+    networks:
+      - theater_network
 
   frontend:
-    build: ../frontend
+    build: ./frontend
     container_name: theater_frontend
     ports:
       - "8001:80"
@@ -69,8 +75,11 @@ services:
     environment:
       - VITE_API_URL=http://web:8000/api
 
-
 volumes:
   postgres_data:
   redis_data:
   media_volume:
+
+networks:
+  theater_network:
+    driver: bridge

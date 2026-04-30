@@ -28,7 +28,7 @@ def load_training_data(csv_file):
             name='Основной зал',
             description='Главная сцена театра'
         )
-    print(f"✓ Зал: {hall.name}")
+    print(f"Зал: {hall.name}")
 
     sold_status, created = TicketStatus.objects.get_or_create(
         name='продан'
@@ -131,7 +131,7 @@ def load_training_data(csv_file):
                 )
                 created_tickets += 1
         
-        print(f"  ✓ {play.title}: {tickets_sold} билетов (создано {existing_tickets_count} новых)")
+        print(f"  {play.title}: {tickets_sold} билетов (создано {existing_tickets_count} новых)")
     
 
     print(" ЗАГРУЗКА ЗАВЕРШЕНА!")

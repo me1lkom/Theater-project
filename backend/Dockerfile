@@ -5,19 +5,23 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# Используем официальное зеркало Debian
-RUN sed -i 's/deb.debian.org/mirror.yandex.ru/g' /etc/apt/sources.list.d/debian.sources
-
+# Устанавливаем системные зависимости
 RUN apt-get update && apt-get install -y \
     gcc \
     libpq-dev \
-    postgresql-client \
+    netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt /app/
-RUN pip install --no-cache-dir -r requirements.txt
+# Копируем requirements.txt
+COPY requirements.txt .
 
-COPY . /app/
+# Увеличиваем таймаут и используем зеркало
+RUN pip install --no-cache-dir --timeout 120 \
+    -i https://pypi.tuna.tsinghua.edu.cn/simple \
+    --trusted-host pypi.tuna.tsinghua.edu.cn \
+    -r requirements.txt
+
+COPY . .
 
 RUN mkdir -p /app/media /app/static
 
