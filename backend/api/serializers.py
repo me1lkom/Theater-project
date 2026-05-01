@@ -57,15 +57,91 @@ class SessionActorSerializer(serializers.ModelSerializer):
         model = SessionActor
         fields = ['actor_id', 'actor_name', 'actor_role_name']
 
-class SessionSerializer(serializers.ModelSerializer):   
+class SessionSerializer(serializers.ModelSerializer):
     play_title = serializers.CharField(source='play.title', read_only=True)
     hall_name = serializers.CharField(source='hall.name', read_only=True)
-    actors = SessionActorSerializer(source='session_actors', many=True, read_only=True)
-
+    actors = SessionActorSerializer(many=True, read_only=True, source='session_actors')
+    calculated_price = serializers.SerializerMethodField()
+    coefficients = serializers.SerializerMethodField()  # ← НОВОЕ ПОЛЕ
+    
     class Meta:
         model = Session
-        fields = ['session_id', 'play', 'play_title', 'hall', 'hall_name', 'date', 'time', 'actors']
-
+        fields = ['session_id', 'play', 'play_title', 'hall', 'hall_name', 
+                  'date', 'time', 'calculated_price', 'coefficients', 'actors']
+    
+    def get_calculated_price(self, obj):
+        if obj.calculated_price is not None:
+            return float(obj.calculated_price)
+        from .price_service import PriceCalculator
+        return float(PriceCalculator.calculate_session_price(obj))
+    
+    def get_coefficients(self, obj):
+        """
+        Возвращает коэффициенты, применённые к сеансу
+        """
+        from .price_service import PriceCalculator
+        
+        # Получаем коэффициенты
+        weekday_coeff = PriceCalculator.get_weekday_coefficient(obj.date)
+        time_coeff = PriceCalculator.get_time_coefficient(obj.time)
+        holiday_coeff = PriceCalculator.get_holiday_coefficient(obj.date)
+        
+        # Находим название дня недели
+        weekdays = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
+        weekday_name = weekdays[obj.date.weekday()]
+        
+        # Название времени суток
+        hour = obj.time.hour
+        if 6 <= hour <= 11:
+            time_name = 'Утро (06:00-11:59)'
+        elif 12 <= hour <= 17:
+            time_name = 'День (12:00-17:59)'
+        elif 18 <= hour <= 21:
+            time_name = 'Вечер (18:00-21:59)'
+        else:
+            time_name = 'Ночь (22:00-05:59)'
+        
+        # Проверяем, есть ли праздник
+        from .models import Holiday
+        holiday = Holiday.objects.filter(
+            month=obj.date.month,
+            day=obj.date.day,
+            is_active=True
+        ).first()
+        
+        result = {
+            'base_price': float(obj.play.price),
+            'applied_coefficients': [
+                {
+                    'name': 'День недели',
+                    'value': float(weekday_coeff),
+                    'detail': weekday_name
+                },
+                {
+                    'name': 'Время суток',
+                    'value': float(time_coeff),
+                    'detail': time_name
+                }
+            ],
+            'final_price': float(self.get_calculated_price(obj))
+        }
+        
+        # Добавляем праздник, если есть
+        if holiday:
+            result['applied_coefficients'].append({
+                'name': 'Праздник',
+                'value': float(holiday.coefficient),
+                'detail': holiday.name
+            })
+        
+        # Формула расчёта
+        result['formula'] = f"{obj.play.price} × {weekday_coeff} × {time_coeff}"
+        if holiday:
+            result['formula'] += f" × {holiday.coefficient}"
+        result['formula'] += f" = {result['final_price']}"
+        
+        return result
+    
 class RegisterSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(write_only=True, required=True)
     phone = serializers.CharField(required=False, allow_blank=True, max_length=20)

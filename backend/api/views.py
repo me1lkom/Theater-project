@@ -18,6 +18,8 @@ import os
 import subprocess
 import shutil
 from django.http import StreamingHttpResponse
+from .price_service import PriceCalculator
+from django.db import transaction
 
 
 class PlayListView(generics.ListAPIView):
@@ -571,7 +573,8 @@ def buy_tickets_bulk(request):
             {'error': 'Статус "продан" не найден в системе'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-
+    
+    ticket_price = PriceCalculator.calculate_ticket_price(session, seat)
     tickets = []
     for seat in available_seats:
         ticket = Ticket.objects.create(
@@ -579,7 +582,7 @@ def buy_tickets_bulk(request):
             seat=seat,
             user_id=buyer_user_id,
             status=sold_status,
-            price_paid=session.play.price,
+            price_paid=ticket_price,
             purchase_date=timezone.now()
         )
         tickets.append(ticket)
@@ -1299,25 +1302,30 @@ def my_tickets(request):
 #         play.delete()
 #         return Response({'success': True})
 
-@api_view(['GET', 'POST', 'PUT', 'DELETE'])
+@api_view(['GET', 'POST', 'PUT', 'PATCH', 'DELETE'])
 @permission_classes([IsAuthenticated])
 def manage_sessions(request, session_id=None):
+    """
+    Управление сеансами
+    GET    /api/sessions/manage/ - список всех сеансов
+    GET    /api/sessions/manage/{id}/ - детали сеанса
+    POST   /api/sessions/manage/ - создать сеанс
+    PUT    /api/sessions/manage/{id}/ - изменить сеанс
+    DELETE /api/sessions/manage/{id}/ - удалить сеанс
+    """
 
-    # GET    /api/sessions/manage/ - список всех(+прошедшие) сеансов
-    # POST   /api/sessions/manage/ - создать сеанс
-    # GET    /api/sessions/manage/{id}/ - детали сеанса
-    # PUT    /api/sessions/manage/{id}/ - изменить сеанс
-    # DELETE /api/sessions/manage/{id}/ - удалить сеанс
-
-    if request.method in ['POST', 'PUT', 'DELETE']:
+    # ==================== ПРОВЕРКА ПРАВ ДЛЯ ИЗМЕНЯЮЩИХ МЕТОДОВ ====================
+    if request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
         if not is_admin_or_manager(request.user):
             return Response(
-                {'error': 'Недостаточно прав'},
+                {'error': 'Недостаточно прав. Требуется роль администратора или руководителя'},
                 status=status.HTTP_403_FORBIDDEN
             )
 
+    # ==================== GET (получение сеансов) ====================
     if request.method == 'GET':
         if session_id:
+            # Получение одного сеанса
             try:
                 session = Session.objects.get(pk=session_id)
                 serializer = SessionSerializer(session)
@@ -1328,10 +1336,12 @@ def manage_sessions(request, session_id=None):
                     status=status.HTTP_404_NOT_FOUND
                 )
         else:
+            # Получение всех сеансов
             sessions = Session.objects.all().order_by('date', 'time')
             serializer = SessionSerializer(sessions, many=True)
             return Response(serializer.data)
 
+    # ==================== POST (создание сеанса) ====================
     if request.method == 'POST':
         data = request.data
 
@@ -1340,12 +1350,14 @@ def manage_sessions(request, session_id=None):
         time_str = data.get('time')
         actors_data = data.get('actors', [])
 
+        # Проверка обязательных полей
         if not all([play_id, date_str, time_str]):
             return Response(
                 {'error': 'Не указаны все необходимые данные (play_id, date, time)'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # Проверка существования спектакля
         try:
             play = Play.objects.get(pk=play_id)
         except Play.DoesNotExist:
@@ -1354,15 +1366,17 @@ def manage_sessions(request, session_id=None):
                 status=status.HTTP_404_NOT_FOUND
             )
 
+        # Парсинг даты и времени
         try:
-            session_date = timezone.datetime.strptime(date_str, '%Y-%m-%d').date()
-            session_time = timezone.datetime.strptime(time_str, '%H:%M:%S').time()
+            session_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            session_time = datetime.strptime(time_str, '%H:%M:%S').time()
         except ValueError:
             return Response(
                 {'error': 'Неверный формат даты или времени. Используйте YYYY-MM-DD и HH:MM:SS'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # Проверка, что сеанс не в прошлом
         session_datetime = timezone.datetime.combine(session_date, session_time)
         session_datetime = timezone.make_aware(session_datetime)
         
@@ -1372,46 +1386,58 @@ def manage_sessions(request, session_id=None):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # Получение зала (первого и единственного)
         hall = TheaterHall.objects.first()
         if not hall:
             return Response(
-                {'error': 'Зал не настроен'},
+                {'error': 'Зал не настроен. Сначала создайте зал в админке.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        # Проверка, нет ли уже сеанса в это время в этом зале
         if Session.objects.filter(hall=hall, date=session_date, time=session_time).exists():
             return Response(
                 {'error': f'В зале "{hall.name}" уже есть сеанс на {session_date} {session_time}'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        session = Session.objects.create(
-            play=play,
-            hall=hall,
-            date=session_date,
-            time=session_time
-        )
+        # СОЗДАНИЕ СЕАНСА
+        with transaction.atomic():
+            session = Session.objects.create(
+                play=play,
+                hall=hall,
+                date=session_date,
+                time=session_time
+            )
 
-        for actor_data in actors_data:
-            actor_id = actor_data.get('actor_id')
-            role = actor_data.get('role')
-            if actor_id and role:
-                SessionActor.objects.create(
-                    session=session,
-                    actor_id=actor_id,
-                    actor_role_name=role
-                )        
-        
+            # РАСЧЁТ И СОХРАНЕНИЕ ЦЕНЫ СЕАНСА
+            session.calculated_price = PriceCalculator.calculate_session_price(session)
+            session.save()
+
+            # ДОБАВЛЕНИЕ АКТЁРОВ (если указаны)
+            for actor_data in actors_data:
+                actor_id = actor_data.get('actor_id')
+                role = actor_data.get('role')
+                if actor_id and role:
+                    SessionActor.objects.create(
+                        session=session,
+                        actor_id=actor_id,
+                        actor_role_name=role
+                    )        
+
+        # ЛОГИРОВАНИЕ
         ActionLog.objects.create(
             user_id=request.user.id,
             action_type='CREATE_SESSION',
-            description=f'Создан сеанс: {play.title} на {session.date} {session.time}'
+            description=f'Создан сеанс: {play.title} на {session.date} {session.time} (цена: {session.calculated_price})'
         )
         
         serializer = SessionSerializer(session)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    # ==================== PUT/PATCH (изменение сеанса) ====================
     if request.method in ['PUT', 'PATCH']:
+        # Проверка существования сеанса
         try:
             session = Session.objects.get(pk=session_id)
         except Session.DoesNotExist:
@@ -1422,6 +1448,7 @@ def manage_sessions(request, session_id=None):
         
         data = request.data
         
+        # Проверка: если есть билеты, нельзя менять дату и время
         if session.tickets.exists():
             if 'date' in data or 'time' in data:
                 return Response(
@@ -1429,43 +1456,56 @@ def manage_sessions(request, session_id=None):
                     status=status.HTTP_400_BAD_REQUEST
                 )
         
+        need_recalculate = False  # Флаг для пересчёта цены
+        
+        # ИЗМЕНЕНИЕ ДАТЫ
         if 'date' in data:
             try:
-                new_date = timezone.datetime.strptime(data['date'], '%Y-%m-%d').date()
+                new_date = datetime.strptime(data['date'], '%Y-%m-%d').date()
                 if new_date < timezone.now().date():
                     return Response(
                         {'error': 'Нельзя перенести сеанс в прошлое'},
                         status=status.HTTP_400_BAD_REQUEST
                     )
-                
                 session.date = new_date
+                need_recalculate = True
             except ValueError:
                 return Response(
                     {'error': 'Неверный формат даты. Используйте YYYY-MM-DD'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
         
+        # ИЗМЕНЕНИЕ ВРЕМЕНИ
         if 'time' in data:
             try:
-                new_time = timezone.datetime.strptime(data['time'], '%H:%M:%S').time()
+                new_time = datetime.strptime(data['time'], '%H:%M:%S').time()
                 session.time = new_time
+                need_recalculate = True
             except ValueError:
                 return Response(
                     {'error': 'Неверный формат времени. Используйте HH:MM:SS'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
+        # ИЗМЕНЕНИЕ СПЕКТАКЛЯ
         if 'play_id' in data:
             try:
-                session.play = Play.objects.get(pk=data['play_id'])
+                new_play = Play.objects.get(pk=data['play_id'])
+                session.play = new_play
+                need_recalculate = True
             except Play.DoesNotExist:
                 return Response(
                     {'error': 'Спектакль не найден'},
                     status=status.HTTP_404_NOT_FOUND
                 )
         
+        # ПЕРЕСЧЁТ ЦЕНЫ (если были изменения, влияющие на цену)
+        if need_recalculate:
+            session.calculated_price = PriceCalculator.calculate_session_price(session)
+        
         session.save()
         
+        # ОБНОВЛЕНИЕ АКТЁРОВ (если переданы)
         if 'actors' in data:
             session.session_actors.all().delete()
             for actor_data in data['actors']:
@@ -1478,6 +1518,7 @@ def manage_sessions(request, session_id=None):
                         actor_role_name=role
                     )
 
+        # ЛОГИРОВАНИЕ
         ActionLog.objects.create(
             user_id=request.user.id,
             action_type='UPDATE_SESSION',
@@ -1487,7 +1528,9 @@ def manage_sessions(request, session_id=None):
         serializer = SessionSerializer(session)
         return Response(serializer.data)
 
+    # ==================== DELETE (удаление сеанса) ====================
     if request.method == 'DELETE':
+        # Проверка существования сеанса
         try:
             session = Session.objects.get(pk=session_id)
         except Session.DoesNotExist:
@@ -1496,21 +1539,24 @@ def manage_sessions(request, session_id=None):
                 status=status.HTTP_404_NOT_FOUND
             )
         
+        # Проверка: нельзя удалить сеанс с проданными билетами
         if session.tickets.exists():
             return Response(
                 {'error': 'Нельзя удалить сеанс с проданными билетами'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        # Удаление сеанса (SessionActor удалятся автоматически благодаря CASCADE)
         session.delete()
         
+        # ЛОГИРОВАНИЕ
         ActionLog.objects.create(
             user_id=request.user.id,
             action_type='DELETE_SESSION',
-            description=f'Удален сеанс'
+            description=f'Удален сеанс (ID: {session_id})'
         )
         
-        return Response({'success': True})
+        return Response({'success': True, 'message': 'Сеанс успешно удалён'})
 
 
 @api_view(['GET'])
@@ -2867,6 +2913,93 @@ def download_sql_backup(request):
 
     except Exception as e:
         return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_ticket_price(request):
+
+    # Получить цену билета
+    # GET /api/price/?session_id={id}&seat_id={id}
+
+    session_id = request.query_params.get('session_id')
+    seat_id = request.query_params.get('seat_id')
+    
+    # Проверка обязательных параметров
+    if not session_id or not seat_id:
+        return Response(
+            {'error': 'Не указаны обязательные параметры: session_id и seat_id'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Проверка существования сеанса
+    try:
+        session = Session.objects.get(pk=session_id)
+    except Session.DoesNotExist:
+        return Response(
+            {'error': 'Сеанс не найден'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Проверка существования места
+    try:
+        seat = Seat.objects.get(pk=seat_id)
+    except Seat.DoesNotExist:
+        return Response(
+            {'error': 'Место не найден'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Расчёт цены
+    try:
+        from .price_service import PriceCalculator
+        price = PriceCalculator.calculate_ticket_price(session, seat)
+    except Exception as e:
+        return Response(
+            {'error': f'Ошибка расчёта цены: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    
+    # Формирование ответа
+    response_data = {
+        'session_id': session.session_id,
+        'seat_id': seat.seat_id,
+        'seat': {
+            'row': seat.row_number,
+            'number': seat.seat_number,
+            'sector': seat.sector.name,
+            'sector_coefficient': float(seat.sector.price_coefficient)
+        },
+        'play': {
+            'id': session.play.play_id,
+            'title': session.play.title,
+            'base_price': float(session.play.price)
+        },
+        'session': {
+            'date': session.date,
+            'time': session.time,
+            'calculated_price': float(session.calculated_price) if session.calculated_price else None
+        },
+        'price': float(price)
+    }
+    
+    # Добавляем коэффициенты (опционально)
+    from .price_service import PriceCalculator as PC
+    response_data['coefficients'] = {
+        'weekday': float(PC.get_weekday_coefficient(session.date)),
+        'time': float(PC.get_time_coefficient(session.time)),
+        'holiday': float(PC.get_holiday_coefficient(session.date)),
+        'sector': float(seat.sector.price_coefficient)
+    }
+    
+    # Формула расчёта
+    coeffs = response_data['coefficients']
+    formula = f"{session.play.price} × {coeffs['weekday']} (день) × {coeffs['time']} (время)"
+    if coeffs['holiday'] != 1.0:
+        formula += f" × {coeffs['holiday']} (праздник)"
+    formula += f" × {coeffs['sector']} (сектор) = {float(price):.2f}"
+    response_data['formula'] = formula
+    
+    return Response(response_data)
 
 def get_total_seats():
     return Seat.objects.count()

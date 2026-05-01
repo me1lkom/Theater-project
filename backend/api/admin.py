@@ -3,7 +3,7 @@ from .models import Profile, Role
 from django.contrib import admin
 from .models import (Role, Actor, Play, TheaterHall, Seat, 
                     Panorama, PanoramaLink, Session, TicketStatus, Ticket, Basket, 
-                    ActionLog, AIPrediction, Genre, Sector, SessionActor)
+                    ActionLog, AIPrediction, Genre, Sector, SessionActor, WeekdayCoefficient, TimeCoefficient, Holiday)
 
 
 
@@ -32,3 +32,6 @@ admin.site.register(Ticket)
 admin.site.register(Basket)
 admin.site.register(ActionLog)
 admin.site.register(AIPrediction)
+admin.site.register(WeekdayCoefficient)
+admin.site.register(TimeCoefficient)
+admin.site.register(Holiday)

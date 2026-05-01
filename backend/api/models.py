@@ -146,15 +146,15 @@ class Sector(models.Model):
         verbose_name='Зал'
     )
 
+    price_coefficient = models.DecimalField(
+        max_digits=4,
+        decimal_places=2,
+        default=1.0,
+        verbose_name='Коэффициент цены сектора'
+    )
+
     name = models.CharField(max_length=100, verbose_name='Название сектора')
     description = models.TextField(blank=True, verbose_name='Описание')
-    panorama_url = models.CharField(
-        max_length=500,
-        blank=True,
-        null=True,
-        verbose_name='URL 3D-панорамы'
-    )
-    
     class Meta:
         verbose_name = 'Сектор'
         verbose_name_plural = 'Секторы'
@@ -283,6 +283,14 @@ class Session(models.Model):
         on_delete=models.CASCADE,
         related_name='sessions',
         verbose_name='Зал'
+    )
+
+    calculated_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name='Рассчитанная цена сеанса'
     )
 
     date = models.DateField(verbose_name='Дата')
@@ -504,3 +512,77 @@ class Profile(models.Model):
     
     def __str__(self):
         return f"{self.user.username} - {self.role.name if self.role else 'Нет роли'}"
+
+class WeekdayCoefficient(models.Model):
+    """
+    Коэффициенты для дней недели
+    """
+    WEEKDAYS = [
+        (0, 'Понедельник'),
+        (1, 'Вторник'),
+        (2, 'Среда'),
+        (3, 'Четверг'),
+        (4, 'Пятница'),
+        (5, 'Суббота'),
+        (6, 'Воскресенье'),
+    ]
+    
+    weekday = models.IntegerField(choices=WEEKDAYS, unique=True, verbose_name='День недели')
+    coefficient = models.DecimalField(
+        max_digits=4, 
+        decimal_places=2, 
+        default=1.0,
+        verbose_name='Коэффициент'
+    )
+    is_active = models.BooleanField(default=True, verbose_name='Активен')
+    
+    class Meta:
+        verbose_name = 'Коэффициент дня недели'
+        verbose_name_plural = 'Коэффициенты дней недели'
+        ordering = ['weekday']
+    
+    def __str__(self):
+        return f"{self.get_weekday_display()}: x{self.coefficient}"
+
+
+class TimeCoefficient(models.Model):
+    """
+    Коэффициенты для времени суток
+    """
+    TIME_SLOTS = [
+        ('morning', 'Утро (06:00-11:59)'),
+        ('afternoon', 'День (12:00-17:59)'),
+        ('evening', 'Вечер (18:00-21:59)'),
+        ('night', 'Ночь (22:00-05:59)'),
+    ]
+    
+    time_slot = models.CharField(max_length=20, choices=TIME_SLOTS, unique=True)
+    coefficient = models.DecimalField(max_digits=4, decimal_places=2, default=1.0)
+    is_active = models.BooleanField(default=True)
+    
+    class Meta:
+        verbose_name = 'Коэффициент времени'
+        verbose_name_plural = 'Коэффициенты времени'
+    
+    def __str__(self):
+        return f"{self.get_time_slot_display()}: x{self.coefficient}"
+
+
+class Holiday(models.Model):
+    """
+    Праздничные дни (без привязки к году)
+    """
+    name = models.CharField(max_length=100, verbose_name='Название')
+    month = models.IntegerField(verbose_name='Месяц (1-12)')
+    day = models.IntegerField(verbose_name='День (1-31)')
+    coefficient = models.DecimalField(max_digits=4, decimal_places=2, default=1.5)
+    is_active = models.BooleanField(default=True)
+    
+    class Meta:
+        verbose_name = 'Праздник'
+        verbose_name_plural = 'Праздники'
+        ordering = ['month', 'day']
+        unique_together = ['month', 'day']
+    
+    def __str__(self):
+        return f"{self.name} ({self.month}.{self.day}) → x{self.coefficient}"

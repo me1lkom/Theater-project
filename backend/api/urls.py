@@ -73,11 +73,12 @@ urlpatterns = [
     path('panoramas/manage/<int:panorama_id>/', views.manage_panoramas, name='manage-panorama-detail'),
     path('panorama/by-seat/', views.get_panorama_by_seat, name='panorama-by-seat'),  
 
-
     path('ml/train/', views.train_ml_model, name='train-ml'),
     path('ml/demand-predict/', views.demand_predict, name='demand-predict'),
     path('ml/predictions/', views.get_predictions, name='get-predictions'),
     path('ml/info/', views.model_info, name='model-info'),
 
     path('backup/', views.download_sql_backup, name='backup'),
+
+    path('price/', views.get_ticket_price, name='get-price'),
 ]
