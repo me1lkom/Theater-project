@@ -650,9 +650,12 @@ def my_tickets(request):
     
     return Response(result)
 
-# возвращает список свободных мест на указанный сеанс
 @api_view(['GET'])
 def available_seats(request, pk):
+
+    # Возвращает список свободных мест с ценами
+    # GET /api/sessions/{pk}/available-seats/
+
     try:
         session = Session.objects.get(pk=pk)
     except Session.DoesNotExist:
@@ -682,9 +685,25 @@ def available_seats(request, pk):
     busy_seat_ids = set(busy_from_tickets) | set(busy_from_basket)
     
     available_seats = all_seats.exclude(seat_id__in=busy_seat_ids)
-    
-    serializer = SeatSerializer(available_seats, many=True)
-    return Response(serializer.data)
+    available_seats_data = []
+    for seat in available_seats:
+        price = PriceCalculator.calculate_ticket_price(session, seat)
+        available_seats_data.append({
+            'seat_id': seat.seat_id,
+            'row_number': seat.row_number,
+            'seat_number': seat.seat_number,
+            'sector': seat.sector.name,
+            'price': float(price),
+        })
+
+    return Response({
+        'session_id': session.session_id,
+        'play_title': session.play.title,
+        'date': session.date,
+        'time': session.time,
+        'available_count': len(available_seats_data),
+        'seats': available_seats_data,
+    })
 
 # @api_view(['POST'])
 # @permission_classes([IsAuthenticated])
