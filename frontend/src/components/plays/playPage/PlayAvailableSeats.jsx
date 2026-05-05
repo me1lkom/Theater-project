@@ -62,8 +62,9 @@ export default function PlayAvailableSeats({ sessionId }) {
         });
 
         console.log(`Найдено мест:', ${seatRects.length}`);
+        console.log(availableSeats.seats);
 
-        const freeSeatIds = new Set(availableSeats.map(s => s.seat_id));
+        const freeSeatIds = new Set(availableSeats.seats.map(s => s.seat_id));
 
         seatRects.forEach((rect, index) => {
             const seatData = seats[index];
