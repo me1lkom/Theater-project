@@ -20,11 +20,9 @@
 }
 
 .infoPanel {
-    /* margin-top: var(--space-lg); */
     padding: var(--space-md);
-    /* background: #2a2a2a; */
     border-radius: var(--radius-md);
-    color: white;
+    /* color: white; */
     text-align: center;
     width: 100%;
     max-width: 800px;
@@ -100,14 +98,4 @@
     height: 24px;
     border-radius: 6px;
     border: 1px solid #ddd;
-}
-
-.totalPrice {
-    margin-top: 15px;
-    padding-top: 12px;
-    border-top: 1px solid #e0e0e0;
-    font-size: 18px;
-    font-weight: bold;
-    color: #e74c3c;
-    text-align: right;
 }
