@@ -15,6 +15,8 @@ export default function PlayAvailableSeats({ sessionId }) {
     const [selectedSeats, setSelectedSeats] = useState([]);
     const [price, setPrice] = useState(0);
     const { addTicketToBasket } = useAddToBasket();
+    const [sectorPrices, setSectorPrices] = useState({});
+
 
     const { isAuthenticated } = useAuthStore();
 
@@ -23,6 +25,18 @@ export default function PlayAvailableSeats({ sessionId }) {
     const navigate = useNavigate();
 
     const MySwal = withReactContent(Swal)
+
+    useEffect(() => {
+        if (availableSeats?.seats) {
+            const prices = {};
+            availableSeats.seats.forEach(seat => {
+                if (!prices[seat.sector]) {
+                    prices[seat.sector] = seat.price;
+                }
+            });
+            setSectorPrices(prices);
+        }
+    }, [availableSeats]);
 
     const resetSeats = () => {
         if (!svgRef.current) return;
@@ -553,14 +567,62 @@ export default function PlayAvailableSeats({ sessionId }) {
                 </svg>
             </div>
 
-            <div className={styles.infoPanel}>
-                <div>
-                    Выбрано мест: <strong className={styles.selectedCount}>{selectedSeats.length}</strong>
+            <div className={styles.legend}>
+                <div className={styles.legendTitle}>Секторы зала</div>
+                {console.log(sectorPrices)}
+                <div className={styles.legendGrid}>
+                    <div className={styles.legendItem}>
+                        <div className={styles.colorBox} style={{ background: '#2ecc71' }}></div>
+                        <span>Партер</span>
+                    </div>
+
+                    <div className={styles.legendItem}>
+                        <div className={styles.colorBox} style={{ background: '#3498db' }}></div>
+                        <span>Амфитеатр</span>
+                    </div>
+
+                    <div className={styles.legendItem}>
+                        <div className={styles.colorBox} style={{ background: '#e67e22' }}></div>
+                        <span>Балкон</span>
+                    </div>
+
+                    <div className={styles.legendItem}>
+                        <div className={styles.colorBox} style={{ background: '#f1c40f' }}></div>
+                        <span>Выбрано вами</span>
+                    </div>
+
+                    <div className={styles.legendItem}>
+                        <div className={styles.colorBox} style={{ background: '#666', opacity: 0.5 }}></div>
+                        <span>Занято</span>
+                    </div>
                 </div>
+            </div>
+
+            <div className={styles.legend}>
+                <div className={styles.legendTitle}>Цены секторов зала</div>
+
+                <div className={styles.legendGrid}>
+                    <div className={styles.legendItem}>
+                        <div className={styles.colorBox} style={{ background: '#2ecc71' }}></div>
+                        <span>Партер {sectorPrices.Партер && `— ${sectorPrices.Партер} ₽`}</span>                    </div>
+
+                    <div className={styles.legendItem}>
+                        <div className={styles.colorBox} style={{ background: '#3498db' }}></div>
+                        <span>Амфитеатр {sectorPrices.Амфитеатр && `— ${sectorPrices.Амфитеатр} ₽`}</span>                    </div>
+
+                    <div className={styles.legendItem}>
+                        <div className={styles.colorBox} style={{ background: '#e67e22' }}></div>
+                        <span>Балкон {sectorPrices.Балкон && `— ${sectorPrices.Балкон} ₽`}</span>                    </div>
+                </div>
+            </div>
+
+
+            <div className={styles.infoPanel}>
                 <button className={styles.buyButton} onClick={handleBooking} disabled={selectedSeats.length === 0}>
                     Купить
                 </button>
             </div>
+
         </div>
     );
 }
