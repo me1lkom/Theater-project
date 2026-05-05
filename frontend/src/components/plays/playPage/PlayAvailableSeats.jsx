@@ -13,6 +13,7 @@ export default function PlayAvailableSeats({ sessionId }) {
     const { seats, loading, error } = useSeats();
     const { availableSeats } = useAvailableSeats(sessionId);
     const [selectedSeats, setSelectedSeats] = useState([]);
+    const [price, setPrice] = useState(0);
     const { addTicketToBasket } = useAddToBasket();
 
     const { isAuthenticated } = useAuthStore();
@@ -110,7 +111,6 @@ export default function PlayAvailableSeats({ sessionId }) {
 
 
                 const seatId = parseInt(rect.getAttribute('data-seat-id'));
-
                 const isTaken = rect.classList.contains('taken');
 
                 if (isTaken) {
@@ -125,6 +125,9 @@ export default function PlayAvailableSeats({ sessionId }) {
 
                 const isSelected = rect.classList.contains('selected');
 
+                const priceSelectedSeat = availableSeats.seats?.find(seat => seat.seat_id === seatId).price || 5;
+                console.log(priceSelectedSeat);
+
                 if (isSelected) {
                     rect.classList.remove('selected');
 
@@ -133,11 +136,14 @@ export default function PlayAvailableSeats({ sessionId }) {
                     else if (sector === 'Амфитеатр') rect.setAttribute('fill', '#3498db');
                     else if (sector === 'Балкон') rect.setAttribute('fill', '#e67e22');
                     setSelectedSeats(prev => prev.filter(id => id !== seatId));
+                    setPrice(prev => prev - priceSelectedSeat);
+
                 } else {
                     console.log(selectedSeats.length)
                     rect.classList.add('selected');
                     rect.setAttribute('fill', '#f1c40f');
                     setSelectedSeats(prev => [...prev, seatId]);
+                    setPrice(prev => prev + priceSelectedSeat);
                 }
             };
         });
@@ -148,6 +154,7 @@ export default function PlayAvailableSeats({ sessionId }) {
 
         resetSeats();
         setSelectedSeats([]);
+        setPrice(0);
         initialized.current = false;
 
     }, [sessionId]);
@@ -191,7 +198,7 @@ export default function PlayAvailableSeats({ sessionId }) {
 
 
 
-        console.log(`Попытка отправить sessionId: ${sessionId}, seatIds:`, selectedSeats);
+        console.log(`Попытка отправить sessionId: ${sessionId}, seatIds: ${selectedSeats}, с итоговой ценой ${price}`);
 
         const result = await addTicketToBasket(sessionId, selectedSeats);
 
@@ -199,7 +206,8 @@ export default function PlayAvailableSeats({ sessionId }) {
             navigate('/payment', {
                 state: {
                     sessionId: sessionId,
-                    selectedSeats: selectedSeats
+                    selectedSeats: selectedSeats,
+                    price: price
                 }
             });
         } else {

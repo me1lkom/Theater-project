@@ -5,11 +5,11 @@ import styles from './PaymentPage.module.css';
 export default function PaymentPage() {
 
     const location = useLocation();
-    const { sessionId, selectedSeats } = location.state || {};
+    const { sessionId, selectedSeats, price } = location.state || {};
 
     return(
         <div className={styles.container}>
-            <DataInfo sessionId={sessionId} selectedSeats={selectedSeats} />
+            <DataInfo sessionId={sessionId} selectedSeats={selectedSeats} price={price} />
         </div>
     )
 }
