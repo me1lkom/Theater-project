@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views, views_auth
+from . import views, views_auth, views_payment
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 urlpatterns = [
@@ -81,4 +81,7 @@ urlpatterns = [
     path('backup/', views.download_sql_backup, name='backup'),
 
     path('price/', views.get_ticket_price, name='get-price'),
+
+    path('create-payment/', views_payment.create_payment_api, name='create-payment'),
+    path('payment-success/', views_payment.payment_success, name='payment-success'),
 ]

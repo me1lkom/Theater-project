@@ -1324,16 +1324,14 @@ def my_tickets(request):
 @api_view(['GET', 'POST', 'PUT', 'PATCH', 'DELETE'])
 @permission_classes([IsAuthenticated])
 def manage_sessions(request, session_id=None):
-    """
-    Управление сеансами
-    GET    /api/sessions/manage/ - список всех сеансов
-    GET    /api/sessions/manage/{id}/ - детали сеанса
-    POST   /api/sessions/manage/ - создать сеанс
-    PUT    /api/sessions/manage/{id}/ - изменить сеанс
-    DELETE /api/sessions/manage/{id}/ - удалить сеанс
-    """
 
-    # ==================== ПРОВЕРКА ПРАВ ДЛЯ ИЗМЕНЯЮЩИХ МЕТОДОВ ====================
+    # Управление сеансами
+    # GET    /api/sessions/manage/ - список всех сеансов
+    # GET    /api/sessions/manage/{id}/ - детали сеанса
+    # POST   /api/sessions/manage/ - создать сеанс
+    # PUT    /api/sessions/manage/{id}/ - изменить сеанс
+    # DELETE /api/sessions/manage/{id}/ - удалить сеанс
+
     if request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
         if not is_admin_or_manager(request.user):
             return Response(
@@ -1341,7 +1339,6 @@ def manage_sessions(request, session_id=None):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-    # ==================== GET (получение сеансов) ====================
     if request.method == 'GET':
         if session_id:
             # Получение одного сеанса
@@ -1355,12 +1352,10 @@ def manage_sessions(request, session_id=None):
                     status=status.HTTP_404_NOT_FOUND
                 )
         else:
-            # Получение всех сеансов
             sessions = Session.objects.all().order_by('date', 'time')
             serializer = SessionSerializer(sessions, many=True)
             return Response(serializer.data)
 
-    # ==================== POST (создание сеанса) ====================
     if request.method == 'POST':
         data = request.data
 
@@ -1369,14 +1364,12 @@ def manage_sessions(request, session_id=None):
         time_str = data.get('time')
         actors_data = data.get('actors', [])
 
-        # Проверка обязательных полей
         if not all([play_id, date_str, time_str]):
             return Response(
                 {'error': 'Не указаны все необходимые данные (play_id, date, time)'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Проверка существования спектакля
         try:
             play = Play.objects.get(pk=play_id)
         except Play.DoesNotExist:
@@ -1385,7 +1378,6 @@ def manage_sessions(request, session_id=None):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Парсинг даты и времени
         try:
             session_date = datetime.strptime(date_str, '%Y-%m-%d').date()
             session_time = datetime.strptime(time_str, '%H:%M:%S').time()
@@ -1395,7 +1387,6 @@ def manage_sessions(request, session_id=None):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Проверка, что сеанс не в прошлом
         session_datetime = timezone.datetime.combine(session_date, session_time)
         session_datetime = timezone.make_aware(session_datetime)
         
@@ -1405,22 +1396,19 @@ def manage_sessions(request, session_id=None):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Получение зала (первого и единственного)
         hall = TheaterHall.objects.first()
         if not hall:
             return Response(
                 {'error': 'Зал не настроен. Сначала создайте зал в админке.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
-        # Проверка, нет ли уже сеанса в это время в этом зале
+
         if Session.objects.filter(hall=hall, date=session_date, time=session_time).exists():
             return Response(
                 {'error': f'В зале "{hall.name}" уже есть сеанс на {session_date} {session_time}'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # СОЗДАНИЕ СЕАНСА
         with transaction.atomic():
             session = Session.objects.create(
                 play=play,
@@ -1429,11 +1417,9 @@ def manage_sessions(request, session_id=None):
                 time=session_time
             )
 
-            # РАСЧЁТ И СОХРАНЕНИЕ ЦЕНЫ СЕАНСА
             session.calculated_price = PriceCalculator.calculate_session_price(session)
             session.save()
 
-            # ДОБАВЛЕНИЕ АКТЁРОВ (если указаны)
             for actor_data in actors_data:
                 actor_id = actor_data.get('actor_id')
                 role = actor_data.get('role')
@@ -1444,7 +1430,6 @@ def manage_sessions(request, session_id=None):
                         actor_role_name=role
                     )        
 
-        # ЛОГИРОВАНИЕ
         ActionLog.objects.create(
             user_id=request.user.id,
             action_type='CREATE_SESSION',
@@ -1454,9 +1439,7 @@ def manage_sessions(request, session_id=None):
         serializer = SessionSerializer(session)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    # ==================== PUT/PATCH (изменение сеанса) ====================
     if request.method in ['PUT', 'PATCH']:
-        # Проверка существования сеанса
         try:
             session = Session.objects.get(pk=session_id)
         except Session.DoesNotExist:
@@ -1466,8 +1449,7 @@ def manage_sessions(request, session_id=None):
             )
         
         data = request.data
-        
-        # Проверка: если есть билеты, нельзя менять дату и время
+
         if session.tickets.exists():
             if 'date' in data or 'time' in data:
                 return Response(
@@ -1475,9 +1457,8 @@ def manage_sessions(request, session_id=None):
                     status=status.HTTP_400_BAD_REQUEST
                 )
         
-        need_recalculate = False  # Флаг для пересчёта цены
-        
-        # ИЗМЕНЕНИЕ ДАТЫ
+        need_recalculate = False 
+
         if 'date' in data:
             try:
                 new_date = datetime.strptime(data['date'], '%Y-%m-%d').date()
@@ -1493,8 +1474,7 @@ def manage_sessions(request, session_id=None):
                     {'error': 'Неверный формат даты. Используйте YYYY-MM-DD'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-        
-        # ИЗМЕНЕНИЕ ВРЕМЕНИ
+
         if 'time' in data:
             try:
                 new_time = datetime.strptime(data['time'], '%H:%M:%S').time()
@@ -1506,7 +1486,6 @@ def manage_sessions(request, session_id=None):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-        # ИЗМЕНЕНИЕ СПЕКТАКЛЯ
         if 'play_id' in data:
             try:
                 new_play = Play.objects.get(pk=data['play_id'])
@@ -1517,14 +1496,12 @@ def manage_sessions(request, session_id=None):
                     {'error': 'Спектакль не найден'},
                     status=status.HTTP_404_NOT_FOUND
                 )
-        
-        # ПЕРЕСЧЁТ ЦЕНЫ (если были изменения, влияющие на цену)
+
         if need_recalculate:
             session.calculated_price = PriceCalculator.calculate_session_price(session)
         
         session.save()
-        
-        # ОБНОВЛЕНИЕ АКТЁРОВ (если переданы)
+
         if 'actors' in data:
             session.session_actors.all().delete()
             for actor_data in data['actors']:
@@ -1537,7 +1514,6 @@ def manage_sessions(request, session_id=None):
                         actor_role_name=role
                     )
 
-        # ЛОГИРОВАНИЕ
         ActionLog.objects.create(
             user_id=request.user.id,
             action_type='UPDATE_SESSION',
@@ -1547,9 +1523,7 @@ def manage_sessions(request, session_id=None):
         serializer = SessionSerializer(session)
         return Response(serializer.data)
 
-    # ==================== DELETE (удаление сеанса) ====================
     if request.method == 'DELETE':
-        # Проверка существования сеанса
         try:
             session = Session.objects.get(pk=session_id)
         except Session.DoesNotExist:
@@ -1557,18 +1531,15 @@ def manage_sessions(request, session_id=None):
                 {'error': 'Сеанс не найден'},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
-        # Проверка: нельзя удалить сеанс с проданными билетами
+
         if session.tickets.exists():
             return Response(
                 {'error': 'Нельзя удалить сеанс с проданными билетами'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
-        # Удаление сеанса (SessionActor удалятся автоматически благодаря CASCADE)
+
         session.delete()
         
-        # ЛОГИРОВАНИЕ
         ActionLog.objects.create(
             user_id=request.user.id,
             action_type='DELETE_SESSION',
@@ -1749,8 +1720,7 @@ def update_hall(request):
             hall.description = data['description']
         
         hall.save()
-        
-        # записываем действие в журнал действий
+
         ActionLog.objects.create(
             user_id=request.user.id,
             action_type='UPDATE_HALL',
