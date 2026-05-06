@@ -10,7 +10,7 @@ import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 
 
-export default function DataInfo({ sessionId, selectedSeats }) {
+export default function DataInfo({ sessionId, selectedSeats, price }) {
     const { session, loading, error } = useSession(sessionId);
     const { play, loading: playLoading, error: playError } = usePlay(session?.play);
     const { seats } = useSeats();
@@ -21,6 +21,7 @@ export default function DataInfo({ sessionId, selectedSeats }) {
 
     const neededSeats = seats?.filter(seat => selectedSeats.includes(seat.seat_id));
 
+    console.log(`цена билетов ${price}`)
 
     if (!session || !play) {
         return (
@@ -33,16 +34,16 @@ export default function DataInfo({ sessionId, selectedSeats }) {
 
 
 
-    const countTickets = selectedSeats.length;
+    // const countTickets = selectedSeats.length;
 
     const handleFormSubmit = async ({ user_data }) => {
         console.log(`user_data: ${user_data}`);
 
         const payload = {
             session_id: Number(sessionId),
-            seat_ids: selectedSeats.map(id => Number(id))
+            seat_ids: selectedSeats.map(id => Number(id)),
         };
-
+        
         console.log('Отправка на сервер:', payload.user_id, payload.session_id, payload.seat_ids);
 
         const result = await buyTickets(payload.session_id, payload.seat_ids);
@@ -62,6 +63,7 @@ export default function DataInfo({ sessionId, selectedSeats }) {
             alert(`Ошибка: ${result.error}`);
         }
     };
+
 
     const hours = Math.floor(play.duration / 60);
     let minutes = play.duration % 60;
@@ -90,7 +92,7 @@ export default function DataInfo({ sessionId, selectedSeats }) {
             ))}
             </div>
 
-            <div className={styles.price}>К Оплате: {countTickets * play.price}</div>
+            <div className={styles.price}>К Оплате: {price}</div>
 
             <UserForm onSubmit={handleFormSubmit} />
         </div>

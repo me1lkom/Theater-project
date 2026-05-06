@@ -20,11 +20,9 @@
 }
 
 .infoPanel {
-    margin-top: var(--space-lg);
     padding: var(--space-md);
-    background: #2a2a2a;
     border-radius: var(--radius-md);
-    color: white;
+    /* color: white; */
     text-align: center;
     width: 100%;
     max-width: 800px;
@@ -61,4 +59,43 @@
     text-align: center;
     padding: var(--space-xl);
     color: var(--text);
+}
+
+
+
+.legend {
+    background: #f5f5f5;
+    border-radius: 12px;
+    padding: 15px 20px;
+    margin-bottom: 20px;
+    border: 1px solid #e0e0e0;
+}
+
+.legendTitle {
+    font-weight: bold;
+    font-size: 14px;
+    margin-bottom: 12px;
+    color: #333;
+}
+
+.legendGrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    row-gap: 10px;
+}
+
+.legendItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #555;
+}
+
+.colorBox {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
 }
