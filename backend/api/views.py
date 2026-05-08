@@ -20,6 +20,7 @@ import shutil
 from django.http import StreamingHttpResponse
 from .price_service import PriceCalculator
 from django.db import transaction
+from django.db import models  # ← важно: импорт models для Q
 
 
 class PlayListView(generics.ListAPIView):
@@ -813,15 +814,13 @@ def get_active_baskets(user):
     
     return Basket.objects.filter(user=user, expires_at__gt=timezone.now())
 
+from .price_service import PriceCalculator
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def add_to_basket_bulk(request):
-
-    # Добавление нескольких мест в корзину одной операцией
-    # POST /api/basket/add/bulk/
-
     user_id = request.user.id
-    get_active_baskets(request.user) 
+    get_active_baskets(request.user)
 
     serializer = BulkBasketSerializer(data=request.data)
     if not serializer.is_valid():
@@ -838,7 +837,7 @@ def add_to_basket_bulk(request):
             status=status.HTTP_404_NOT_FOUND
         )
 
-    seats = Seat.objects.filter(pk__in=seat_ids)
+    seats = Seat.objects.filter(pk__in=seat_ids).select_related('sector')
     if seats.count() != len(seat_ids):
         return Response(
             {'error': 'Одно или несколько мест не найдены'},
@@ -901,11 +900,14 @@ def add_to_basket_bulk(request):
     baskets = []
     
     for seat in free_seats:
+        price = PriceCalculator.calculate_ticket_price(session, seat)
+        
         basket = Basket.objects.create(
             user_id=user_id,
             session=session,
             seat=seat,
-            expires_at=expires_at
+            expires_at=expires_at,
+            price_at_time=price
         )
         baskets.append(basket)
 
@@ -924,7 +926,8 @@ def add_to_basket_bulk(request):
                 'basket_id': b.basket_id,
                 'seat_id': b.seat.seat_id,
                 'row': b.seat.row_number,
-                'seat_number': b.seat.seat_number
+                'seat_number': b.seat.seat_number,
+                'price': float(b.price_at_time)
             }
             for b in baskets
         ]
@@ -997,7 +1000,7 @@ def my_basket(request):
             'hall': basket.session.hall.name,
             'row': basket.seat.row_number,
             'seat': basket.seat.seat_number,
-            'price': str(basket.session.play.price),
+            'price': float(basket.price_at_time),
             'expires_at': basket.expires_at,
             'expires_in_seconds': (basket.expires_at - timezone.now()).total_seconds()
         })
@@ -2847,10 +2850,10 @@ def model_info(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def download_sql_backup(request):
-
     if not is_admin_or_manager(request.user):
         return Response({'error': 'Недостаточно прав'}, status=403)
-    
+
+    proc = None
     try:
         db_settings = settings.DATABASES['default']
         db_name = db_settings['NAME']
@@ -2861,11 +2864,16 @@ def download_sql_backup(request):
 
         pg_dump_path = shutil.which('pg_dump')
         if not pg_dump_path:
+            ActionLog.objects.create(
+                user=request.user,
+                action_type='BACKUP_ERROR',
+                description='pg_dump не найден в системе'
+            )
             return Response({'error': 'pg_dump не найден в системе'}, status=500)
-        
+
         env = os.environ.copy()
         env['PGPASSWORD'] = db_password
-        
+
         cmd = [
             pg_dump_path,
             '-U', db_user,
@@ -2873,35 +2881,52 @@ def download_sql_backup(request):
             '-p', str(db_port),
             db_name
         ]
-        
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
 
-        import time
-        time.sleep(0.5)
-        if proc.poll() is not None and proc.returncode != 0:
-            error = proc.stderr.read().decode('utf-8', errors='ignore')
-            return Response({'error': f'Ошибка pg_dump: {error}'}, status=500)
-        
+        # Запускаем процесс
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=env
+        )
+
         def generate():
-            for line in proc.stdout:
-                yield line
-        
+            try:
+                for line in iter(proc.stdout.readline, b''):
+                    if line:
+                        yield line
+            finally:
+                if proc.poll() is None:
+                    proc.terminate()
+                    proc.wait()
+                proc.stdout.close()
+
         timestamp = datetime.now().strftime('%Y.%m.%d_%H.%M')
         filename = f'theater_dump_{timestamp}.sql'
-        
+
         response = StreamingHttpResponse(generate(), content_type='application/sql')
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
-        
+
         ActionLog.objects.create(
-            user_id=request.user.id,
+            user=request.user,
             action_type='DOWNLOAD_BACKUP',
-            description=f'Скачена резервного копированиям'
+            description=f'Скачана резервная копия базы данных'
         )
 
         return response
 
     except Exception as e:
-        return Response({'error': str(e)}, status=500)
+        if proc and proc.poll() is None:
+            proc.terminate()
+            proc.wait()
+
+        ActionLog.objects.create(
+            user=request.user,
+            action_type='BACKUP_ERROR',
+            description=f'Ошибка при создании бэкапа: {str(e)[:200]}'
+        )
+
+        return Response({'error': str(e)}, status=500)  
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -2989,6 +3014,154 @@ def get_ticket_price(request):
     response_data['formula'] = formula
     
     return Response(response_data)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_refundable_tickets(request):
+
+    # Возвращает список билетов на будущие сеансы, которые можно вернуть
+    # GET /api/tickets/refundable/
+    
+    # Параметры фильтрации:
+    # - user_id: ID пользователя
+    # - play_id: ID спектакля
+    # - date_from: начальная дата
+    # - date_to: конечная дата
+    # - search: поиск по имени/фамилии/email
+    
+    if not is_admin_or_cashier(request.user):
+        return Response({
+            'error': 'Недостаточно прав. Требуется роль администратора или кассира.'
+        }, status=status.HTTP_403_FORBIDDEN)
+
+    today = timezone.now().date()
+    
+    tickets = Ticket.objects.filter(
+        session__date__gte=today, 
+        status__name='продан'
+    ).select_related(
+        'user', 'session', 'session__play', 'seat', 'seat__sector', 'status'
+    ).order_by('session__date', 'session__time')
+
+    user_id = request.query_params.get('user_id')
+    if user_id:
+        tickets = tickets.filter(user_id=user_id)
+
+    play_id = request.query_params.get('play_id')
+    if play_id:
+        tickets = tickets.filter(session__play_id=play_id)
+
+    date_from = request.query_params.get('date_from')
+    if date_from:
+        tickets = tickets.filter(session__date__gte=date_from)
+    
+    date_to = request.query_params.get('date_to')
+    if date_to:
+        tickets = tickets.filter(session__date__lte=date_to)
+
+    search = request.query_params.get('search')
+    if search:
+        tickets = tickets.filter(
+            models.Q(user__first_name__icontains=search) |
+            models.Q(user__last_name__icontains=search) |
+            models.Q(user__username__icontains=search) |
+            models.Q(user__email__icontains=search)
+        )
+
+    limit = request.query_params.get('limit', 100)
+    try:
+        limit = int(limit)
+        if limit > 500:
+            limit = 500
+    except ValueError:
+        limit = 100
+    
+    tickets = tickets[:limit]
+    result = []
+    for ticket in tickets:
+        session_datetime = timezone.datetime.combine(
+            ticket.session.date,
+            ticket.session.time
+        )
+        session_datetime = timezone.make_aware(session_datetime)
+        deadline = session_datetime - timedelta(days=3)
+        can_refund = timezone.now() <= deadline
+        
+        result.append({
+            'ticket_id': ticket.ticket_id,
+            'user': {
+                'id': ticket.user.id,
+                'name': f"{ticket.user.first_name} {ticket.user.last_name}".strip(),
+                'username': ticket.user.username,
+                'email': ticket.user.email,
+                'phone': getattr(ticket.user.profile, 'phone', '')
+            },
+            'session': {
+                'id': ticket.session.session_id,
+                'play': ticket.session.play.title,
+                'play_id': ticket.session.play.play_id,
+                'date': ticket.session.date,
+                'time': ticket.session.time,
+                'hall': ticket.session.hall.name
+            },
+            'seat': {
+                'id': ticket.seat.seat_id,
+                'row': ticket.seat.row_number,
+                'number': ticket.seat.seat_number,
+                'sector': ticket.seat.sector.name
+            },
+            'price': float(ticket.price_paid),
+            'purchase_date': ticket.purchase_date,
+            'can_refund': can_refund,
+            'refund_deadline': deadline.date() if can_refund else None
+        })
+    
+    return Response({
+        'count': len(result),
+        'limit': limit,
+        'results': result
+    })
+
+from django.http import FileResponse
+from .ticket_pdf import generate_ticket_pdf
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def download_ticket(request, ticket_id):
+
+    # Скачивает билет в формате PDF
+    # GET /api/tickets/{ticket_id}/download/
+
+    try:
+        ticket = Ticket.objects.select_related(
+            'user', 'session', 'session__play', 
+            'session__hall', 'seat', 'seat__sector'
+        ).get(pk=ticket_id)
+    except Ticket.DoesNotExist:
+        return Response({'error': 'Билет не найден'}, status=404)
+    
+
+    if ticket.user_id != request.user.id:
+        if not is_admin_or_cashier(request.user):
+            return Response(
+                {'error': 'Вы можете скачать только свои билеты'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+    
+    pdf_buffer = generate_ticket_pdf(ticket)
+
+    filename = f"ticket_{ticket.ticket_id}_{ticket.session.date}.pdf"
+    
+    response = FileResponse(
+        pdf_buffer,
+        as_attachment=True,
+        filename=filename,
+        content_type='application/pdf'
+    )
+    
+    return response
 
 def get_total_seats():
     return Seat.objects.count()

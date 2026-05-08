@@ -395,6 +395,14 @@ class Basket(models.Model):
         on_delete=models.CASCADE,
         verbose_name='Место'
     )
+
+    price_at_time = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name='Цена на момент добавления'
+    )
     
     added_at = models.DateTimeField(
         default=timezone.now,
@@ -514,9 +522,7 @@ class Profile(models.Model):
         return f"{self.user.username} - {self.role.name if self.role else 'Нет роли'}"
 
 class WeekdayCoefficient(models.Model):
-    """
-    Коэффициенты для дней недели
-    """
+
     WEEKDAYS = [
         (0, 'Понедельник'),
         (1, 'Вторник'),
@@ -546,9 +552,7 @@ class WeekdayCoefficient(models.Model):
 
 
 class TimeCoefficient(models.Model):
-    """
-    Коэффициенты для времени суток
-    """
+
     TIME_SLOTS = [
         ('morning', 'Утро (06:00-11:59)'),
         ('afternoon', 'День (12:00-17:59)'),
@@ -569,9 +573,7 @@ class TimeCoefficient(models.Model):
 
 
 class Holiday(models.Model):
-    """
-    Праздничные дни (без привязки к году)
-    """
+
     name = models.CharField(max_length=100, verbose_name='Название')
     month = models.IntegerField(verbose_name='Месяц (1-12)')
     day = models.IntegerField(verbose_name='День (1-31)')
@@ -586,3 +588,28 @@ class Holiday(models.Model):
     
     def __str__(self):
         return f"{self.name} ({self.month}.{self.day}) → x{self.coefficient}"
+    
+
+class Payment(models.Model):
+    PAYMENT_STATUS = (
+        ('pending', 'Ожидает оплаты'),
+        ('succeeded', 'Оплачен'),
+        ('cancelled', 'Отменён'),
+        ('refunded', 'Возвращён'),
+    )
+    
+    payment_id = models.CharField(max_length=100, unique=True, verbose_name='ID платежа в ЮKassa')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='payments')
+    amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Сумма')
+    status = models.CharField(max_length=20, choices=PAYMENT_STATUS, default='pending')
+    baskets_data = models.JSONField(default=list, verbose_name='Данные корзин')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'Платёж'
+        verbose_name_plural = 'Платежи'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Платёж {self.payment_id} - {self.status} - {self.amount}₽"
