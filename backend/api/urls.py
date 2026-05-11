@@ -85,5 +85,5 @@ urlpatterns = [
     path('price/', views.get_ticket_price, name='get-price'),
 
     path('create-payment/', views_payment.create_payment_api, name='create-payment'),
-    path('payment-success/', views_payment.payment_success, name='payment-success'),
+    path('check-payment/', views_payment.check_payment_status, name='check-payment'),
 ]
