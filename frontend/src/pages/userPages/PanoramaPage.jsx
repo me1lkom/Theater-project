@@ -4,7 +4,7 @@ import HallPlan from '../../components/panorama/HallPlan';
 import styles from './PanoramaPage.module.css';
 
 export default function PanoramaPage() {
-    const defaultImage = '/panoramas/default.png';
+    const defaultImage = 'https://s3.twcstorage.ru/f6d90d88-c142-44fd-b70d-0a879c5125f7/panoramas/1-1.jpg';
     const [imageUrl, setImageUrl] = useState(null);
 
     const placesWithPanoramas = [

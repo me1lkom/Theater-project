@@ -180,12 +180,12 @@ export async function refreshToken() {
 }
 
 // –– Билеты 
-export async function postReturnTicket(id, reason) {
-    const response = await apiClient.post(`/tickets/return/${id}/`, reason);
-    return response.data;
-}
+// export async function postReturnTicket(id, reason) {
+//     const response = await apiClient.post(`/tickets/return/${id}/`, reason);
+//     return response.data;
+// }
 
-// –– Покупка билетов / Козина
+// –– Покупка билетов / Козина / Скачивание билетов
 export async function addToBasket(session_id, seat_ids) {
     const response = await apiClient.post('/basket/add/bulk/', {
         session_id: session_id,
@@ -207,6 +207,13 @@ export async function buyTicketCashier(session_id, seat_ids, phone) {
         session_id: session_id,
         seat_ids: seat_ids,
         phone: phone
+    });
+    return response.data;
+}
+
+export async function getTicketPDF(ticket_id) {
+    const response = await apiClient.get(`/tickets/${ticket_id}/download/`, {
+        responseType: 'blob',
     });
     return response.data;
 }
@@ -346,3 +353,12 @@ export async function deleteActor(actor_id) {
     const response = await apiClient.delete(`/actors/manage/${actor_id}/`);
     return response.data;
 }
+
+
+// –– Юкасса
+export async function createPayment() {
+    const response = await apiClient.post('/create-payment/');
+    return response.data;
+}
+
+

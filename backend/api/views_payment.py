@@ -60,12 +60,12 @@ def create_payment_api(request):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+# @permission_classes([IsAuthenticated])
 def payment_success(request):
 
-    user = request.user
+    # user = request.user
     payment = Payment.objects.filter(
-        user=user,
+        # user=user,
         status='pending',
         created_at__gte=timezone.now() - timezone.timedelta(minutes=30)
     ).order_by('-created_at').first()

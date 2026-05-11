@@ -1,44 +1,37 @@
 import { useEffect, useRef, useState } from 'react';
 import { Viewer } from '@photo-sphere-viewer/core';
 import '@photo-sphere-viewer/core/index.css';
-import styles from './PanoramaViewer.module.css';
 
 export default function PanoramaViewer({ defaultImageUrl, imageUrl }) {
     const containerRef = useRef(null);
     const viewerRef = useRef(null);
-    const [imageLoaded, setImageLoaded] = useState(false);
-    const [preloadedImage, setPreloadedImage] = useState(null);
+    const [isInitialized, setIsInitialized] = useState(false);
 
-    let seatRow = String(imageUrl).slice(11, 15).split('-');
+    const loadPanorama = async (url, viewer) => {
+        if (!url || !viewer) return;
 
-    useEffect(() => {
-        if (!defaultImageUrl) return;
+        try {
+            console.log('Загружаем через fetch:', url);
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
 
+            viewer.setPanorama(blobUrl);
 
-        console.log(`Начинаем предзагрузку изображения:, ${defaultImageUrl}`);
-
-        const img = new Image();
-        img.onload = () => {
-            console.log('Изображение загружено!');
-            setImageLoaded(true);
-            setPreloadedImage(img.src);
-        };
-        img.onerror = () => {
-            console.error(`Ошибка загрузки изображения:, ${defaultImageUrl}`);
-        };
-        img.src = defaultImageUrl;
-    }, [defaultImageUrl]);
+        } catch (error) {
+            console.error('Ошибка загрузки:', error);
+        }
+    };
 
     useEffect(() => {
-        if (!imageLoaded) return;
         if (!containerRef.current) return;
         if (viewerRef.current) return;
 
-        console.log(`Создаём плеер с предзагруженным изображением:, ${preloadedImage}`);
+        const placeholder = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxIiBoZWlnaHQ9IjEiPjwvc3ZnPg==';
 
         viewerRef.current = new Viewer({
             container: containerRef.current,
-            panorama: preloadedImage,
+            anorama: placeholder,
             loadingTxt: 'Загрузка...',
             navbar: [
                 'zoom',
@@ -49,29 +42,34 @@ export default function PanoramaViewer({ defaultImageUrl, imageUrl }) {
             defaultZoomLvl: 0,
         });
 
+        setIsInitialized(true);
+
         return () => {
             if (viewerRef.current) {
                 viewerRef.current.destroy();
                 viewerRef.current = null;
             }
         };
-    }, [imageLoaded, preloadedImage]);
+    }, []);
 
     useEffect(() => {
-        if (!viewerRef.current) return;
+        if (!isInitialized || !viewerRef.current) return;
+        if (!defaultImageUrl) return;
+
+        loadPanorama(defaultImageUrl, viewerRef.current);
+    }, [isInitialized, defaultImageUrl]);
+
+    useEffect(() => {
+        if (!isInitialized || !viewerRef.current) return;
         if (!imageUrl) return;
 
+        const seatMatch = imageUrl.match(/(\d+)-(\d+)/);
+        if (seatMatch) {
+            viewerRef.current.setOption('caption', `Ряд: ${seatMatch[1]} Место: ${seatMatch[2]}`);
+        }
 
+        loadPanorama(imageUrl, viewerRef.current);
+    }, [imageUrl, isInitialized]);
 
-        console.log(`Переключаем панораму на:, ${imageUrl}`);
-        viewerRef.current.setOption('caption', ('Ряд: ' + seatRow[0] + ' Место: ' + seatRow[1]));
-        viewerRef.current.setPanorama(imageUrl);
-    }, [imageUrl]);
-
-    return (
-        <div
-            ref={containerRef}
-            className={styles.player}
-        />
-    );
+    return <div ref={containerRef} style={{ width: '100%', height: '500px' }} />;
 }

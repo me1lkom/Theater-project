@@ -51,8 +51,8 @@
     width: 100%;
     margin-top: var(--space-md);
     padding: var(--space-sm);
-    background: var(--error-color);
-    color: var(--text);
+    background: var(--bg-button);
+    color: var(--text-h);
     border: none;
     border-radius: var(--radius-sm);
     cursor: pointer;

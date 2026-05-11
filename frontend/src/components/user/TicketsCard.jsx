@@ -1,7 +1,9 @@
 import styles from './TicketsCard.module.css'
+import { useGetTicketPDF } from '../../hooks/useGetTicketPDF';
 
-export default function TicketsCard({ ticket, onReturnClick }) {
+export default function TicketsCard({ ticket }) {
     const reversed = ticket.date?.split('-').reverse().join('-');
+    const { downloadTicket, loading: downloadTicketLoading } = useGetTicketPDF(ticket.ticket_id);
 
 
     return (
@@ -30,10 +32,11 @@ export default function TicketsCard({ ticket, onReturnClick }) {
                     </div>
 
                     <button
-                        onClick={() => onReturnClick(ticket.ticket_id)}
+                        onClick={downloadTicket}
                         className={styles.returnButton}
+                        disabled={downloadTicketLoading}
                     >
-                        Вернуть билет
+                        Скачать билет
                     </button>
                 </>
             )}
