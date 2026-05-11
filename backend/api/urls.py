@@ -74,6 +74,7 @@ urlpatterns = [
     path('panoramas/manage/', views.manage_panoramas, name='manage-panoramas'),
     path('panoramas/manage/<int:panorama_id>/', views.manage_panoramas, name='manage-panorama-detail'),
     path('panorama/by-seat/', views.get_panorama_by_seat, name='panorama-by-seat'),  
+    path('panoramas/all/', views.get_all_panoramas, name='all-panoramas'),
 
     path('ml/train/', views.train_ml_model, name='train-ml'),
     path('ml/demand-predict/', views.demand_predict, name='demand-predict'),

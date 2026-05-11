@@ -43,10 +43,8 @@ def create_payment_api(request):
     return_url = "http://localhost:8001/order"
     
     try:
-        # Создаём платёж в ЮKassa
         payment_url, yookassa_payment_id = create_payment(total_amount, description, return_url)
         
-        # Сохраняем в БД
         payment = Payment.objects.create(
             payment_id=yookassa_payment_id,
             user=user,
@@ -80,8 +78,7 @@ def check_payment_status(request):
     
     if not payment_id:
         return Response({'error': 'payment_id required'}, status=400)
-    
-    # Ищем платёж в БД по payment_id
+
     try:
         payment = Payment.objects.get(payment_id=payment_id, user=request.user)
     except Payment.DoesNotExist:
@@ -89,15 +86,13 @@ def check_payment_status(request):
             'status': 'not_found',
             'message': 'Платёж не найден'
         }, status=404)
-    
-    # Если уже обработан
+
     if payment.status != 'pending':
         return Response({
             'status': payment.status,
             'message': 'Платёж уже обработан'
         })
-    
-    # Проверяем статус в ЮKassa
+
     try:
         is_paid = check_payment(payment.payment_id)
     except Exception as e:
@@ -112,7 +107,6 @@ def check_payment_status(request):
             'message': 'Ожидание оплаты...'
         })
     
-    # Оплата прошла — создаём билеты
     success, result = process_payment(payment)
     
     if success:
@@ -152,7 +146,7 @@ def process_payment(payment):
         return False, 'Корзина пуста или истекла'
     
     # Создаём словарь цен для быстрого доступа
-    prices_map = {item['basket_id']: item['price'] for item in payment.items_prices}
+    # prices_map = {item['basket_id']: item['price'] for item in payment.items_prices}
     
     try:
         with transaction.atomic():
@@ -167,7 +161,7 @@ def process_payment(payment):
                     raise Exception(f"Место {basket.seat.seat_number} уже продано")
                 
                 # Берём цену из сохранённых данных
-                price = prices_map.get(basket.basket_id)
+                price = basket.price_at_time
                 if not price:
                     price = float(basket.price_at_time) if basket.price_at_time else float(basket.session.play.price)
                 

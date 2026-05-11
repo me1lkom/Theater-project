@@ -62,6 +62,19 @@ class PriceCalculator:
         
         return result
     
+
+    @staticmethod
+    def get_row_coefficient(row_number):
+
+        if row_number <= 3:
+            return Decimal('1.16')
+        elif row_number <= 7:
+            return Decimal('1.14')
+        elif row_number <= 12:
+            return Decimal('1.12')
+        else:
+            return Decimal('1')
+
     @classmethod
     def calculate_ticket_price(cls, session, seat) -> Decimal:
 
@@ -70,7 +83,9 @@ class PriceCalculator:
             session_price = cls.calculate_session_price(session)
         
         sector_coeff = seat.sector.price_coefficient
-        result = session_price * sector_coeff
+        row_coeff = cls.get_row_coefficient(seat.row_number)
+        
+        result = session_price * sector_coeff * row_coeff
         result = cls.round_price(result)
         
         return result

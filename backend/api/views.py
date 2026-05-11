@@ -3145,6 +3145,28 @@ def download_ticket(request, ticket_id):
     
     return response
 
+from .models import Panorama
+from .serializers import PanoramaSerializer
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_all_panoramas(request):
+
+    # Возвращает список всех панорам
+    # GET /api/panoramas/all/
+    
+    # Параметры фильтрации:
+    # - seat_id: ID места
+
+    panoramas = Panorama.objects.all().select_related('seat__sector')
+    
+    seat_id = request.query_params.get('seat_id')
+    if seat_id:
+        panoramas = panoramas.filter(seat_id=seat_id)
+    
+    serializer = PanoramaSerializer(panoramas, many=True)
+    return Response(serializer.data)
+
 def get_total_seats():
     return Seat.objects.count()
 
