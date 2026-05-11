@@ -20,6 +20,7 @@ import AdminMainPage from "./pages/adminPages/AdminMainPage";
 import { CashierRoute } from "./components/common/CashierRoute";
 import CashierMainPage from "./pages/cashierPages/CashierMainPage";
 import CashierPaymentPage from "./pages/cashierPages/CashierPaymentPage";
+import PaymentProcessingPage from "./pages/userPages/PaymentProcessingPage";
 
 function App() {
   const hydrate = useAuthStore((state) => state.hydrate);
@@ -90,6 +91,8 @@ function App() {
                 <CashierPaymentPage />
               </CashierRoute>
             } />
+
+            <Route path="/order" element={<PaymentProcessingPage />} />
           </Routes>
         </main>
         <Footer />
