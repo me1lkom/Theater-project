@@ -92,7 +92,13 @@ function App() {
               </CashierRoute>
             } />
 
-            <Route path="/order" element={<PaymentProcessingPage />} />
+
+            <Route path="/order" element={
+              <AuthenticatedRoute>
+                <PaymentProcessingPage />
+              </AuthenticatedRoute>
+            } />
+
           </Routes>
         </main>
         <Footer />

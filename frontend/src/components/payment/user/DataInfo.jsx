@@ -5,7 +5,8 @@ import UserForm from './UserForm';
 // import { useBuyTicket } from '../../../hooks/useBuyTicket';
 import { useNavigate } from 'react-router-dom';
 import styles from './DataInfo.module.css';
-import { createPayment } from '../../../api/index'
+import { createPayment } from '../../../api/index';
+
 
 
 import Swal from 'sweetalert2'
@@ -66,9 +67,10 @@ export default function DataInfo({ sessionId, selectedSeats, price }) {
         // }
 
         const url = await createPayment();
+
         console.log(`URL для перехода на оплату ${url.payment_url}`)
         window.location.href = url.payment_url;
-        
+
     };
 
 

@@ -1,5 +1,3 @@
-// import { useState } from "react";
-// import { useParams } from "react-router-dom";
 import { useNavigate } from 'react-router-dom';
 import styles from './PaymentProcessingPage.module.css';
 
@@ -15,6 +13,7 @@ export default function PaymentProcessingPage() {
             <h1>Проверка оплаты в разработке</h1>
             <button
                 onClick={handleProfileClick}
+                className={styles.button}
             >
                 Вернуться в профиль
             </button>

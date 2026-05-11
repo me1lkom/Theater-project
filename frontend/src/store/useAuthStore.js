@@ -6,6 +6,8 @@ const useAuthStore = create((set) => ({
     isLoading: true,
     theme: 'light',
 
+    paymentId: null,
+
     setUser: (user) => {
         set({ user: user, isAuthenticated: true, isLoading: false });
         localStorage.setItem('user', JSON.stringify(user));
@@ -30,6 +32,18 @@ const useAuthStore = create((set) => ({
         localStorage.setItem('theme', newTheme);
         return { theme: newTheme };
     }),
+
+    setPaymentId: (paymen_id) => {
+        set({ paymentId: paymen_id });
+        localStorage.setItem('paymentId', JSON.stringify(paymen_id));
+        console.log('Текущий localStorage:', { ...localStorage });
+    },
+
+    clearPaymentId: () => {
+        set({ paymentId: null });
+        localStorage.removeItem('paymentId');
+        console.log('Текущий localStorage:', { ...localStorage });
+    },
 
     hydrate: () => {
         const savedUser = localStorage.getItem('user');
