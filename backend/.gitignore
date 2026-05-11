@@ -53,7 +53,6 @@ postgres_data/
 redis_data/
 *.pid
 
-# Database dumps (если хочешь хранить — убери)
 *.sql
 *.sql.gz
 *.dump
