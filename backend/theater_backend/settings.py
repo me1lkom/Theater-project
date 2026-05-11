@@ -81,6 +81,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'theater_backend.wsgi.application'
 
+YOOKASSA_SHOP_ID = os.environ.get('YOOKASSA_SHOP_ID', '')
+YOOKASSA_SECRET_KEY = os.environ.get('YOOKASSA_SECRET_KEY', '')
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases

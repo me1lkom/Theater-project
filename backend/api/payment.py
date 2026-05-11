@@ -1,9 +1,9 @@
 from yookassa import Configuration, Payment
 import uuid
+from django.conf import settings
 
-# Настройка API ключей для ТЕСТОВОГО режима
-Configuration.account_id = "1350612"        # из личного кабинета
-Configuration.secret_key = "test_9V4lq0V1TzLRNVPeNAgH4gAGniX2alLYjsloC34tzM0"    # из личного кабинета
+Configuration.account_id = settings.YOOKASSA_SHOP_ID 
+Configuration.secret_key = settings.YOOKASSA_SECRET_KEY
 
 def create_payment(amount, description, return_url):
     idempotence_key = str(uuid.uuid4())
@@ -18,7 +18,7 @@ def create_payment(amount, description, return_url):
         },
         "confirmation": {
             "type": "redirect",
-            "return_url": return_url  # Просто используем переданный URL
+            "return_url": return_url
         },
         "description": description,
         "capture": True

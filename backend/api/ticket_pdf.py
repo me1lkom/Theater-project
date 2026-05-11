@@ -7,21 +7,43 @@ from reportlab.lib import colors
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.utils import ImageReader
+import qrcode
 from django.conf import settings
-from django.utils import timezone
 
 
-
+# Регистрируем русский шрифт
 font_path = os.path.join(os.path.dirname(__file__), 'fonts', 'DejaVuSans.ttf')
 pdfmetrics.registerFont(TTFont('DejaVuSans', font_path))
-pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', font_path)) 
+
+
+def generate_qr_code(ticket, size=150):
+
+    # qr_data = f"Билет #{ticket_id}\nПроверка билета: https://your-theater.com/check/{ticket_id}"
+    qr_data = f"Билет #{ticket.ticket_id}\nСтатус билета: {ticket.status.name}"
+
+    qr = qrcode.QRCode(
+        version=2,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=4,
+        border=2,
+    )
+    qr.add_data(qr_data)
+    qr.make(fit=True)
+    
+    img = qr.make_image(fill_color="black", back_color="white")
+    
+    # Сохраняем в BytesIO
+    img_buffer = io.BytesIO()
+    img.save(img_buffer, format='PNG')
+    img_buffer.seek(0)
+    
+    return ImageReader(img_buffer)
 
 
 def generate_ticket_pdf(ticket):
 
     buffer = io.BytesIO()
-    
-    # Создаём PDF с русским шрифтом
     p = canvas.Canvas(buffer, pagesize=A4)
     width, height = A4
     
@@ -31,65 +53,64 @@ def generate_ticket_pdf(ticket):
     p.rect(20*mm, 20*mm, width - 40*mm, height - 40*mm)
     
     # Заголовок (русский шрифт)
-    p.setFont("DejaVuSans-Bold", 24)
+    p.setFont("DejaVuSans", 24)
     p.drawCentredString(width/2, height - 40*mm, "ЭЛЕКТРОННЫЙ БИЛЕТ")
     
     # Театр
-    p.setFont("DejaVuSans-Bold", 16)
+    p.setFont("DejaVuSans", 16)
     p.drawCentredString(width/2, height - 55*mm, "Театр")
     
     # Данные билета
     y_position = height - 80*mm
     
-    p.setFont("DejaVuSans-Bold", 12)
+    p.setFont("DejaVuSans", 12)
     p.drawString(30*mm, y_position, "Спектакль:")
     p.setFont("DejaVuSans", 12)
     p.drawString(80*mm, y_position, ticket.session.play.title)
     
     y_position -= 10*mm
-    p.setFont("DejaVuSans-Bold", 12)
+    p.setFont("DejaVuSans", 12)
     p.drawString(30*mm, y_position, "Дата и время:")
     p.setFont("DejaVuSans", 12)
-    p.drawString(80*mm, y_position, f"{ticket.session.date} {ticket.session.time}")
+    p.drawString(80*mm, y_position, f"{ticket.session.date.strftime('%d.%m.%Y')} {ticket.session.time}")
     
     y_position -= 10*mm
-    p.setFont("DejaVuSans-Bold", 12)
+    p.setFont("DejaVuSans", 12)
     p.drawString(30*mm, y_position, "Зал:")
     p.setFont("DejaVuSans", 12)
     p.drawString(80*mm, y_position, ticket.session.hall.name)
     
     y_position -= 10*mm
-    p.setFont("DejaVuSans-Bold", 12)
+    p.setFont("DejaVuSans", 12)
     p.drawString(30*mm, y_position, "Место:")
     p.setFont("DejaVuSans", 12)
     p.drawString(80*mm, y_position, f"Ряд {ticket.seat.row_number}, Место {ticket.seat.seat_number}")
     
     y_position -= 10*mm
-    p.setFont("DejaVuSans-Bold", 12)
+    p.setFont("DejaVuSans", 12)
     p.drawString(30*mm, y_position, "Сектор:")
     p.setFont("DejaVuSans", 12)
     p.drawString(80*mm, y_position, ticket.seat.sector.name)
     
     y_position -= 10*mm
-    p.setFont("DejaVuSans-Bold", 12)
+    p.setFont("DejaVuSans", 12)
     p.drawString(30*mm, y_position, "Цена:")
     p.setFont("DejaVuSans", 12)
     p.drawString(80*mm, y_position, f"{ticket.price_paid} ₽")
     
     y_position -= 15*mm
-    p.setFont("DejaVuSans-Bold", 12)
+    p.setFont("DejaVuSans", 12)
     p.drawString(30*mm, y_position, "ID билета:")
     p.setFont("DejaVuSans", 12)
     p.drawString(80*mm, y_position, str(ticket.ticket_id))
-    
-    y_position -= 15*mm
+
+    y_position -= 100*mm
+    qr_img = generate_qr_code(ticket)
+    p.drawImage(qr_img, width - 100*mm, y_position, width=70*mm, height=70*mm)
+
     p.setFont("DejaVuSans", 10)
-    p.drawString(30*mm, y_position, "Предъявите этот билет при входе")
+    p.drawString(width - 75*mm, y_position - 5*mm, "QR-код для проверки")
         
-    # Нижний колонтитул
-    p.setFont("DejaVuSans", 8)
-    p.drawString(30*mm, 25*mm, f"Билет сгенерирован: {timezone.now()}")
-    
     p.showPage()
     p.save()
     

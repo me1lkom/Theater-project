@@ -1012,72 +1012,52 @@ def my_basket(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
+def return_ticket(request, ticket_id):
 
     # Возврат билета
-    # POST api/tickets/return/<int:ticket_id>/'
+    # POST api/tickets/return/<int:ticket_id>/
 
-def return_ticket(request, ticket_id):
     data = request.data
-    user_id = request.user.id
-    reason = data.get('reason','Причина не указана')
-
-    if not user_id:
+    user = request.user
+    reason = data.get('reason', 'Причина не указана')
+        
+    if not is_admin_or_cashier:
         return Response(
-            {'error':'Не указан id пользователя'},
-            status=status.HTTP_400_BAD_REQUEST
+            {'error': 'Недостаточно прав. Требуется роль администратора или кассира'},
+            status=status.HTTP_403_FORBIDDEN
         )
-
+    
+    # Получаем билет
     try:
-        ticket = Ticket.objects.select_related('session', 'session__play').get(pk=ticket_id)
+        ticket = Ticket.objects.select_related('session', 'session__play', 'user').get(pk=ticket_id)
     except Ticket.DoesNotExist:
         return Response(
             {'error': 'Билет не найден'},
             status=status.HTTP_404_NOT_FOUND
         )
-
-    if ticket.status.name == 'возврат':
+    
+    # Проверка статуса билета
+    if ticket.status.name != 'продан':
         return Response(
             {'error': 'Можно вернуть только проданный билет'},
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    if ticket.status.name != 'продан':
-        return Response(
-            {'error':'Билет уже был возвращен ранее'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-
+    # Проверка дедлайна (не позднее чем за 3 дня до спектакля)
     session_datetime = timezone.datetime.combine(
         ticket.session.date,
         ticket.session.time
     )
-
-    session_datetime = timezone.make_aware(session_datetime) # добавляет информацию о часовом поясе
-
+    session_datetime = timezone.make_aware(session_datetime)
     deadline = session_datetime - timedelta(days=3)
-
+    
     if timezone.now() > deadline:
         return Response(
             {'error': 'Возврат возможен не позднее чем за 3 дня до спектакля'},
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    if ticket.user_id != user_id:
-        try:
-            user = User.objects.get(pk=user_id)
-            is_cashier = user.role_set.filter(name='кассир').exists()
-        
-            if not is_cashier:
-                return Response(
-                    {'error': 'Вы можете вернуть только свои билеты'},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-        except User.DoesNotExist:
-            return Response(
-                {'error': 'Пользователь не найден'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-        
+    # Получаем статус "возврат"
     try:
         returned_status = TicketStatus.objects.get(name='возврат')
     except TicketStatus.DoesNotExist:
@@ -1086,15 +1066,17 @@ def return_ticket(request, ticket_id):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
     
+    # Возвращаем билет
     ticket.status = returned_status
     ticket.save()
-
+    
+    # Логируем действие
     ActionLog.objects.create(
-        user_id=user_id,
+        user_id=user.id,
         action_type='RETURN_TICKET',
-        description=f'Возврат билета {ticket_id} на спектакль {ticket.session.play.title}. Причина: {reason}'
+        description=f'Возврат билета {ticket_id} на спектакль {ticket.session.play.title} пользователем {ticket.user.username}. Причина: {reason}'
     )
-
+    
     return Response({
         'success': True,
         'ticket_id': ticket.ticket_id,
