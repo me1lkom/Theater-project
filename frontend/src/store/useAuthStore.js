@@ -47,6 +47,7 @@ const useAuthStore = create((set) => ({
 
     hydrate: () => {
         const savedUser = localStorage.getItem('user');
+        const savedPaymentId = localStorage.getItem('paymentId');
         if (savedUser) {
             set({
                 user: JSON.parse(savedUser),
@@ -55,6 +56,10 @@ const useAuthStore = create((set) => ({
             });
         } else {
             set({ isLoading: false });
+        }
+
+        if (savedPaymentId) {
+            set({ paymentId: JSON.parse(savedPaymentId) });
         }
     }
 }));

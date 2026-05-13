@@ -1,22 +1,35 @@
 import { useNavigate } from 'react-router-dom';
-import styles from './PaymentProcessingPage.module.css';
+import { useEffect } from 'react';
+// import styles from './PaymentProcessingPage.module.css';
+import { useGetPaymentStatus } from '../../hooks/useGetPaymentStatus';
+import useAuthStore from '../../store/useAuthStore';
 
 export default function PaymentProcessingPage() {
     const navigate = useNavigate();
+    const paymentId = useAuthStore(state => state.paymentId);
+    const { status, error } = useGetPaymentStatus(paymentId);
 
-    const handleProfileClick = () => {
-        navigate(`/profile`);
-    }
+
+    console.log('paymentId:', paymentId);
+
+
+    useEffect(() => {
+        if (status === 'succeeded') {
+            navigate('/profile', {
+                replace: true,
+                state: { text: 'Оплата прошла успешно!', icon: 'success' }
+            });
+        } else if (status === 'fail') {
+            navigate('/profile', {
+                replace: true,
+                state: { text: 'Оплата не прошла!', icon: 'error' }
+            });
+        }
+    }, [status, navigate]);
+
+    if (!paymentId) return <h1>Нет данных об оплате</h1>;
 
     return (
-        <div className={styles.container}>
-            <h1>Проверка оплаты в разработке</h1>
-            <button
-                onClick={handleProfileClick}
-                className={styles.button}
-            >
-                Вернуться в профиль
-            </button>
-        </div>
-    )
+        <h1>Подождите, идёт подтверждение оплаты...</h1>
+    );
 }

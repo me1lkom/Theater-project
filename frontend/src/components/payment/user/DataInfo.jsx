@@ -6,7 +6,7 @@ import UserForm from './UserForm';
 import { useNavigate } from 'react-router-dom';
 import styles from './DataInfo.module.css';
 import { createPayment } from '../../../api/index';
-
+import  useAuthStore  from '../../../store/useAuthStore'
 
 
 import Swal from 'sweetalert2'
@@ -19,6 +19,8 @@ export default function DataInfo({ sessionId, selectedSeats, price }) {
     const { seats } = useSeats();
     // const { buyTickets } = useBuyTicket();
     const navigate = useNavigate();
+
+    const setPaymentId = useAuthStore(state => state.setPaymentId);
 
     const MySwal = withReactContent(Swal)
 
@@ -66,10 +68,11 @@ export default function DataInfo({ sessionId, selectedSeats, price }) {
         //     alert(`Ошибка: ${result.error}`);
         // }
 
-        const url = await createPayment();
+        const paymentData = await createPayment();
 
-        console.log(`URL для перехода на оплату ${url.payment_url}`)
-        window.location.href = url.payment_url;
+        setPaymentId(paymentData.payment_id)
+        console.log(`URL для перехода на оплату ${paymentData.payment_url}`)
+        window.location.href = paymentData.payment_url;
 
     };
 

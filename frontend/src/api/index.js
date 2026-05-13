@@ -361,4 +361,8 @@ export async function createPayment() {
     return response.data;
 }
 
+export async function getPaymentStatus(payment_id) {
+    const response = await apiClient.get(`/check-payment/?payment_id=${payment_id}`);
+    return response.data;
+}
 
