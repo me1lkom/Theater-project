@@ -364,6 +364,14 @@ class Ticket(models.Model):
         decimal_places=2,
         verbose_name='Цена продажи'
     )
+
+    payment = models.ForeignKey(
+        'Payment', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='tickets'
+    )
     
     class Meta:
         verbose_name = 'Билет'
@@ -602,7 +610,7 @@ class Payment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='payments')
     amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Сумма')
     status = models.CharField(max_length=20, choices=PAYMENT_STATUS, default='pending')
-    baskets_data = models.JSONField(default=list, verbose_name='Данные корзин')
+    tickets_data = models.JSONField(default=list)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

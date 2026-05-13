@@ -1,5 +1,5 @@
 from rest_framework import generics
-from .models import Play, Session, Seat, Panorama, Ticket, Basket, TicketStatus, ActionLog, Profile, TheaterHall, Sector, PanoramaLink, Genre, AIPrediction, Actor
+from .models import Play, Session, Seat, Panorama, Ticket, Basket, TicketStatus, ActionLog, Profile, TheaterHall, Sector, PanoramaLink, Genre, AIPrediction, Actor, Payment
 from .serializers import PlaySerializer, SessionSerializer, SeatSerializer, PanoramaSerializer, RegisterSerializer, SectorSerializer, BulkSeatSerializer, ActionLogSerializer, PanoramaLinkSerializer, TicketStatusSerializer, GenreSerializer, BulkBuySerializer, BulkBasketSerializer, SessionWithActorsSerializer, ActorSerializer, SessionActor
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -3042,6 +3042,14 @@ def get_refundable_tickets(request):
     if date_to:
         tickets = tickets.filter(session__date__lte=date_to)
 
+    ticket_id = request.query_params.get('ticket_id')
+    if ticket_id:
+        tickets = tickets.filter(ticket_id=ticket_id)
+
+    purchase_date = request.query_params.get('purchase_date')
+    if purchase_date:
+        tickets = tickets.filter(purchase_date__date=purchase_date)
+
     search = request.query_params.get('search')
     if search:
         tickets = tickets.filter(
@@ -3145,6 +3153,51 @@ def download_ticket(request, ticket_id):
     
     return response
 
+# api/views.py
+from django.http import HttpResponse
+import io
+import zipfile
+
+@api_view(['GET'])
+# @permission_classes([IsAuthenticated])
+def download_tickets_by_payment(request, payment_id):
+
+    # Скачивает все билеты платежа в ZIP архиве
+    # GET /api/payments/{payment_id}/download-tickets/
+
+    try:
+        payment = Payment.objects.get(payment_id=payment_id)
+    except Payment.DoesNotExist:
+        return Response({'error': 'Платёж не найден'}, status=404)
+    
+    # Проверка прав: пользователь может скачать свои билеты
+    # if payment.user != request.user and not is_admin_or_cashier(request.user):
+    #     return Response({'error': 'Недостаточно прав'}, status=403)
+    
+    # Получаем все билеты этого платежа
+    tickets = payment.tickets.all()
+    
+    if not tickets.exists():
+        return Response({'error': 'Билеты не найдены'}, status=404)
+    
+    # Создаём ZIP архив
+    zip_buffer = io.BytesIO()
+    
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        for ticket in tickets:
+            # Генерируем PDF для каждого билета
+            pdf_buffer = generate_ticket_pdf(ticket)
+            filename = f"ticket_{ticket.ticket_id}_{ticket.session.date}.pdf"
+            zip_file.writestr(filename, pdf_buffer.getvalue())
+    
+    zip_buffer.seek(0)
+    
+    # Отдаём ZIP файл
+    response = HttpResponse(zip_buffer, content_type='application/zip')
+    response['Content-Disposition'] = f'attachment; filename="tickets_payment_{payment_id}.zip"'
+    
+    return response
+
 from .models import Panorama
 from .serializers import PanoramaSerializer
 
@@ -3166,6 +3219,7 @@ def get_all_panoramas(request):
     
     serializer = PanoramaSerializer(panoramas, many=True)
     return Response(serializer.data)
+
 
 def get_total_seats():
     return Seat.objects.count()

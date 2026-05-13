@@ -47,7 +47,8 @@ urlpatterns = [
     path('tickets/my/', views.my_tickets, name='my-tickets'),
     path('tickets/refundable/', views.get_refundable_tickets, name='refundable-tickets'),
     path('tickets/<int:ticket_id>/download/', views.download_ticket, name='download-ticket'),
-    
+    path('tickets/<str:payment_id>/download-tickets/', views.download_tickets_by_payment, name='download-tickets-by-payment'),
+
     # path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'), // устарело
     # path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
