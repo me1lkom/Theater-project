@@ -16,7 +16,7 @@ import StatisticsPage from "./pages/adminPages/StatisticsPage";
 import { AdminRoute } from "./components/common/AdminRoute";
 import { AuthenticatedRoute } from "./components/common/AuthenticatedRoute";
 import DataManagementPage from "./pages/adminPages/DataManagementPage";
-import AdminMainPage from "./pages/adminPages/AdminMainPage";
+import AdminTileMainPage from "./pages/adminPages/AdminTileMainPage";
 import { CashierRoute } from "./components/common/CashierRoute";
 import CashierMainPage from "./pages/cashierPages/CashierMainPage";
 import CashierPaymentPage from "./pages/cashierPages/CashierPaymentPage";
@@ -64,19 +64,10 @@ function App() {
             } />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/panorama" element={<PanoramaPage />} />
+
             <Route path="/admin" element={
               <AdminRoute>
-                <AdminMainPage />
-              </AdminRoute>
-            } />
-            <Route path="/admin/statistics" element={
-              <AdminRoute>
-                <StatisticsPage />
-              </AdminRoute>
-            } />
-            <Route path="admin/data-management" element={
-              <AdminRoute>
-                <DataManagementPage />
+                <AdminTileMainPage />
               </AdminRoute>
             } />
 

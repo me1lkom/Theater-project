@@ -16,4 +16,6 @@
     background: var(--bg-inv);
     color: var(--text);
     border-radius: var(--radius-md);
+    user-select: none;
+    font-size: var(--font-lg);
 }

@@ -7,18 +7,20 @@ import ControlGenreData from '../../components/admin/dataChanges/ControlGenreDat
 export default function DataManagementPage() {
     return (
         <div className={styles.container}>
-            <h1>Управление данными</h1>
-            <h2>Управление данными о спектаклях</h2>
-            <ControlPlayData />
+            <div className={styles.neededContainer}>
+                <h1>Управление данными</h1>
+                <h2>Управление данными о спектаклях</h2>
+                <ControlPlayData />
 
-            <h2>Управление данными о сеансах</h2>
-            <ControlSessionData />
+                <h2>Управление данными о сеансах</h2>
+                <ControlSessionData />
 
-            <h2>Управление актерами</h2>
-            <ControlActorData />
+                <h2>Управление актерами</h2>
+                <ControlActorData />
 
-            <h2>Управление жанрами</h2>
-            <ControlGenreData />
+                <h2>Управление жанрами</h2>
+                <ControlGenreData />
+            </div>
         </div>
     )
 }

@@ -4,6 +4,12 @@
     padding: var(--space-lg);
 }
 
+.neededContainer {
+    border: 2px dotted var(--bg-inv);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+}
+
 .title {
     font-size: var(--font-xxl);
     color: var(--text-h);
@@ -121,8 +127,6 @@
     font-weight: 600;
 }
 
-
-
 .loading {
     text-align: center;
     padding: var(--space-xl);
@@ -162,7 +166,6 @@
 .autoRefreshButton:hover {
     border-color: var(--accent);
 }
-
 
 .moreButton {
     padding: var(--space-sm) var(--space-lg);
