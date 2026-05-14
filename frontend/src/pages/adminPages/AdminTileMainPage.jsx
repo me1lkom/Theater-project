@@ -14,7 +14,8 @@ export default function AdminMainPage() {
 
 
     const handleSelectTile = (data) => {
-        setActiveTab(data)
+        if(activeTab === data) setActiveTab(null)
+        else setActiveTab(data)
     }
 
     const renderContent = () => {
