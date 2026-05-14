@@ -31,7 +31,7 @@ export default function PanoramaViewer({ defaultImageUrl, imageUrl }) {
 
         viewerRef.current = new Viewer({
             container: containerRef.current,
-            anorama: placeholder,
+            panorama: placeholder,
             loadingTxt: 'Загрузка...',
             navbar: [
                 'zoom',

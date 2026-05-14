@@ -46,6 +46,7 @@ export function useGetPaymentStatus(payment_id) {
             }
         }
 
+        checkStatus();
         intervalId = setInterval(checkStatus, 5000);
 
         return () => {
