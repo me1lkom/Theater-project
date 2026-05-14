@@ -1,6 +1,6 @@
 import DataManagementPage from './DataManagementPage';
 import StatisticsPage from './StatisticsPage';
-import LoggingPage from '../../components/admin/LoggingPage';
+import LoggingPage from '../../components/admin/logging/LoggingPage';
 import styles from './AdminMainPage.module.css';
 import { useNavigate } from 'react-router-dom';
 import { useBackup } from '../../hooks/useBackup';

@@ -1,8 +1,8 @@
 import styles from './DataManagementPage.module.css';
-import ControlPlayData from '../../components/admin/ControlPlayData';
-import ControlSessionData from '../../components/admin/ControlSessionData';
-import ControlActorData from '../../components/admin/ControlActorData';
-import ControlGenreData from '../../components/admin/ControlGenreData';
+import ControlPlayData from '../../components/admin/dataChanges/ControlPlayData';
+import ControlSessionData from '../../components/admin/dataChanges/ControlSessionData';
+import ControlActorData from '../../components/admin/dataChanges/ControlActorData';
+import ControlGenreData from '../../components/admin/dataChanges/ControlGenreData';
 
 export default function DataManagementPage() {
     return (

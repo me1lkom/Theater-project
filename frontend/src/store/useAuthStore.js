@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { logout as logoutByApi } from '../api/index';
 const useAuthStore = create((set) => ({
     user: null,
+    userRole: null,
     isAuthenticated: false,
     isLoading: true,
     theme: 'light',
@@ -9,7 +10,7 @@ const useAuthStore = create((set) => ({
     paymentId: null,
 
     setUser: (user) => {
-        set({ user: user, isAuthenticated: true, isLoading: false });
+        set({ user: user, userRole: user.role, isAuthenticated: true, isLoading: false });
         localStorage.setItem('user', JSON.stringify(user));
         console.log('Данные получены');
         console.log('Текущий localStorage:', { ...localStorage });
@@ -48,9 +49,11 @@ const useAuthStore = create((set) => ({
     hydrate: () => {
         const savedUser = localStorage.getItem('user');
         const savedPaymentId = localStorage.getItem('paymentId');
+
         if (savedUser) {
             set({
                 user: JSON.parse(savedUser),
+                userRole: JSON.parse(savedUser).role,
                 isAuthenticated: true,
                 isLoading: false
             });

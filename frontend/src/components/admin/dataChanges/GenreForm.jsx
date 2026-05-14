@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useGetGenreById } from '../../hooks/useGetGenreById';
+import { useGetGenreById } from '../../../hooks/useGetGenreById';
 import styles from './PlayForm.module.css';
 
 export default function GenreForm({ Data, onSubmit, onClose }) {

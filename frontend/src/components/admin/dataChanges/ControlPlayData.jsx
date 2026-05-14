@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { usePlays } from '../../hooks/usePlays';
-import { useGenres } from '../../hooks/useGenres';
-import { createPlay, changePlay, deletePlay } from '../../api/index';
+import { usePlays } from '../../../hooks/usePlays';
+import { useGenres } from '../../../hooks/useGenres';
+import { createPlay, changePlay, deletePlay } from '../../../api/index';
 import PlayForm from './PlayForm';
 import styles from './ControlPlayData.module.css';
 import DataFilter from './DataFilter';

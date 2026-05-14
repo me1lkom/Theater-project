@@ -1,20 +1,20 @@
 import { useState } from 'react';
-import { useGenres } from '../../hooks/useGenres';
-import { createGenre, changeGenre, deleteGenre } from '../../api/index';
-import GenreForm from './GenreForm';
-import styles from './ControlGenreData.module.css';
+import { useGetActors } from '../../../hooks/useGetActors';
+import { createActor, changeActor, deleteActor } from '../../../api/index';
+import ActorForm from './ActorForm';
+import styles from './ControlActorData.module.css';
 import DataFilter from './DataFilter';
 
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 
 export default function ControlPlayData() {
-    const { genres, loading, error, refetch } = useGenres();
+    const { actors, loading, error, refetch } = useGetActors();
 
     const [searchQuery, setSearchQuery] = useState('');
 
 
-    const [selectedGenre, setSelectedGenre] = useState(null);
+    const [selectedActor, setSelectedActor] = useState(null);
     const [isFormOpen, setIsFormOpen] = useState(false);
 
     const MySwal = withReactContent(Swal);
@@ -22,7 +22,7 @@ export default function ControlPlayData() {
     const handlePlayDelete = async () => {
         MySwal.fire({
             icon: "error",
-            title: <p>Вы хотите удалить этот жанр?</p>,
+            title: <p>Вы хотите удалить этого актера?</p>,
             showConfirmButton: true,
             showDenyButton: true,
             denyButtonText: `Отмена`,
@@ -30,13 +30,13 @@ export default function ControlPlayData() {
             reverseButtons: true
         }).then(async (result) => {
             if (result.isConfirmed) {
-                await deleteGenre(selectedGenre.genre_id);
+                await deleteActor(selectedActor.actor_id);
                 await refetch();
-                setSelectedGenre(null);
+                setSelectedActor(null);
                 setIsFormOpen(false);
 
                 MySwal.fire({
-                    title: 'Жанр успешно удалён!',
+                    title: 'Актёр успешно удалён!',
                     icon: 'success',
                     showConfirmButton: false,
                     timer: 1500,
@@ -44,20 +44,19 @@ export default function ControlPlayData() {
                     position: 'top-right',
                 })
             } else {
-                setSelectedGenre(null);
+                setSelectedActor(null);
                 console.log('Отмена действия');
             }
         })
-
     }
 
     const handlePlayChange = async (formData) => {
-        await changeGenre(selectedGenre.genre_id, formData);
+        await changeActor(selectedActor.actor_id, formData);
         await refetch();
-        setSelectedGenre(null);
+        setSelectedActor(null);
         setIsFormOpen(false);
         MySwal.fire({
-            title: 'Жанр успешно изменён!',
+            title: 'Актёр успешно изменён!',
             icon: 'success',
             showConfirmButton: false,
             timer: 1500,
@@ -67,11 +66,11 @@ export default function ControlPlayData() {
     }
 
     const handlePlayCreate = async (formData) => {
-        await createGenre(formData);
+        await createActor(formData);
         await refetch();
         setIsFormOpen(false);
-         MySwal.fire({
-            title: 'Жанр успешно создан!',
+        MySwal.fire({
+            title: 'Актёр успешно создан!',
             icon: 'success',
             showConfirmButton: false,
             timer: 1500,
@@ -80,10 +79,11 @@ export default function ControlPlayData() {
         })
     }
 
-    const filteredData = genres?.filter(genre => {
-        const matchByTitle = genre.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const filteredData = actors?.filter(actor => {
+        const matchByTitle = actor.actor_fio.toLowerCase().includes(searchQuery.toLowerCase());
         return matchByTitle;
     });
+
 
     if (loading) return <div>Загрузка...</div>;
     if (error) return <div>Ошибка: {error}</div>;
@@ -94,28 +94,28 @@ export default function ControlPlayData() {
                 <DataFilter
                     searchQuery={searchQuery}
                     onSearchChange={setSearchQuery} />
-                <div className={styles.genresList}>
-                    {filteredData?.map(genre => (
+                <div className={styles.actorsList}>
+                    {filteredData?.map(actor => (
                         <div
-                            key={genre.genre_id}
-                            className={`${styles.genreCard} ${selectedGenre?.genre_id === genre.genre_id ? styles.selected : ''}`}
-                            onClick={() => setSelectedGenre(genre)}
+                            key={actor.actor_id}
+                            className={`${styles.actorCard} ${selectedActor?.actor_id === actor.actor_id ? styles.selected : ''}`}
+                            onClick={() => setSelectedActor(actor)}
                         >
-                            <div className={styles.genreId}>{genre.genre_id}</div>
-                            <div className={styles.genreName}>{genre.name}</div>
+                            <div className={styles.actorId}>{actor.actor_id}</div>
+                            <div className={styles.actorFIO}>{actor.actor_fio}</div>
                         </div>
                     ))}
                 </div>
 
                 <div className={styles.actionList}>
-                    {!selectedGenre ? (
+                    {!selectedActor ? (
                         <button
                             onClick={() => {
                                 if (isFormOpen) {
                                     setIsFormOpen(false);
-                                    setSelectedGenre(null);
+                                    setSelectedActor(null);
                                 } else {
-                                    setSelectedGenre(null);
+                                    setSelectedActor(null);
                                     setIsFormOpen(true);
                                 }
                             }}
@@ -126,12 +126,12 @@ export default function ControlPlayData() {
                         <button
                             onClick={() => {
                                 setIsFormOpen(false);
-                                setSelectedGenre(null);
+                                setSelectedActor(null);
                             }}
                             className={styles.createButton}>Отмена</button>
 
                     )}
-                    {selectedGenre ? (
+                    {selectedActor ? (
                         <>
                             <button onClick={() => setIsFormOpen(true)} className={styles.changeButton}>Изменить</button>
                             <button onClick={handlePlayDelete} className={styles.deleteButton}>Удалить</button>
@@ -147,12 +147,12 @@ export default function ControlPlayData() {
 
             <div className={styles.rightColumn}>
                 {isFormOpen ? (
-                    <GenreForm
-                        Data={selectedGenre}
-                        onSubmit={selectedGenre ? handlePlayChange : handlePlayCreate}
+                    <ActorForm
+                        Data={selectedActor}
+                        onSubmit={selectedActor ? handlePlayChange : handlePlayCreate}
                         onClose={() => {
                             setIsFormOpen(false);
-                            setSelectedGenre(null);
+                            setSelectedActor(null);
                         }}
 
                     />

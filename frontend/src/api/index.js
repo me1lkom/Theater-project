@@ -180,10 +180,10 @@ export async function refreshToken() {
 }
 
 // –– Билеты 
-// export async function postReturnTicket(id, reason) {
-//     const response = await apiClient.post(`/tickets/return/${id}/`, reason);
-//     return response.data;
-// }
+export async function postReturnTicket(id, reason) {
+    const response = await apiClient.post(`/tickets/return/${id}/`, reason);
+    return response.data;
+}
 
 // –– Покупка билетов / Козина / Скачивание билетов
 export async function addToBasket(session_id, seat_ids) {
@@ -275,6 +275,12 @@ export async function getBackup() {
     const response = await apiClient.get('/backup/', {
         responseType: 'blob',
     });
+    return response.data;
+}
+
+// –– Управление билетами (админ/кассир)
+export async function getRefundableTickets(filters = {}) {
+    const response = await apiClient.get('/tickets/refundable/', { params: filters });
     return response.data;
 }
 

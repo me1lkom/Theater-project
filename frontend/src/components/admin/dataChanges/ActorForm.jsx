@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useGetActorById } from '../../hooks/useGetActorById';
+import { useGetActorById } from '../../../hooks/useGetActorById';
 import styles from './PlayForm.module.css';
 
 export default function ActorForm({ Data, onSubmit, onClose }) {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useLogs } from '../../hooks/useLogs';
-import { useLogTypes } from '../../hooks/useLogTypes';
+import { useLogs } from '../../../hooks/useLogs';
+import { useLogTypes } from '../../../hooks/useLogTypes';
 import styles from "./LoggingPage.module.css";
 
 export default function LoggingPage() {

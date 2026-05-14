@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useSession } from '../../hooks/useSession';
-import { useGetActors } from '../../hooks/useGetActors';
+import { useSession } from '../../../hooks/useSession';
+import { useGetActors } from '../../../hooks/useGetActors';
 import styles from './PlayForm.module.css';
 
 export default function PlayForm({ Data, plays, onSubmit, onClose }) {

@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { useSessions } from '../../hooks/useSessions';
-import { usePlays } from '../../hooks/usePlays';
-import { createSession, changeSession, deleteSession } from '../../api/index';
+import { useSessions } from '../../../hooks/useSessions';
+import { usePlays } from '../../../hooks/usePlays';
+import { createSession, changeSession, deleteSession } from '../../../api/index';
 import SessionForm from './SessionForm';
 import styles from './ControlSessionData.module.css';
 import DateFilter from './DateFilter';
 
-import { getErrorMessage } from '../../utils/getErrorMessage';
+import { getErrorMessage } from '../../../utils/getErrorMessage';
 
 import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'

@@ -7,6 +7,7 @@ import useAuthStore from '../../store/useAuthStore';
 export default function PaymentProcessingPage() {
     const navigate = useNavigate();
     const paymentId = useAuthStore(state => state.paymentId);
+    const { clearPaymentId } = useAuthStore();
     const { status, error } = useGetPaymentStatus(paymentId);
 
 
@@ -19,11 +20,13 @@ export default function PaymentProcessingPage() {
                 replace: true,
                 state: { text: 'Оплата прошла успешно!', icon: 'success' }
             });
+            clearPaymentId();
         } else if (status === 'fail') {
             navigate('/profile', {
                 replace: true,
                 state: { text: 'Оплата не прошла!', icon: 'error' }
             });
+            clearPaymentId();
         }
     }, [status, navigate]);
 

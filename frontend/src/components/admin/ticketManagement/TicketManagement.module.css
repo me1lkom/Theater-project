@@ -1,0 +1,39 @@
+.ticketsSection {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+
+.ticketsGrid {
+    gap: var(--space-lg);
+    padding: var(--space-lg);
+    color: var(--text-h);
+}
+
+.ticketsGridOn {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+}
+
+.ticketsGridOff {
+    text-align: center;
+}
+
+.searchButton {
+    width: 10%;
+    margin-top: var(--space-md);
+    padding: var(--space-sm);
+    background: var(--bg-button);
+    color: var(--text-h);
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: var(--font-sm);
+    transition: opacity 0.2s;
+}
+
+.searchButton:hover {
+    opacity: 0.9;
+}

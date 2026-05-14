@@ -1,0 +1,39 @@
+import { useState } from 'react';
+import styles from './ReturnModal.module.css';
+
+export default function ReturnModal({  ticketId, onConfirm, onCancel }) {
+    const [reason, setReason] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        
+        setIsSubmitting(true);
+        await onConfirm(ticketId, reason);
+        setIsSubmitting(false);
+    };
+
+    return (
+        <div className={styles.modal}>
+            <div className={styles.modalContent}>
+                <h3>Возврат билета</h3>
+                <form onSubmit={handleSubmit}>
+                    <textarea
+                        placeholder="Укажите причину возврата"
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        rows={4}
+                    />
+                    <div className={styles.modalButtons}>
+                        <button type="button" onClick={onCancel}>
+                            Отмена
+                        </button>
+                        <button type="submit" disabled={isSubmitting}>
+                            {isSubmitting ? 'Обработка...' : 'Подтвердить возврат'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    )
+}
