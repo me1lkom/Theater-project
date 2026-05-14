@@ -372,3 +372,8 @@ export async function getPaymentStatus(payment_id) {
     return response.data;
 }
 
+// –– Панорамы 
+export async function getAllPanoramas() {
+    const response = await apiClient.get(`/panoramas/all/`);
+    return response.data;
+}

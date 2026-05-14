@@ -2,7 +2,7 @@ import { useSeats } from '../../hooks/useSeats';
 import { useState, useEffect, useRef } from 'react';
 import styles from './HallPlan.module.css';
 
-export default function HallPlan({ placesWithPanoramas, onClick }) {
+export default function HallPlan({ panoramas, onClick }) {
     const { seats, loading, error } = useSeats();
     const [selectedSeat, setSelectedSeat] = useState(null);
 
@@ -38,7 +38,7 @@ export default function HallPlan({ placesWithPanoramas, onClick }) {
             // console.log(seatRow);
 
 
-            if (!placesWithPanoramas.includes(seatRow)) {
+            if (!panoramas.some(seat => seat.title === seatRow)) {
                 rect.classList.add('taken');
                 rect.setAttribute('fill', '#666');
                 rect.setAttribute('opacity', '0.5');
