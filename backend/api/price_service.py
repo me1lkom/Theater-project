@@ -48,8 +48,33 @@ class PriceCalculator:
             rounded = price_int + (10 - remainder)
         return Decimal(max(rounded, 100))
     
+    @staticmethod
+    def get_row_coefficient(row_number):
+        if row_number <= 3:
+            return Decimal('1.16')
+        elif row_number <= 7:
+            return Decimal('1.14')
+        elif row_number <= 12:
+            return Decimal('1.12')
+        else:
+            return Decimal('1.0')
+    
     @classmethod
-    def calculate_session_price(cls, session) -> Decimal:
+    def get_session_price(cls, session):
+        """Возвращает цену сеанса (ручная > расчётная)"""
+        if session.custom_price is not None:
+            return session.custom_price
+        
+        if session.calculated_price is not None:
+            return session.calculated_price
+        
+        # Если ничего нет — рассчитываем (но без рекурсии!)
+        return cls._calculate_base_session_price(session)
+    
+    @classmethod
+    def _calculate_base_session_price(cls, session) -> Decimal:
+
+        # Рассчитывает без сохранения цены сеанса в БД
 
         base_price = session.play.price
         
@@ -62,26 +87,22 @@ class PriceCalculator:
         
         return result
     
+    @classmethod
+    def calculate_session_price(cls, session) -> Decimal:
 
-    @staticmethod
-    def get_row_coefficient(row_number):
+        # Рассчитывает и сохраняет цену сеанса в БД
 
-        if row_number <= 3:
-            return Decimal('1.16')
-        elif row_number <= 7:
-            return Decimal('1.14')
-        elif row_number <= 12:
-            return Decimal('1.12')
-        else:
-            return Decimal('1')
+        result = cls._calculate_base_session_price(session)
 
+        session.calculated_price = result
+        session.save(update_fields=['calculated_price'])
+        
+        return result
+    
     @classmethod
     def calculate_ticket_price(cls, session, seat) -> Decimal:
-
-        session_price = session.calculated_price
-        if session_price is None:
-            session_price = cls.calculate_session_price(session)
-        
+        """Рассчитывает цену билета"""
+        session_price = cls.get_session_price(session)
         sector_coeff = seat.sector.price_coefficient
         row_coeff = cls.get_row_coefficient(seat.row_number)
         

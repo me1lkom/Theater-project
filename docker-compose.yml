@@ -77,6 +77,33 @@ services:
     environment:
       - VITE_API_URL=http://web:8000/api
 
+  payment_checker:
+    build: ./backend
+    container_name: theater_payment_checker
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: db
+      DB_PORT: ${DB_PORT}
+      REDIS_HOST: redis
+      REDIS_PORT: ${REDIS_PORT}
+      SECRET_KEY: ${SECRET_KEY}
+      YOOKASSA_SHOP_ID: ${YOOKASSA_SHOP_ID}
+      YOOKASSA_SECRET_KEY: ${YOOKASSA_SECRET_KEY}
+      DEBUG: ${DEBUG}
+    command: python manage.py check_payments
+    restart: always
+    networks:
+      - theater_network
+
 volumes:
   postgres_data:
   redis_data:

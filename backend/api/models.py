@@ -209,7 +209,12 @@ class Panorama(models.Model):
         verbose_name='Название'
     )
 
-    image = models.ImageField(upload_to='panoramas/')
+    image_url = models.CharField(
+        max_length=500,
+        blank=True,
+        null = True,
+        verbose_name='URL панорамы'
+    )
     
     class Meta:
         verbose_name = 'Панорама' 
@@ -291,6 +296,12 @@ class Session(models.Model):
         null=True,
         blank=True,
         verbose_name='Рассчитанная цена сеанса'
+    )
+
+    custom_price = models.DecimalField(
+        max_digits=10, decimal_places=2,
+        null=True, blank=True,
+        verbose_name='Ручная цена (переопределяет расчётную)'
     )
 
     date = models.DateField(verbose_name='Дата')

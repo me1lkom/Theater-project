@@ -20,7 +20,12 @@ import shutil
 from django.http import StreamingHttpResponse
 from .price_service import PriceCalculator
 from django.db import transaction
-from django.db import models  # ← важно: импорт models для Q
+from django.db import models
+from django.http import HttpResponse
+import io
+import zipfile
+from django.http import FileResponse
+from .ticket_pdf import generate_ticket_pdf
 
 
 class PlayListView(generics.ListAPIView):
@@ -1446,7 +1451,7 @@ def manage_sessions(request, session_id=None):
 
         if 'date' in data:
             try:
-                new_date = datetime.strptime(data['date'], '%Y-%m-%d').date()
+                new_date = datetime.strptime(data['date'], '%d-%m-%Y').date()
                 if new_date < timezone.now().date():
                     return Response(
                         {'error': 'Нельзя перенести сеанс в прошлое'},
@@ -1456,7 +1461,7 @@ def manage_sessions(request, session_id=None):
                 need_recalculate = True
             except ValueError:
                 return Response(
-                    {'error': 'Неверный формат даты. Используйте YYYY-MM-DD'},
+                    {'error': 'Неверный формат даты. Используйте DD-MM-YYYY'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
@@ -2590,7 +2595,6 @@ def demand_predict(request):
     
     total_seats = Seat.objects.count() or 300
     predicted = min(predicted, total_seats)
-    
     prediction, created = AIPrediction.objects.update_or_create(
         session=session,
         defaults={
@@ -2604,16 +2608,12 @@ def demand_predict(request):
         action_type='SESSION_PREDICT',
         description=f'Сделан прогноз на сеанс {session_id}'
     )
-    
+    serializer = SessionSerializer(session)
     return Response({
         
         'success': True,
         'created': created,
-        'session_id': session.session_id,
-        'play_id': session.play_id,
-        'play': session.play.title,
-        'date': session.date,
-        'time': session.time,
+        'session': serializer.data,
         'prediction': {
             'predicted_tickets': prediction.predicted_tickets,
             'prediction_date': prediction.prediction_date
@@ -3011,6 +3011,10 @@ def get_refundable_tickets(request):
     # - date_from: начальная дата
     # - date_to: конечная дата
     # - search: поиск по имени/фамилии/email
+    # - ticket_id: по id билета
+    # - purchase_date: дата покупки билета
+    # - email: электронная почта
+    # - phone: номер телефона
     
     if not is_admin_or_cashier(request.user):
         return Response({
@@ -3049,7 +3053,15 @@ def get_refundable_tickets(request):
     purchase_date = request.query_params.get('purchase_date')
     if purchase_date:
         tickets = tickets.filter(purchase_date__date=purchase_date)
+    
+    email = request.query_params.get('email')
+    if email:
+        tickets = tickets.filter(user__email=email)
 
+    phone = request.query_params.get('phone')
+    if phone:
+        tickets = tickets.filter(user__profile__phone__icontains=phone)
+        
     search = request.query_params.get('search')
     if search:
         tickets = tickets.filter(
@@ -3113,9 +3125,6 @@ def get_refundable_tickets(request):
         'results': result
     })
 
-from django.http import FileResponse
-from .ticket_pdf import generate_ticket_pdf
-
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -3154,12 +3163,10 @@ def download_ticket(request, ticket_id):
     return response
 
 # api/views.py
-from django.http import HttpResponse
-import io
-import zipfile
+
 
 @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated])
 def download_tickets_by_payment(request, payment_id):
 
     # Скачивает все билеты платежа в ZIP архиве
@@ -3170,7 +3177,6 @@ def download_tickets_by_payment(request, payment_id):
     except Payment.DoesNotExist:
         return Response({'error': 'Платёж не найден'}, status=404)
     
-    # Проверка прав: пользователь может скачать свои билеты
     # if payment.user != request.user and not is_admin_or_cashier(request.user):
     #     return Response({'error': 'Недостаточно прав'}, status=403)
     
