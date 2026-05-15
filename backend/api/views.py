@@ -3204,8 +3204,6 @@ def download_tickets_by_payment(request, payment_id):
     
     return response
 
-from .models import Panorama
-from .serializers import PanoramaSerializer
 
 @api_view(['GET'])
 @permission_classes([AllowAny])

@@ -48,7 +48,7 @@ class PanoramaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Panorama
-        fields = ['panorama_id', 'seat_id', 'title',]
+        fields = ['panorama_id', 'seat_id', 'title', 'image_url']
         read_only_fields = ['panorama_id']
 
 class SessionActorSerializer(serializers.ModelSerializer):
