@@ -68,55 +68,57 @@ export default function TicketManagement() {
         setSelectedTicketId(null);
     };
 
-
-
-    if (loading) return <div>Загрузка билетов...</div>;
-    if (error) return <div>Ошибка: {error}</div>;
-
     let ticketFlag = tickets?.results.length > 0;
 
 
     return (
         <div className={styles.ticketsSection}>
             <h2 className={styles.sectionTitle}>Управление билетами</h2>
-
-            <TicketsFilter
-                searchPhone={searchPhone}
-                onPhoneChange={onPhoneChange}
-                searchEmail={searchEmail}
-                onEmailChange={onEmailChange}
-                searchTicketId={searchTicketId}
-                onTicketIdChange={onTicketIdChange}
-                searchPurchaseDate={searchPurchaseDate}
-                onPurchaseDateChange={onPurchaseDateChange}
-            />
-
-            <button onClick={handleSearchClick} className={styles.searchButton}>Найти</button>
-
-            <div className=''>
-
-                {console.log(tickets?.results)}
-
-                <div className={`${styles.ticketsGrid} ${ticketFlag === true ? styles.ticketsGridOn : styles.ticketsGridOff}`}>
-                    {tickets?.results.length > 0 ? (
+            {
+                loading ? <div className="loading loadingCenter">Загрузка билетов...</div> :
+                    error ? <div className="error errorCenter">Ошибка: {error}</div> :
                         <>
-                            {console.log(tickets?.results)}
-                            {tickets?.results.map(ticket => (
-                                <TicketsCard key={ticket.ticket_id} ticket={ticket} handleReturnClick={handleReturnClick}/>
-                            ))}
+                            <TicketsFilter
+                                searchPhone={searchPhone}
+                                onPhoneChange={onPhoneChange}
+                                searchEmail={searchEmail}
+                                onEmailChange={onEmailChange}
+                                searchTicketId={searchTicketId}
+                                onTicketIdChange={onTicketIdChange}
+                                searchPurchaseDate={searchPurchaseDate}
+                                onPurchaseDateChange={onPurchaseDateChange}
+                            />
+
+                            <button onClick={handleSearchClick} className={styles.searchButton}>Найти</button>
+
+                            <div className=''>
+
+                                {console.log(tickets?.results)}
+
+                                <div className={`${styles.ticketsGrid} ${ticketFlag === true ? styles.ticketsGridOn : styles.ticketsGridOff}`}>
+                                    {tickets?.results.length > 0 ? (
+                                        <>
+                                            {console.log(tickets?.results)}
+                                            {tickets?.results.map(ticket => (
+                                                <TicketsCard key={ticket.ticket_id} ticket={ticket} handleReturnClick={handleReturnClick} />
+                                            ))}
+                                        </>
+                                    ) : (
+                                        <p className={styles.emptyMessage}>Введите параметры поиска</p>
+                                    )}
+                                </div>
+                                {showModal && (
+                                    <ReturnModal
+                                        ticketId={selectedTicketId}
+                                        onConfirm={handleConfirmReturn}
+                                        onCancel={handleCancelReturn}
+                                    />
+                                )}
+                            </div>
                         </>
-                    ) : (
-                        <p className={styles.emptyMessage}>Введите параметры поиска</p>
-                    )}
-                </div>
-                {showModal && (
-                    <ReturnModal
-                        ticketId={selectedTicketId}
-                        onConfirm={handleConfirmReturn}
-                        onCancel={handleCancelReturn}
-                    />
-                )}
-            </div>
+            }
+
+
         </div>
 
     )

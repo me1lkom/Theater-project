@@ -8,13 +8,13 @@ import { useBackup } from '../../hooks/useBackup';
 
 export default function AdminMainPage() {
 
-    const { downloadBackup, loading } = useBackup();
+    const { downloadBackup, loading, error } = useBackup();
 
     const [activeTab, setActiveTab] = useState(null);
 
 
     const handleSelectTile = (data) => {
-        if(activeTab === data) setActiveTab(null)
+        if (activeTab === data) setActiveTab(null)
         else setActiveTab(data)
     }
 
@@ -22,11 +22,13 @@ export default function AdminMainPage() {
         if (activeTab === null) return null
         if (activeTab === 'data-manage') return <DataManagementPage />
         if (activeTab === 'statistics') return <StatisticsPage />
-        if (activeTab === 'logging') return  <LoggingPage />
+        if (activeTab === 'logging') return <LoggingPage />
     }
 
     return (
         <div className={styles.container}>
+            {loading && <div className="loading loadingCenter">Загрузка...</div>}
+            {error && <div className="error errorCenter">Ошибка: {error}</div>}
             <h1>Админ панель</h1>
             <div className={styles.buttonsContainer}>
                 <button className={styles.actionButton} onClick={() => handleSelectTile('data-manage')}>Управление данными</button>
