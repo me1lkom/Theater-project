@@ -26,6 +26,7 @@ import io
 import zipfile
 from django.http import FileResponse
 from .ticket_pdf import generate_ticket_pdf
+from decimal import Decimal
 
 
 class PlayListView(generics.ListAPIView):
@@ -1353,6 +1354,7 @@ def manage_sessions(request, session_id=None):
         date_str = data.get('date')
         time_str = data.get('time')
         actors_data = data.get('actors', [])
+        custom_price = data.get('custom_price') 
 
         if not all([play_id, date_str, time_str]):
             return Response(
@@ -1404,7 +1406,8 @@ def manage_sessions(request, session_id=None):
                 play=play,
                 hall=hall,
                 date=session_date,
-                time=session_time
+                time=session_time,
+                custom_price=Decimal(str(custom_price)) if custom_price else None
             )
 
             session.calculated_price = PriceCalculator.calculate_session_price(session)

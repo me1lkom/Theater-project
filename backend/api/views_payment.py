@@ -4,8 +4,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db import transaction
 from django.utils import timezone
-from .models import Basket, Payment, Session, Seat
-from .payment import create_payment
+from .models import Basket, Payment, Session, Seat, Ticket, TicketStatus
+from .payment import create_payment, check_payment, refund_payment
 import logging
 
 logger = logging.getLogger(__name__)
@@ -66,9 +66,7 @@ def create_payment_api(request):
         return Response({'error': str(e)}, status=500)
     
 # api/views_payment.py (продолжение)
-from .models import Ticket, TicketStatus
-from .payment import check_payment, refund_payment
-from django.db import transaction
+
 
 
 @api_view(['GET'])
