@@ -40,6 +40,9 @@ export default function LoggingPage() {
     return (
         <div className={styles.loggingContainer}>
             <div className={styles.neededContainer}>
+
+
+
                 <h2 className={styles.title}>Журнал событий</h2>
 
                 <div className={styles.controls}>
@@ -66,8 +69,8 @@ export default function LoggingPage() {
                     </button>
                 </div>
 
-                {loading && <div className={styles.loading}>Загрузка логов...</div>}
-                {error && <div className={styles.error}>Ошибка: {error}</div>}
+                {loading && <div className="loading loadingCenter">Загрузка логов...</div>}
+                {error && <div className="error errorCenter">Ошибка: {error}</div>}
 
                 {!loading && !error && (
                     <>

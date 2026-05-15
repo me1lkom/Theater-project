@@ -64,9 +64,9 @@ export default function UserInfo() {
     return (
         <div className={styles.userInfo}>
             {loading ? (
-                <p>Загрузка...</p>
+                <div className="loading loadingCenter">Загрузка данных пользователя...</div>
             ) : error ? (
-                <p className={styles.error}>Ошибка: {error}</p>
+                <div className="error errorCenter">Ошибка: {error}</div>
             ) : me && (
                 !changeData ? (
                     <>
