@@ -1450,11 +1450,18 @@ def manage_sessions(request, session_id=None):
                     status=status.HTTP_400_BAD_REQUEST
                 )
         
+        if 'custom_price' in data:
+            if data['custom_price'] is None or data['custom_price'] == '':
+                session.custom_price = None
+                need_recalculate = True  # если сбросили ручную цену → нужно пересчитать
+            else:
+                session.custom_price = Decimal(str(data['custom_price']))
+
         need_recalculate = False 
 
         if 'date' in data:
             try:
-                new_date = datetime.strptime(data['date'], '%d-%m-%Y').date()
+                new_date = datetime.strptime(data['date'], '%Y-%m-%d').date()
                 if new_date < timezone.now().date():
                     return Response(
                         {'error': 'Нельзя перенести сеанс в прошлое'},
