@@ -61,20 +61,19 @@ class PriceCalculator:
     
     @classmethod
     def get_session_price(cls, session):
-        """Возвращает цену сеанса (ручная > расчётная)"""
+
         if session.custom_price is not None:
             return session.custom_price
         
         if session.calculated_price is not None:
             return session.calculated_price
-        
-        # Если ничего нет — рассчитываем (но без рекурсии!)
+
         return cls._calculate_base_session_price(session)
     
     @classmethod
     def _calculate_base_session_price(cls, session) -> Decimal:
 
-        # Рассчитывает без сохранения цены сеанса в БД
+        # рассчитывает без сохранения цены сеанса в БД
 
         base_price = session.play.price
         
@@ -90,7 +89,7 @@ class PriceCalculator:
     @classmethod
     def calculate_session_price(cls, session) -> Decimal:
 
-        # Рассчитывает и сохраняет цену сеанса в БД
+        # рассчитывает и сохраняет цену сеанса в БД
 
         result = cls._calculate_base_session_price(session)
 
@@ -101,7 +100,7 @@ class PriceCalculator:
     
     @classmethod
     def calculate_ticket_price(cls, session, seat) -> Decimal:
-        """Рассчитывает цену билета"""
+
         session_price = cls.get_session_price(session)
         sector_coeff = seat.sector.price_coefficient
         row_coeff = cls.get_row_coefficient(seat.row_number)

@@ -25,10 +25,8 @@ def create_payment_api(request):
     if not basket_items.exists():
         return Response({'error': 'Корзина пуста'}, status=400)
     
-    # Рассчитываем сумму
     total_amount = 0
     tickets_data = []
-    items_prices = []
     
     for item in basket_items:
         price = float(item.price_at_time) if item.price_at_time else float(item.session.play.price)
@@ -65,9 +63,6 @@ def create_payment_api(request):
         logger.error(f"Ошибка создания платежа: {e}")
         return Response({'error': str(e)}, status=500)
     
-# api/views_payment.py (продолжение)
-
-
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -139,7 +134,6 @@ def process_payment(payment):
                 session = Session.objects.get(pk=ticket_data['session_id'])
                 seat = Seat.objects.get(pk=ticket_data['seat_id'])
                 
-                # Проверяем, не продано ли место
                 if Ticket.objects.filter(
                     session=session,
                     seat=seat

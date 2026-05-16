@@ -64,6 +64,7 @@ class SessionSerializer(serializers.ModelSerializer):
     actors = SessionActorSerializer(many=True, read_only=True, source='session_actors')
     calculated_price = serializers.SerializerMethodField()
     coefficients = serializers.SerializerMethodField()
+    custom_price = serializers.SerializerMethodField()
     
     class Meta:
         model = Session
@@ -74,6 +75,11 @@ class SessionSerializer(serializers.ModelSerializer):
         if obj.calculated_price is not None:
             return float(obj.calculated_price)
         return float(PriceCalculator.calculate_session_price(obj))
+
+    def get_custom_price(self, obj):
+        if obj.custom_price is not None:
+            return float(obj.custom_price)
+        return None
 
     def get_coefficients(self, obj):
 

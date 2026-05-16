@@ -1407,7 +1407,7 @@ def manage_sessions(request, session_id=None):
                 hall=hall,
                 date=session_date,
                 time=session_time,
-                custom_price=Decimal(str(custom_price)) if custom_price else None
+                custom_price=custom_price if custom_price else None
             )
 
             session.calculated_price = PriceCalculator.calculate_session_price(session)

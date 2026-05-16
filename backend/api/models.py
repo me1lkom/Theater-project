@@ -299,8 +299,10 @@ class Session(models.Model):
     )
 
     custom_price = models.DecimalField(
-        max_digits=10, decimal_places=2,
-        null=True, blank=True,
+        max_digits=10, 
+        decimal_places=2,
+        null=True, 
+        blank=True,
         verbose_name='Ручная цена (переопределяет расчётную)'
     )
 
