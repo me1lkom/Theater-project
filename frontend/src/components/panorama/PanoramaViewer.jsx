@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Viewer } from '@photo-sphere-viewer/core';
 import '@photo-sphere-viewer/core/index.css';
 
-export default function PanoramaViewer({ defaultImageUrl, imageUrl }) {
+export default function PanoramaViewer({ defaultImageUrl, imageUrl, title }) {
     const containerRef = useRef(null);
     const viewerRef = useRef(null);
     const [isInitialized, setIsInitialized] = useState(false);
@@ -63,7 +63,8 @@ export default function PanoramaViewer({ defaultImageUrl, imageUrl }) {
         if (!isInitialized || !viewerRef.current) return;
         if (!imageUrl) return;
 
-        const seatMatch = imageUrl.match(/(\d+)-(\d+)/);
+        const seatMatch = title.match(/(\d+)-(\d+)/);
+        console.log(seatMatch)
         if (seatMatch) {
             viewerRef.current.setOption('caption', `Ряд: ${seatMatch[1]} Место: ${seatMatch[2]}`);
         }

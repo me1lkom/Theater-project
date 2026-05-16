@@ -11,7 +11,7 @@ export default function GraphPastSessions({ dataSet, predict }) {
     // const occupancy = dataSet?.map(session => session.statistics.occupancy) || [];
 
 
-    const predictionDate = predict?.date;
+    const predictionDate = predict?.session.date;
     const predictionValue = predict?.prediction?.predicted_tickets;
 
     const predictionSession = dataSet.filter(session => session.session_id === predict.session_id);

@@ -4,6 +4,8 @@ import GraphPastSessions from './GraphPastSessions';
 
 export default function PastSessionsStatistic({ play_id, predict}){
 
+    console.log(play_id);
+
     const { data, loading, error } = usePastSessions(play_id);
 
     const sessions = data?.results

@@ -9,13 +9,17 @@ export default function PlayForm({ Data, plays, onSubmit, onClose }) {
     const { actors } = useGetActors();
     const isEdit = !!Data;
 
+
+
     const [formData, setFormData] = useState({
         play_id: '',
         hall: 1,
         date: '',
         time: '',
+        custom_price: '',
         actors: [],
     });
+
 
     useEffect(() => {
         if (isEdit && session) {
@@ -23,6 +27,7 @@ export default function PlayForm({ Data, plays, onSubmit, onClose }) {
                 play_id: session.play || '',
                 date: session.date || '',
                 time: session.time || '',
+                custom_price: !session.custom_price ? session.calculated_price : session.custom_price || '',
                 actors: session?.actors.map(a => ({
                     actor_id: a.actor_id,
                     role: a.actor_role_name
@@ -30,6 +35,7 @@ export default function PlayForm({ Data, plays, onSubmit, onClose }) {
             });
         }
     }, [isEdit, session]);
+
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -118,6 +124,14 @@ export default function PlayForm({ Data, plays, onSubmit, onClose }) {
                 value={formData.time}
                 onChange={handleChange}
                 required
+            />
+
+            <input
+                name="price"
+                type="number"
+                placeholder="Цена"
+                value={formData.custom_price}
+                onChange={handleChange}
             />
 
             <div className={styles.actors}>
