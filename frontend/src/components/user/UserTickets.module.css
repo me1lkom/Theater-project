@@ -20,3 +20,8 @@
 .ticketsGridOff {
     text-align: center;
 }
+
+.returnText {
+    color: var(--text-s);
+    font-size: var(--font-xs);
+}

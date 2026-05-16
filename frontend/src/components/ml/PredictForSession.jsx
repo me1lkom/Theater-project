@@ -49,20 +49,23 @@ export default function PredictForSession() {
                 {loading && <div>Загрузка прогноза...</div>}
                 {error && <div className={styles.error}>Ошибка: {error}</div>}
 
+                {console.log(predict)}
+
                 {predict && (
                     <>
                         <div className={styles.result}>
                             <h3>Результат прогноза:</h3>
-                            <p>ID сеанса: {predict.session_id}</p>
-                            <p>Спектакль: {predict.play}</p>
-                            <p>Дата: {predict.date}</p>
-                            <p>Время: {predict.time}</p>
+                            <p>ID сеанса: {predict.session.session_id}</p>
+                            <p>Спектакль: {predict.session.play}</p>
+                            <p>Дата: {predict.session.date}</p>
+                            <p>Время: {predict.session.time}</p>
+                            <p>Изначальная цена: {!predict.session.custom_price ? predict.session.calculated_price : predict.session.custom_price}</p>
                             <p>Прогноз продаж: {predict.prediction?.predicted_tickets} / 300</p>
                             {/* <p>Заполняемость: {predict.prediction?.predicted_occupancy}%</p> */}
                         </div>
                         <GraphPredict dataSet={predict} />
 
-                        <PastSessionsStatistic play_id={predict.play_id} predict={predict}/>
+                        <PastSessionsStatistic play_id={predict.session.play} predict={predict}/>
                     </>
                 )}
             </div>

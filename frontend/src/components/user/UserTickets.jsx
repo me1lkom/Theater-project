@@ -13,7 +13,7 @@ export default function UserTickets() {
 
     const MySwal = withReactContent(Swal);
 
-    const filteredTickets = tickets.filter(ticket => {
+    const filteredTickets = tickets?.filter(ticket => {
         return ticket.status === 'продан'
     });
 
@@ -38,6 +38,8 @@ export default function UserTickets() {
                             )}
                         </div>
             }
+            <div className={styles.returnText}>Для возврата билета напишите на почту с данными билета</div>
+
         </div>
     )
 }
