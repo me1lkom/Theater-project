@@ -75,12 +75,11 @@ def load_training_data(csv_file):
             defaults={
                 'duration': row['duration'],
                 'description': f'Спектакль {row["play_title"]}',
-                'price': row['price']
             }
         )
         
         if not created:
-            play.price = row['price']
+            play.price = row['calculated_price']
             play.duration = row['duration']
             play.save()
 
@@ -93,10 +92,12 @@ def load_training_data(csv_file):
             date=session_date,
             time=session_time
         )
-        
-        if created:
-            created_sessions += 1
 
+        if created:
+            session.calculated_price = row['calculated_price']
+            session.save()
+            created_sessions += 1
+                   
         tickets_sold = int(row['tickets_sold'])
 
         existing_tickets_count = Ticket.objects.filter(session=session).count()
@@ -125,7 +126,7 @@ def load_training_data(csv_file):
                     session=session,
                     seat=seat,
                     status=sold_status,
-                    price_paid=row['price'],
+                    price_paid=row['calculated_price'],
                     purchase_date=timezone.now()
                 )
                 created_tickets += 1

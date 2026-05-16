@@ -3172,9 +3172,6 @@ def download_ticket(request, ticket_id):
     
     return response
 
-# api/views.py
-
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def download_tickets_by_payment(request, payment_id):
@@ -3190,25 +3187,21 @@ def download_tickets_by_payment(request, payment_id):
     # if payment.user != request.user and not is_admin_or_cashier(request.user):
     #     return Response({'error': 'Недостаточно прав'}, status=403)
     
-    # Получаем все билеты этого платежа
     tickets = payment.tickets.all()
     
     if not tickets.exists():
         return Response({'error': 'Билеты не найдены'}, status=404)
-    
-    # Создаём ZIP архив
+
     zip_buffer = io.BytesIO()
     
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
         for ticket in tickets:
-            # Генерируем PDF для каждого билета
             pdf_buffer = generate_ticket_pdf(ticket)
             filename = f"ticket_{ticket.ticket_id}_{ticket.session.date}.pdf"
             zip_file.writestr(filename, pdf_buffer.getvalue())
     
     zip_buffer.seek(0)
-    
-    # Отдаём ZIP файл
+
     response = HttpResponse(zip_buffer, content_type='application/zip')
     response['Content-Disposition'] = f'attachment; filename="tickets_payment_{payment_id}.zip"'
     

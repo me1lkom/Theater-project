@@ -27,18 +27,28 @@ def create_payment_api(request):
     
     total_amount = 0
     tickets_data = []
+    tickets_description = []
     
     for item in basket_items:
         price = float(item.price_at_time) if item.price_at_time else float(item.session.play.price)
         total_amount += price
-    
+
+        tickets_description.append(
+            f"{item.session.play.title}, {item.session.date} {item.session.time}, "
+            f"ряд {item.seat.row_number}, место {item.seat.seat_number}"
+        )
+
         tickets_data.append({
         'session_id': item.session.session_id,
         'price': price,
         'seat_id': item.seat.seat_id,
-    })
+        })
 
-    description = f"Билеты для {user.username}"
+    description = f"Билеты для {user.username}: " + "; ".join(tickets_description)
+    
+    if len(description) > 200:
+        description = description[:197] + "..."
+
     return_url = "http://localhost:8001/order"
     
     try:

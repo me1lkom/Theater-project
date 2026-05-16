@@ -5,6 +5,8 @@ from datetime import timedelta
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, accuracy_score
+from .price_service import PriceCalculator
+from .models import Session, Ticket
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODEL_DIR = os.path.join(BASE_DIR, 'api', 'models')
@@ -71,9 +73,10 @@ class SalesPredictor:
         weekday = session.date.weekday()  # 0-6 (пн-вс)
         month = session.date.month        # 1-12
         is_weekend = 1 if weekday >= 5 else 0
-        price = float(session.play.price)
         duration = session.play.duration
         
+        price = session.custom_price if session.custom_price else session.calculated_price
+
         avg_sales_7d = self._get_avg_sales_last_days(session, 7)
         avg_sales_30d = self._get_avg_sales_last_days(session, 30)
         
@@ -147,8 +150,13 @@ class SalesPredictor:
             return {}
         
         feature_names = [
-            'day_of_week', 'month', 'is_weekend', 'price', 
-            'duration', 'avg_sales_7d', 'avg_sales_30d'
+            'day_of_week', 
+            'month', 
+            'is_weekend', 
+            'price', 
+            'duration',
+            'avg_sales_7d',
+            'avg_sales_30d'
         ]
         
         importance = {}
@@ -181,7 +189,6 @@ class SalesPredictor:
         if not self.is_trained or self.model is None:
             return False
         
-        from .models import Session, Ticket
         sessions_with_sales = Session.objects.filter(tickets__isnull=False).distinct()
         count = 0
         for session in sessions_with_sales:

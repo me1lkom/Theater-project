@@ -55,6 +55,8 @@ class Play(models.Model):
     price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
+        null=True, 
+        blank=True,
         verbose_name='Базовая цена'
     )
 
