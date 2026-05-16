@@ -218,6 +218,13 @@ export async function getTicketPDF(ticket_id) {
     return response.data;
 }
 
+export async function getBulkTicketPDF(payment_id) {
+    const response = await apiClient.get(`/tickets/${payment_id}/download-tickets/`, {
+        responseType: 'blob',
+    });
+    return response.data;
+}
+
 export async function getMyBasket() {
     const response = await apiClient.get('/basket/my/');
     return response.data;

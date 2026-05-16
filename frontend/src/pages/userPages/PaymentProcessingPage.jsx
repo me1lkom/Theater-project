@@ -1,7 +1,8 @@
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
-// import styles from './PaymentProcessingPage.module.css';
+import { useEffect, useState } from 'react';
+import styles from './PaymentProcessingPage.module.css';
 import { useGetPaymentStatus } from '../../hooks/useGetPaymentStatus';
+import { useGetBulkTicketPDF } from '../../hooks/useGetBulkTicketPDF';
 import useAuthStore from '../../store/useAuthStore';
 
 export default function PaymentProcessingPage() {
@@ -10,29 +11,68 @@ export default function PaymentProcessingPage() {
     const { clearPaymentId } = useAuthStore();
     const { status, error } = useGetPaymentStatus(paymentId);
 
+    const [ticketStatus, setTicketStatus] = useState(null);
+
+    const { downloadTickets, loading } = useGetBulkTicketPDF();
 
     console.log('paymentId:', paymentId);
 
 
     useEffect(() => {
         if (status === 'succeeded') {
-            navigate('/profile', {
-                replace: true,
-                state: { text: 'Оплата прошла успешно!', icon: 'success' }
-            });
-            clearPaymentId();
+            setTicketStatus('succeeded');
         } else if (status === 'fail') {
-            navigate('/profile', {
-                replace: true,
-                state: { text: 'Оплата не прошла!', icon: 'error' }
-            });
-            clearPaymentId();
+            setTicketStatus('fail');
         }
-    }, [status, navigate]);
+    }, [status]);
+
+    const handleRerurnToProfile = () => {
+        navigate('/profile', {replace: true});
+    };
 
     if (!paymentId) return <h1>Нет данных об оплате</h1>;
 
     return (
-        <h1>Подождите, идёт подтверждение оплаты...</h1>
+        <>
+            {ticketStatus === 'succeeded' &&
+                <>
+                    <h1>Оплата прошла успешно!</h1>
+                    <div className={styles.actionButton}>
+                        <button
+                            onClick={() => downloadTickets(paymentId)}
+                            className={styles.button}
+                            disabled={loading}
+                        >
+                            Скачать билет(ы)
+                        </button>
+
+                        <button
+                            onClick={handleRerurnToProfile}
+                            className={styles.button}
+                            disabled={loading}
+                        >
+                            Перейти в профиль
+                        </button>
+                    </div>
+
+                </>
+            }
+            {ticketStatus === 'fail' &&
+                <>
+                    <h1>Оплата не прошла!</h1>
+                    <button
+                        onClick={handleRerurnToProfile}
+                        className={styles.button}
+                        disabled={loading}
+                    >
+                        Перейти в профиль
+                    </button>
+                </>
+            }
+
+            {ticketStatus === null && <h1>Подождите, идёт подтверждение оплаты...</h1>}
+
+
+        </>
     );
 }
