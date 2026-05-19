@@ -26,3 +26,26 @@
     line-height: 1.6;
     border-bottom: 2px dotted var(--border);
 }
+
+.mapContainer {
+    margin: var(--space-xl);
+    padding: var(--space-lg);
+}
+
+.mapContainer iframe {
+    height: 600px;
+    width: 100%;
+    border-radius: var(--radius-lg);
+}
+
+@media (max-width: 630px) {
+    .mapContainer iframe {
+        height: 450px;
+    }
+}
+
+@media (max-width: 450px) {
+    .mapContainer iframe {
+        height: 300px;
+    }
+}
