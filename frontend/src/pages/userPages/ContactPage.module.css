@@ -27,6 +27,29 @@
     border-bottom: 2px dotted var(--border);
 }
 
+.infoContainer {
+    margin: var(--space-xl);
+    padding: var(--space-lg);
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.infoContainer h2 {
+    font-size: var(--font-xxl);
+    color: var(--text-h);
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-sm);
+    display: inline-block;
+}
+
+.infoContainer p {
+    font-size: var(--font-md);
+    color: var(--text-h);
+    margin: var(--space-md) 0;
+}
+
+
 .mapContainer {
     margin: var(--space-xl);
     padding: var(--space-lg);
