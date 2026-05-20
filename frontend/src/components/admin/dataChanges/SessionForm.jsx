@@ -127,7 +127,7 @@ export default function PlayForm({ Data, plays, onSubmit, onClose }) {
             />
 
             <input
-                name="price"
+                name="custom_price"
                 type="number"
                 placeholder="Цена"
                 value={formData.custom_price}
@@ -173,7 +173,7 @@ export default function PlayForm({ Data, plays, onSubmit, onClose }) {
 
             <div className={styles.buttons}>
                 <button type="submit">Сохранить</button>
-                <button type="button" onClick={onClose}>Отмена</button>
+                <button type="button" onClick={onClose} className={styles.cancelButton}>Отмена</button>
             </div>
         </form>
     )

@@ -1,0 +1,35 @@
+.container {
+    max-width: 1200px;
+    padding: var(--space-lg);
+}
+
+.photoContainer {
+    position: relative;
+}
+
+.photo {
+    width: 100%;
+    display: block;
+}
+
+.overlayText {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    text-align: center;
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.title {
+    font-weight: bold;
+    font-size: var(--font-xxl);
+}
+
+.text {
+    font-size: var(--font-lg);
+}

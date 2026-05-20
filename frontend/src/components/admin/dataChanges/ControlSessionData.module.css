@@ -76,6 +76,7 @@
 
 .actionList {
     display: flex;
+    flex-wrap: wrap;
     gap: var(--space-sm);
 }
 
@@ -99,4 +100,3 @@
 .deleteButton {
     background: var(--error-color) !important;
 }
-

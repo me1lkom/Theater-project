@@ -123,3 +123,7 @@
     background: var(--bg-inv);
     width: 100%;;
 }
+
+.cancelButton {
+    background: var(--cancel-bg) !important;
+}

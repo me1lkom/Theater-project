@@ -43,7 +43,7 @@ export default function ActorForm({ Data, onSubmit, onClose }) {
 
             <div className={styles.buttons}>
                 <button type="submit">Сохранить</button>
-                <button type="button" onClick={onClose}>Отмена</button>
+                <button type="button" onClick={onClose} className={styles.cancelButton}>Отмена</button>
             </div>
         </form>
     )
