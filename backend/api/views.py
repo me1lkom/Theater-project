@@ -3269,7 +3269,7 @@ def create_return_request(request, ticket_id):
     return Response({
         'success': True,
         'request_id': return_request.request_id,
-        'message': 'Запрос на возврат отправлен администратору'
+        'message': 'Запрос на возврат отправлен'
     }, status=201)
 
 
@@ -3383,6 +3383,100 @@ def process_return_request(request, request_id):
         return_request.save()
         
         return Response({'success': True, 'message': 'Запрос отклонён'})
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def check_ticket_by_qr(request, ticket_id):
+
+    # Проверка билета по QR-коду
+    # GET /api/check-ticket/{ticket_id}/
+
+    try:
+        ticket = Ticket.objects.select_related(
+            'session', 'session__play', 'seat', 'seat__sector', 'user', 'status'
+        ).get(pk=ticket_id)
+    except Ticket.DoesNotExist:
+        return Response({
+            'valid': False,
+            'message': 'Билет не найден',
+            'status': 'invalid'
+        })
+    
+    status_name = ticket.status.name
+    can_enter = status_name == 'продан'
+
+    from datetime import datetime, time as datetime_time
+    
+    session_datetime = datetime.combine(ticket.session.date, ticket.session.time)
+    session_datetime = timezone.make_aware(session_datetime)
+    is_expired = timezone.now() > session_datetime
+    
+    return Response({
+        'valid': can_enter and not is_expired,
+        'ticket_id': ticket.ticket_id,
+        'status': status_name,
+        'can_enter': can_enter,
+        'is_expired': is_expired,
+        'message': _get_status_message(status_name, is_expired),
+        'ticket_info': {
+            'play': ticket.session.play.title,
+            'date': ticket.session.date,
+            'time': ticket.session.time,
+            'hall': ticket.session.hall.name,
+            'seat': f"Ряд {ticket.seat.row_number}, Место {ticket.seat.seat_number}",
+            'user': {
+                'name': f"{ticket.user.first_name} {ticket.user.last_name}".strip(),
+                'email': ticket.user.email
+            }
+        }
+    })
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def mark_ticket_used(request, ticket_id):
+
+    # Кассир отмечает билет как использованный при входе
+    # POST /api/tickets/<int:ticket_id>/mark-used/
+    
+    if not is_admin_or_cashier(request.user):
+        return Response({'error': 'Недостаточно прав'}, status=403)
+    
+    try:
+        ticket = Ticket.objects.get(pk=ticket_id)
+    except Ticket.DoesNotExist:
+        return Response({'error': 'Билет не найден'}, status=404)
+
+    if ticket.status.name != 'продан':
+        return Response({'error': f'Билет не может быть использован (статус: {ticket.status.name})'}, status=400)
+
+    session_datetime = datetime.combine(ticket.session.date, ticket.session.time)
+    session_datetime = timezone.make_aware(session_datetime)
+    
+    if timezone.now() > session_datetime:
+        return Response({'error': 'Сеанс уже прошёл'}, status=400)
+    
+    used_status, _ = TicketStatus.objects.get_or_create(name='использован')
+    ticket.status = used_status
+    ticket.save()
+    
+    return Response({
+        'success': True,
+        'message': 'Билет отмечен как использованный',
+        'ticket_id': ticket_id
+    })
+
+def _get_status_message(status, is_expired):
+    if status == 'продан':
+        if is_expired:
+            return "Билет действителен, но сеанс уже прошёл"
+        return "Билет действителен"
+    elif status == 'возврат':
+        return "Билет возвращён"
+    elif status == 'использован':
+        return "Билет уже использован"
+    else:
+        return f"Статус: {status}"
 
 def get_total_seats():
     return Seat.objects.count()

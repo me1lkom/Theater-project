@@ -619,6 +619,7 @@ class Payment(models.Model):
         ('succeeded', 'Оплачен'),
         ('cancelled', 'Отменён'),
         ('refunded', 'Возвращён'),
+        ('expired', 'Истёк'),
     )
     
     payment_id = models.CharField(max_length=100, unique=True, verbose_name='ID платежа в ЮKassa')

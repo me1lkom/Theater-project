@@ -17,11 +17,12 @@ font_path = os.path.join(os.path.dirname(__file__), 'fonts', 'DejaVuSans.ttf')
 pdfmetrics.registerFont(TTFont('DejaVuSans', font_path))
 
 
-def generate_qr_code(ticket, size=150):
-
-    # qr_data = f"Билет #{ticket_id}\nПроверка билета: https://your-theater.com/check/{ticket_id}"
-    qr_data = f"Билет #{ticket.ticket_id}\nСтатус билета: {ticket.status.name}"
-
+def generate_qr_code(ticket):
+    # Генерирует QR-код со ссылкой на проверку билета
+    
+    frontend_url = "http://localhost:8001"
+    qr_data = f"{frontend_url}/check-ticket/{ticket.ticket_id}"
+    
     qr = qrcode.QRCode(
         version=2,
         error_correction=qrcode.constants.ERROR_CORRECT_M,
@@ -33,7 +34,6 @@ def generate_qr_code(ticket, size=150):
     
     img = qr.make_image(fill_color="black", back_color="white")
     
-    # Сохраняем в BytesIO
     img_buffer = io.BytesIO()
     img.save(img_buffer, format='PNG')
     img_buffer.seek(0)
@@ -52,15 +52,12 @@ def generate_ticket_pdf(ticket):
     p.setLineWidth(2)
     p.rect(20*mm, 20*mm, width - 40*mm, height - 40*mm)
     
-    # Заголовок (русский шрифт)
     p.setFont("DejaVuSans", 24)
     p.drawCentredString(width/2, height - 40*mm, "ЭЛЕКТРОННЫЙ БИЛЕТ")
-    
-    # Театр
+
     p.setFont("DejaVuSans", 16)
     p.drawCentredString(width/2, height - 55*mm, "Театр")
-    
-    # Данные билета
+
     y_position = height - 80*mm
     
     p.setFont("DejaVuSans", 12)

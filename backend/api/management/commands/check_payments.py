@@ -44,7 +44,7 @@ class Command(BaseCommand):
 
 
             age = timezone.now() - payment.created_at
-            if age > timedelta(hours=2):
+            if age > timedelta(minutes=15):
                 self.stdout.write(f"Платёж {payment.payment_id} завис на {age}. Отменяем")
                 payment.status = 'expired'
                 payment.error_message = 'Истек срок ожидания оплаты'

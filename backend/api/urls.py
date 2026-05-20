@@ -92,4 +92,7 @@ urlpatterns = [
     path('tickets/<int:ticket_id>/return-request/', views.create_return_request, name='create-return-request'),
     path('return-requests/', views.get_return_requests, name='get-return-requests'),
     path('return-requests/<int:request_id>/process/', views.process_return_request, name='process-return-request'),
+
+    path('check-ticket/<int:ticket_id>/', views.check_ticket_by_qr, name='check-ticket'),
+    path('tickets/<int:ticket_id>/mark-used/', views.mark_ticket_used, name='mark-ticket-used'),
 ]   
