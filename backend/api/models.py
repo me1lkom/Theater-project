@@ -545,8 +545,6 @@ class Profile(models.Model):
         return f"{self.user.username} - {self.role.name if self.role else 'Нет роли'}"
 
 class WeekdayCoefficient(models.Model):
-    weekday_id = models.BigAutoField(primary_key=True)
-
     WEEKDAYS = [
         (0, 'Понедельник'),
         (1, 'Вторник'),
@@ -576,8 +574,6 @@ class WeekdayCoefficient(models.Model):
 
 
 class TimeCoefficient(models.Model):
-    time_id = models.BigAutoField(primary_key=True)
-
     TIME_SLOTS = [
         ('morning', 'Утро (06:00-11:59)'),
         ('afternoon', 'День (12:00-17:59)'),
@@ -598,7 +594,6 @@ class TimeCoefficient(models.Model):
 
 
 class Holiday(models.Model):
-    holiday_id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=100, verbose_name='Название')
     month = models.IntegerField(verbose_name='Месяц (1-12)')
     day = models.IntegerField(verbose_name='День (1-31)')
@@ -616,8 +611,6 @@ class Holiday(models.Model):
     
 
 class Payment(models.Model):
-    id = models.BigAutoField(primary_key=True)
-
     PAYMENT_STATUS = (
         ('pending', 'Ожидает оплаты'),
         ('succeeded', 'Оплачен'),
