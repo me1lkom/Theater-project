@@ -636,3 +636,32 @@ class Payment(models.Model):
     
     def __str__(self):
         return f"Платёж {self.payment_id} - {self.status} - {self.amount}₽"
+    
+
+class ReturnRequest(models.Model):
+    STATUS_CHOICES = (
+        ('pending', 'Ожидает'),
+        ('approved', 'Одобрен'),
+        ('rejected', 'Отклонён'),
+    )
+    
+    request_id = models.AutoField(primary_key=True)
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='return_requests')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='return_requests')
+    reason = models.TextField(blank=True, verbose_name='Причина возврата')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    processed_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='processed_returns', verbose_name='Обработал'
+    )
+    admin_comment = models.TextField(blank=True, verbose_name='Комментарий админа')
+    
+    class Meta:
+        verbose_name = 'Запрос на возврат' 
+        verbose_name_plural = 'Запросы на возврат'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Возврат билета #{self.ticket.ticket_id} - {self.get_status_display()}"

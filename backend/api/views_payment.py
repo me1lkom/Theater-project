@@ -1,4 +1,3 @@
-# api/views_payment.py
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -15,8 +14,7 @@ logger = logging.getLogger(__name__)
 @permission_classes([IsAuthenticated])
 def create_payment_api(request):
     user = request.user
-    
-    # Получаем активные элементы корзины
+
     basket_items = Basket.objects.filter(
         user=user,
         expires_at__gt=timezone.now()
@@ -28,13 +26,13 @@ def create_payment_api(request):
     total_amount = 0
     tickets_data = []
     tickets_description = []
-    
+
     for item in basket_items:
         price = float(item.price_at_time) if item.price_at_time else float(item.session.play.price)
         total_amount += price
+        session = Session.objects.get(pk=item.session_id)
 
         tickets_description.append(
-            f"{item.session.play.title}, {item.session.date} {item.session.time}, "
             f"ряд {item.seat.row_number}, место {item.seat.seat_number}"
         )
 
@@ -44,10 +42,14 @@ def create_payment_api(request):
         'seat_id': item.seat.seat_id,
         })
 
+    tickets_description.append(
+        f"{session.play.title}, {session.date} {session.time}"
+    )
+
     description = f"Билеты для {user.username}: " + "; ".join(tickets_description)
     
-    if len(description) > 200:
-        description = description[:197] + "..."
+    if len(description) > 128:
+        description = description[:125] + "..."
 
     return_url = "http://localhost:8001/order"
     

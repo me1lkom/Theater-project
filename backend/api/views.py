@@ -1,5 +1,5 @@
 from rest_framework import generics
-from .models import Play, Session, Seat, Panorama, Ticket, Basket, TicketStatus, ActionLog, Profile, TheaterHall, Sector, PanoramaLink, Genre, AIPrediction, Actor, Payment
+from .models import Play, Session, Seat, Panorama, Ticket, Basket, TicketStatus, ActionLog, Profile, TheaterHall, Sector, PanoramaLink, Genre, AIPrediction, Actor, Payment, ReturnRequest
 from .serializers import PlaySerializer, SessionSerializer, SeatSerializer, PanoramaSerializer, RegisterSerializer, SectorSerializer, BulkSeatSerializer, ActionLogSerializer, PanoramaLinkSerializer, TicketStatusSerializer, GenreSerializer, BulkBuySerializer, BulkBasketSerializer, SessionWithActorsSerializer, ActorSerializer, SessionActor
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -27,6 +27,7 @@ import zipfile
 from django.http import FileResponse
 from .ticket_pdf import generate_ticket_pdf
 from decimal import Decimal
+from .payment import refund_ticket
 
 
 class PlayListView(generics.ListAPIView):
@@ -3081,7 +3082,7 @@ def get_refundable_tickets(request):
             models.Q(user__email__icontains=search)
         )
 
-    limit = request.query_params.get('limit', 100)
+    limit = request.query_params.get('limit', 20)
     try:
         limit = int(limit)
         if limit > 500:
@@ -3227,6 +3228,161 @@ def get_all_panoramas(request):
     serializer = PanoramaSerializer(panoramas, many=True)
     return Response(serializer.data)
 
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_return_request(request, ticket_id):
+
+    # Пользователь создаёт запрос на возврат билета
+    # POST /api/tickets/{ticket_id}/return-request/
+    # Body: {"reason": "Передумал"}
+
+    try:
+        ticket = Ticket.objects.get(pk=ticket_id)
+    except Ticket.DoesNotExist:
+        return Response({'error': 'Билет не найден'}, status=404)
+
+    if ticket.user_id != request.user.id:
+        return Response({'error': 'Это не ваш билет'}, status=403)
+
+    if ticket.status.name != 'продан':
+        return Response({'error': f'Билет нельзя вернуть (статус: {ticket.status.name})'}, status=400)
+    
+    if ReturnRequest.objects.filter(ticket=ticket, status='pending').exists():
+        return Response({'error': 'Запрос на возврат уже отправлен'}, status=400)
+    
+    reason = request.data.get('reason', '')
+    
+    return_request = ReturnRequest.objects.create(
+        ticket=ticket,
+        user=request.user,
+        reason=reason,
+        status='pending'
+    )
+    
+    ActionLog.objects.create(
+        user_id=request.user.id,
+        action_type='CREATE_RETURN_REQUEST',
+        description=f'Создан запрос на возврат билета #{ticket.ticket_id}'
+    )
+    
+    return Response({
+        'success': True,
+        'request_id': return_request.request_id,
+        'message': 'Запрос на возврат отправлен администратору'
+    }, status=201)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_return_requests(request):
+
+    # Получить список запросов на возврат (только админ/кассир)
+    # GET /api/return-requests/
+
+    if not is_admin_or_cashier(request.user):
+        return Response({'error': 'Недостаточно прав'}, status=403)
+    
+    status_filter = request.query_params.get('status', 'pending')
+    
+    requests = ReturnRequest.objects.filter(status=status_filter).select_related(
+        'ticket', 'ticket__user', 'ticket__session', 'ticket__session__play',
+        'ticket__seat', 'user'
+    ).order_by('-created_at')
+    
+    result = []
+    for r in requests:
+        result.append({
+            'request_id': r.request_id,
+            'ticket_id': r.ticket.ticket_id,
+            'user': {
+                'id': r.user.id,
+                'name': f"{r.user.first_name} {r.user.last_name}".strip(),
+                'username': r.user.username,
+                'email': r.user.email,
+                'phone': getattr(r.user.profile, 'phone', '')
+            },
+            'play': r.ticket.session.play.title,
+            'date': r.ticket.session.date,
+            'time': r.ticket.session.time,
+            'seat': f"Ряд {r.ticket.seat.row_number}, Место {r.ticket.seat.seat_number}",
+            'price': float(r.ticket.price_paid),
+            'reason': r.reason,
+            'status': r.status,
+            'created_at': r.created_at,
+            'admin_comment': r.admin_comment
+        })
+    
+    return Response({
+        'count': len(result),
+        'requests': result
+    })
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def process_return_request(request, request_id):
+
+    # POST /api/return-requests/<int:request_id>/process/
+    # Body: {"action": "approve", "comment": "Одобрено"}
+    # Обработка запроса на возврат (одобрение/отклонение)
+
+    if not is_admin_or_cashier(request.user):
+        return Response({'error': 'Недостаточно прав'}, status=403)
+    
+    try:
+        return_request = ReturnRequest.objects.select_related(
+            'ticket', 'ticket__payment', 'ticket__session'
+        ).get(pk=request_id)
+    except ReturnRequest.DoesNotExist:
+        return Response({'error': 'Запрос не найден'}, status=404)
+    
+    if return_request.status != 'pending':
+        return Response({'error': 'Запрос уже обработан'}, status=400)
+    
+    action = request.data.get('action')
+    comment = request.data.get('comment', '')
+    
+    if action not in ['approve', 'reject']:
+        return Response({'error': 'Действие должно быть approve или reject'}, status=400)
+    
+    ticket = return_request.ticket
+    
+    if action == 'approve':
+        if ticket.status.name != 'продан':
+            return Response({'error': f'Билет нельзя вернуть (статус: {ticket.status.name})'}, status=400)
+        
+        session_datetime = timezone.datetime.combine(ticket.session.date, ticket.session.time)
+        session_datetime = timezone.make_aware(session_datetime)
+        deadline = session_datetime - timedelta(days=3)
+        
+        if timezone.now() > deadline:
+            return Response({'error': 'Возврат возможен не позднее чем за 3 дня до спектакля'}, status=400)
+
+        success, message = refund_ticket(ticket)
+        
+        if not success:
+            return Response({'error': message}, status=500)
+        
+        return_request.status = 'approved'
+        return_request.admin_comment = comment
+        return_request.processed_by = request.user
+        return_request.save()
+        
+        ActionLog.objects.create(
+            user_id=request.user.id,
+            action_type='APPROVE_RETURN_REQUEST',
+            description=f'Одобрен возврат билета #{ticket.ticket_id}'
+        )
+        
+        return Response({'success': True, 'message': message})
+    
+    else:
+        return_request.status = 'rejected'
+        return_request.admin_comment = comment
+        return_request.processed_by = request.user
+        return_request.save()
+        
+        return Response({'success': True, 'message': 'Запрос отклонён'})
 
 def get_total_seats():
     return Seat.objects.count()

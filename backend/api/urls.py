@@ -88,4 +88,8 @@ urlpatterns = [
 
     path('create-payment/', views_payment.create_payment_api, name='create-payment'),
     path('check-payment/', views_payment.check_payment_status, name='check-payment'),
-]
+
+    path('tickets/<int:ticket_id>/return-request/', views.create_return_request, name='create-return-request'),
+    path('return-requests/', views.get_return_requests, name='get-return-requests'),
+    path('return-requests/<int:request_id>/process/', views.process_return_request, name='process-return-request'),
+]   
