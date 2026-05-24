@@ -40,14 +40,16 @@ def check_payment(payment_id):
 
 def refund_payment(payment_id):
     try:
-        refund = Refund.create({
-            "payment_id": payment_id,
-            "amount": {
-                "value": "100.00",
-                "currency": "RUB"
-            }
-        })
-        return refund.status == "succeeded"
+        payment = Payment.find_one(payment_id)
+        if payment.status == "succeeded":
+            refund = Refund.create({
+                "payment_id": payment_id,
+                "amount": {
+                    "value": payment.amount.value,
+                    "currency": payment.amount.currency
+                }
+            })
+            return refund.status == "succeeded"
     except Exception as e:
         print(f"Ошибка при возврате: {e}")
         return False

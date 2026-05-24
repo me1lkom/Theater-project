@@ -191,10 +191,8 @@ def logout_cookie(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register_cookie(request):
-    # Сначала проверяем телефон отдельно (или доверяем сериализатору)
     phone = request.data.get('phone', '')
-    
-    # Проверка уникальности телефона ДО создания пользователя
+
     if phone and Profile.objects.filter(phone=phone).exists():
         return Response({
             'phone': ['Пользователь с таким номером телефона уже существует']
@@ -208,20 +206,16 @@ def register_cookie(request):
     
     try:
         with transaction.atomic():
-            # Создаем пользователя через serializer
             user = serializer.save()
-            
-            # Создаем токены
+
             refresh = RefreshToken.for_user(user)
             access_token = str(refresh.access_token)
             refresh_token = str(refresh)
-            
-            # Сохраняем токен в Redis
+
             RedisTokenStorage.save_refresh_token(str(user.id), refresh_token)
             
             logger.info(f"Пользователь {user.username} успешно зарегистрирован")
             
-            # Получаем профиль (он уже создан в сериализаторе)
             profile = user.profile
             
             response = Response({
@@ -236,7 +230,6 @@ def register_cookie(request):
                 }
             }, status=status.HTTP_201_CREATED)
             
-            # Устанавливаем cookies
             set_cookie(
                 response,
                 settings.SIMPLE_JWT.get('AUTH_COOKIE', 'access_token'),

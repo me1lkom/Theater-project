@@ -3238,7 +3238,7 @@ def create_return_request(request, ticket_id):
     # Body: {"reason": "Передумал"}
 
     try:
-        ticket = Ticket.objects.get(pk=ticket_id)
+        ticket = Ticket.objects.select_related('status').get(pk=ticket_id)
     except Ticket.DoesNotExist:
         return Response({'error': 'Билет не найден'}, status=404)
 
@@ -3247,29 +3247,40 @@ def create_return_request(request, ticket_id):
 
     if ticket.status.name != 'продан':
         return Response({'error': f'Билет нельзя вернуть (статус: {ticket.status.name})'}, status=400)
-    
+
     if ReturnRequest.objects.filter(ticket=ticket, status='pending').exists():
         return Response({'error': 'Запрос на возврат уже отправлен'}, status=400)
     
     reason = request.data.get('reason', '')
     
+    # Создаём запрос
     return_request = ReturnRequest.objects.create(
         ticket=ticket,
         user=request.user,
         reason=reason,
         status='pending'
     )
+
+    try:
+        pending_status = TicketStatus.objects.get(name='на рассмотрении')
+        ticket.status = pending_status
+        ticket.save()
+    except TicketStatus.DoesNotExist:
+        pending_status = TicketStatus.objects.create(name='на рассмотрении')
+        ticket.status = pending_status
+        ticket.save()
     
+    # Логируем
     ActionLog.objects.create(
         user_id=request.user.id,
         action_type='CREATE_RETURN_REQUEST',
         description=f'Создан запрос на возврат билета #{ticket.ticket_id}'
     )
-    
+
     return Response({
         'success': True,
         'request_id': return_request.request_id,
-        'message': 'Запрос на возврат отправлен'
+        'message': 'Запрос на возврат отправлен администратору'
     }, status=201)
 
 
