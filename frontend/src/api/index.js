@@ -291,6 +291,22 @@ export async function getRefundableTickets(filters = {}) {
     return response.data;
 }
 
+export async function getRefundRequest() {
+    const response = await apiClient.get('/return-requests/');
+    return response.data;
+}
+
+export async function createRefundRequest(ticket_id, reason) {
+    console.log(`Попытка отправить запрос с /tickets/${ticket_id}/return-request/ и ${reason}`)
+    const response = await apiClient.post(`/tickets/${ticket_id}/return-request/`, { reason: reason });
+    return response.data;
+}
+
+export async function responseRefundRequest(request_id, action, comment) {
+    const response = await apiClient.post(`/return-requests/${request_id}/process/`, { action: action, comment: comment });
+    return response.data;
+}
+
 // –– Управление данными
 // - спектакли
 export async function createPlay(data) {

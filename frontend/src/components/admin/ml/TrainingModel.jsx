@@ -1,5 +1,5 @@
-import { useModelTraining } from '../../hooks/useModelTraining';
-import { useGetMLInfo } from '../../hooks/useGetMLInfo';
+import { useModelTraining } from '../../../hooks/useModelTraining';
+import { useGetMLInfo } from '../../../hooks/useGetMLInfo';
 import GraphTrainingModel from './GraphTrainingModel';
 import styles from './TrainingModel.module.css';
 

@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { useGetPredictForSession } from '../../hooks/useGetPredictForSession';
+import { useGetPredictForSession } from '../../../hooks/useGetPredictForSession';
 import GraphPredict from './GraphPredict';
 import styles from './PredictForSession.module.css';
-import { useSessions } from "../../hooks/useSessions";
+import { useSessions } from '../../../hooks/useSessions';
 import PastSessionsStatistic from './PastSessionsStatistic';
-import { useHistoryPredictions } from '../../hooks/useHistoryPredictions';
+import { useHistoryPredictions } from '../../../hooks/useHistoryPredictions';
 
 export default function PredictForSession() {
     const { predict, prediction, loading, error } = useGetPredictForSession();

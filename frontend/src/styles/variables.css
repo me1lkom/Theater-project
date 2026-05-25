@@ -20,6 +20,10 @@
 
     --bg-button: #7192de2f;
 
+    --refund-color: #79797982;
+    --refund-text: rgb(225, 231, 151);
+    --refund-bg: rgba(255, 241, 152, 0.267);
+
     /* --act-color: #9c27b0;
     --accent: #aa3bff;
     --accent-border: rgba(170, 59, 255, 0.5); */
@@ -34,11 +38,11 @@
     --heading: system-ui, "Segoe UI", Roboto, sans-serif;
     --mono: ui-monospace, Consolas, monospace;
 
-    --space-xs: 4px;
-    --space-sm: 8px;
-    --space-md: 16px;
-    --space-lg: 24px;
-    --space-xl: 32px;
+    --space-xs: 3px;
+    --space-sm: 6px;
+    --space-md: 12px;
+    --space-lg: 18px;
+    --space-xl: 24px;
 
     --radius-sm: 4px;
     --radius-md: 8px;

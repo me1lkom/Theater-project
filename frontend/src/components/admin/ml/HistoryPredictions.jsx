@@ -1,4 +1,4 @@
-import { useHistoryPredictions } from '../../hooks/useHistoryPredictions';
+import { useHistoryPredictions } from '../../../hooks/useHistoryPredictions';
 import styles from './HistoryPredictions.module.css';
 
 export default function HistoryPredictions() {

@@ -116,9 +116,9 @@ export default function Header() {
               <button
                 className={`${styles.actions__button} ${styles['actions__button--admin']}`}
                 onClick={handleAdminClick}
-                aria-label="Админ панель"
+                aria-label="Администрирование"
               >
-                Админ панель
+                Администрирование
               </button>
             </li>
 

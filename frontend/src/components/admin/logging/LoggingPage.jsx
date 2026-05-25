@@ -43,7 +43,7 @@ export default function LoggingPage() {
 
 
 
-                <h2 className={styles.title}>Журнал событий</h2>
+                <h1 className={styles.title}>Журнал событий</h1>
 
                 <div className={styles.controls}>
                     <select
