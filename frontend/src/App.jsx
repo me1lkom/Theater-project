@@ -21,6 +21,7 @@ import { CashierRoute } from "./components/common/CashierRoute";
 import CashierMainPage from "./pages/cashierPages/CashierMainPage";
 import CashierPaymentPage from "./pages/cashierPages/CashierPaymentPage";
 import PaymentProcessingPage from "./pages/userPages/PaymentProcessingPage";
+import CheckTicketQr from './pages/cashierPages/CheckTicketQr';
 
 function App() {
   const hydrate = useAuthStore((state) => state.hydrate);
@@ -88,6 +89,12 @@ function App() {
               <AuthenticatedRoute>
                 <PaymentProcessingPage />
               </AuthenticatedRoute>
+            } />
+
+            <Route path="/check-ticket/:id" element={
+              <CashierRoute>
+                <CheckTicketQr />
+              </CashierRoute>
             } />
 
           </Routes>

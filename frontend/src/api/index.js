@@ -307,6 +307,17 @@ export async function responseRefundRequest(request_id, action, comment) {
     return response.data;
 }
 
+// –– Проверка билета по qr
+export async function QRverification(ticket_id) {
+    const response = await apiClient.get(`/check-ticket/${ticket_id}/`);
+    return response.data;
+}
+
+export async function MarkTicketQR(ticket_id) {
+    const response = await apiClient.post(`/tickets/${ticket_id}/mark-used/`);
+    return response.data;
+}
+
 // –– Управление данными
 // - спектакли
 export async function createPlay(data) {
