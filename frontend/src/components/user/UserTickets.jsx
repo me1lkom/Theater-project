@@ -9,7 +9,7 @@ import Swal from 'sweetalert2'
 import withReactContent from 'sweetalert2-react-content'
 
 export default function UserTickets() {
-    const { tickets, loading, error } = useMyTickets();
+    const { tickets, loading, error, fetchTickets } = useMyTickets();
 
     const MySwal = withReactContent(Swal);
 
@@ -30,7 +30,7 @@ export default function UserTickets() {
                                 <>
                                     {console.log(filteredTickets)}
                                     {filteredTickets?.map(ticket => (
-                                        <TicketsCard key={ticket.ticket_id} ticket={ticket} />
+                                        <TicketsCard key={ticket.ticket_id} ticket={ticket} refetch={fetchTickets}/>
                                     ))}
                                 </>
                             ) : (

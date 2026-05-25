@@ -97,7 +97,7 @@
 .rejectButton {
     flex: 1;
     padding: var(--space-sm);
-    background: var(--cancel-bg);
+    background: var(--refund-button);
     color: white;
     border: none;
     border-radius: var(--radius-sm);
