@@ -3359,7 +3359,7 @@ def process_return_request(request, request_id):
     ticket = return_request.ticket
     
     if action == 'approve':
-        if ticket.status.name != 'продан':
+        if ticket.status.name != 'на рассмотрении':
             return Response({'error': f'Билет нельзя вернуть (статус: {ticket.status.name})'}, status=400)
         
         session_datetime = timezone.datetime.combine(ticket.session.date, ticket.session.time)
