@@ -1,20 +1,85 @@
 import styles from './RequestCard.module.css'
 import useResponseRefundRequest from '../../../hooks/useResponseRefundRequest';
 
-export default function RequestCard({ request }) {
+import Swal from 'sweetalert2'
+import withReactContent from 'sweetalert2-react-content'
+
+export default function RequestCard({ request, refetch }) {
     const request_date_reverse = request?.created_at.slice(0, 10).split('-').reverse().join('-');
     const play_date = request?.date.split('-').reverse().join('-');
+
+    const MySwal = withReactContent(Swal)
+
 
     const { sendResponse, loading, error } = useResponseRefundRequest();
 
 
     const handleApprove = async () => {
-        sendResponse(request.request_id, 'approve')
+        const result = await Swal.fire({
+            title: "Вы уверены?",
+            showCancelButton: true,
+            confirmButtonText: "Да",
+            cancelButtonText: "Отмена",
+            showLoaderOnConfirm: true,
+            preConfirm: async () => {
+                try {
+                    await sendResponse(request.request_id, 'approve')
+
+                } catch (error) {
+                    Swal.showValidationMessage(`Request failed: ${error}`);
+                    throw error;
+                }
+            },
+            allowOutsideClick: () => !Swal.isLoading()
+        });
+
+        if (result.isConfirmed) {
+            MySwal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: "success",
+                title: "Билет возвращен",
+                timer: 1500,
+                showConfirmButton: false
+            });
+            await refetch();
+        }
+
     }
 
     const handleReject = async () => {
-        sendResponse(request.request_id, 'reject')
+        const result = await Swal.fire({
+            title: "Вы уверены?",
+            showCancelButton: true,
+            confirmButtonText: "Да",
+            cancelButtonText: "Отмена",
+            showLoaderOnConfirm: true,
+            preConfirm: async () => {
+                try {
+                    await sendResponse(request.request_id, 'reject')
+
+                } catch (error) {
+                    Swal.showValidationMessage(`Request failed: ${error}`);
+                    throw error;
+                }
+            },
+            allowOutsideClick: () => !Swal.isLoading()
+        });
+
+        if (result.isConfirmed) {
+            MySwal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: "error",
+                title: "Возврат отказан",
+                timer: 1500,
+                showConfirmButton: false
+            });
+            await refetch();
+        }
     }
+
+
 
 
 

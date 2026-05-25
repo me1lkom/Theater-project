@@ -12,7 +12,7 @@ export default function TicketsCard({ ticket, refetch }) {
     const MySwal = withReactContent(Swal)
 
     const handleRefund = async () => {
-        Swal.fire({
+        const result = await Swal.fire({
             title: "Вернуть билет",
             input: "text",
             inputLabel: "Укажите причину возврата",
@@ -25,16 +25,27 @@ export default function TicketsCard({ ticket, refetch }) {
             showLoaderOnConfirm: true,
             preConfirm: async (reason) => {
                 try {
-                    createRefundRequest(ticket.ticket_id, reason);
+                    await createRefundRequest(ticket.ticket_id, reason);
 
                 } catch (error) {
                     Swal.showValidationMessage(`Request failed: ${error}`);
+                    throw error;
                 }
             },
             allowOutsideClick: () => !Swal.isLoading()
         });
 
-        refetch;
+        if (result.isConfirmed) {
+            MySwal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: "success",
+                title: "Заявка отправлена",
+                timer: 1500,
+                showConfirmButton: false
+            });
+            await refetch();
+        }
     }
 
     return (

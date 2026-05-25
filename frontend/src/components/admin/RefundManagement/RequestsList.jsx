@@ -6,7 +6,7 @@ import styles from './RequestsList.module.css';
 
 export default function RequestsList() {
 
-    const { requests, loading, error } = useGetRefundRequest();
+    const { requests, loading, error, refetch } = useGetRefundRequest();
     console.log(requests);
 
     let requestFlag = requests?.count > 0;
@@ -23,7 +23,7 @@ export default function RequestsList() {
                                 <>
                                     {console.log(requests?.requests)}
                                     {requests.requests.map(request => (
-                                        <RequestCard key={request.ticket_id} request={request} />
+                                        <RequestCard key={request.ticket_id} request={request} refetch={refetch} />
                                     ))}
                                 </>
                                 :
