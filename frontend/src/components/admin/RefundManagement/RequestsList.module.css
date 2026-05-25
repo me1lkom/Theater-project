@@ -1,0 +1,31 @@
+.requestsSection {
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+
+.requestsGrid {
+    gap: var(--space-lg);
+    padding: var(--space-lg);
+    color: var(--text-h);
+}
+
+.requestsGridOn {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+
+.requestsGridOff {
+    text-align: center;
+}
+
+.returnText {
+    color: var(--text-s);
+    font-size: var(--font-xs);
+}
+
+
+.noRequests {
+    color: var(--text-h)
+}

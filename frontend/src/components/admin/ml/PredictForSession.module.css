@@ -3,7 +3,6 @@
     gap: var(--space-lg);
     padding: var(--space-lg);
     min-height: 600px;
-    border: 2px dotted var(--bg-inv);
     border-radius: var(--radius-md);
 }
 

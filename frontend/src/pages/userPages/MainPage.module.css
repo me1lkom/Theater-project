@@ -33,3 +33,22 @@
 .text {
     font-size: var(--font-lg);
 }
+
+@media (max-width: 730px) {
+    .title {
+        font-size: var(--space-xl);
+    }
+
+    .text {
+        font-size: var(--space-md);
+    }
+}
+
+@media (max-width: 450px) {
+    .photo {
+        display: none;
+    }
+    .overlayText {
+        display: none;
+    }
+}

@@ -1,5 +1,4 @@
 .TrainingModel {
-    border: 2px dotted var(--bg-inv);
     border-radius: var(--radius-md);
     padding: var(--space-md);
 }

@@ -21,13 +21,14 @@ export default function PaymentProcessingPage() {
     useEffect(() => {
         if (status === 'succeeded') {
             setTicketStatus('succeeded');
-        } else if (status === 'fail') {
-            setTicketStatus('fail');
+        } else if (status === 'expired') {
+            setTicketStatus('expired');
         }
     }, [status]);
 
     const handleRerurnToProfile = () => {
         navigate('/profile', {replace: true});
+        clearPaymentId();
     };
 
     if (!paymentId) return <h1>Нет данных об оплате</h1>;
@@ -57,7 +58,7 @@ export default function PaymentProcessingPage() {
 
                 </>
             }
-            {ticketStatus === 'fail' &&
+            {ticketStatus === 'expired' &&
                 <>
                     <h1>Оплата не прошла!</h1>
                     <button

@@ -1,17 +1,59 @@
 import styles from './TicketsCard.module.css'
 import { useGetTicketPDF } from '../../hooks/useGetTicketPDF';
+import { createRefundRequest } from '../../api/index'
+
+import Swal from 'sweetalert2'
+import withReactContent from 'sweetalert2-react-content'
 
 export default function TicketsCard({ ticket }) {
     const reversed = ticket.date?.split('-').reverse().join('-');
     const { downloadTicket, loading: downloadTicketLoading } = useGetTicketPDF(ticket.ticket_id);
 
+    const MySwal = withReactContent(Swal)
+
+    const handleRefund = async () => {
+        Swal.fire({
+            title: "Вернуть билет",
+            input: "text",
+            inputLabel: "Укажите причину возврата",
+            inputValidator: (value) => {
+                if (!value) return "Причина обязательна.";
+            },
+            showCancelButton: true,
+            confirmButtonText: "Отправить",
+            cancelButtonText: "Отмена",
+            showLoaderOnConfirm: true,
+            preConfirm: async (reason) => {
+                try {
+                    createRefundRequest(ticket.ticket_id, reason);
+
+                } catch (error) {
+                    Swal.showValidationMessage(`Request failed: ${error}`);
+                }
+            },
+            allowOutsideClick: () => !Swal.isLoading()
+        });
+    }
 
     return (
-        <div className={styles.ticketCard}>
-            {ticket.status === "продан" && (
+        <div className={`${styles.ticketCard} ${ticket.status === "на рассмотрении" ? styles.refundTicket : ""}`}>
+            {(ticket.status === "продан" || ticket.status === "на рассмотрении") && (
                 <>
-                    <div className={styles.title}>{ticket.play_title}</div>
+                    {ticket.status === "на рассмотрении" ? (
+                        <div className={styles.refundText}>
+                            На рассмотрении возврата
+                        </div>
+                    ) : ''}
 
+
+
+                    <div className={styles.con}>
+                        <div className={styles.title}>{ticket.play_title}</div>
+                        <div className={styles.refundBlock} onClick={handleRefund}>
+                            <span>ί</span>
+                            <span className={styles.refundForm}>Форма возврата</span>
+                        </div>
+                    </div>
                     <div className={styles.infoGrid}>
                         <div className={styles.infoItem}>
                             <span className={styles.label}>Дата:</span>

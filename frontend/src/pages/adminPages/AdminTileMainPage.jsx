@@ -1,6 +1,7 @@
 import DataManagementPage from './DataManagementPage';
 import StatisticsPage from './StatisticsPage';
 import LoggingPage from '../../components/admin/logging/LoggingPage';
+import RefundManagementPage from './RefundManagementPage'; 
 
 import styles from './AdminTileMainPage.module.css';
 import { useState } from 'react';
@@ -23,6 +24,7 @@ export default function AdminMainPage() {
         if (activeTab === 'data-manage') return <DataManagementPage />
         if (activeTab === 'statistics') return <StatisticsPage />
         if (activeTab === 'logging') return <LoggingPage />
+        if (activeTab === 'refund-management') return <RefundManagementPage />
     }
 
     return (
@@ -34,6 +36,7 @@ export default function AdminMainPage() {
                 <button className={styles.actionButton} onClick={() => handleSelectTile('data-manage')}>Управление данными</button>
                 <button className={styles.actionButton} onClick={() => handleSelectTile('statistics')}>Статистика</button>
                 <button className={styles.actionButton} onClick={() => handleSelectTile('logging')}>Логи</button>
+                <button className={styles.actionButton} onClick={() => handleSelectTile('refund-management')}>Возвраты</button>
 
                 <button
                     className={styles.actionButton}

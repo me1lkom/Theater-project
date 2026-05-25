@@ -1,5 +1,5 @@
 // import styles from './PastSessionsStatistic.module.css'
-import { usePastSessions } from '../../hooks/usePastSessions';
+import { usePastSessions } from '../../../hooks/usePastSessions';
 import GraphPastSessions from './GraphPastSessions';
 
 export default function PastSessionsStatistic({ play_id, predict}){
