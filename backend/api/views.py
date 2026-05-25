@@ -3299,7 +3299,7 @@ def get_return_requests(request):
     requests = ReturnRequest.objects.filter(status=status_filter).select_related(
         'ticket', 'ticket__user', 'ticket__session', 'ticket__session__play',
         'ticket__seat', 'user'
-    ).order_by('-created_at')
+    ).order_by('-ticket__session__date') 
     
     result = []
     for r in requests:
