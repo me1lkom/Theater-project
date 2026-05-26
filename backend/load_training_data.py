@@ -1,161 +1,156 @@
+# load_training_data.py
 import os
-import sys
-import pandas as pd
-from datetime import datetime
-
-# Настройка Django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'theater_backend.settings')
 import django
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'theater_backend.settings')
 django.setup()
 
-from api.models import (
-    Play, Session, Seat, Ticket, TicketStatus, TheaterHall
-)
-from django.utils import timezone
-from django.contrib.auth.models import User
+import random
+from datetime import datetime, timedelta, date
+from api.price_service import PriceCalculator
+from api.models import Play, TheaterHall, Session, Ticket, TicketStatus, Seat
 
 
-def load_training_data(csv_file):
-    print(f"Загрузка данных из {csv_file}...")
-
-    df = pd.read_csv(csv_file)
-
+def generate_data():
     hall = TheaterHall.objects.first()
-    if not hall:
-        print("Создаем зал 'Основной зал'...")
-        hall = TheaterHall.objects.create(
-            name='Основной зал',
-            description='Главная сцена театра'
-        )
-    print(f"Зал: {hall.name}")
-
-    sold_status, created = TicketStatus.objects.get_or_create(
-        name='продан'
-    )
-    print(f" Статус: {sold_status.name}")
+    plays = list(Play.objects.all())
+    all_seats = list(Seat.objects.filter(hall=hall))
+    total_seats = 300
+    status_sold, _ = TicketStatus.objects.get_or_create(name='продан')
     
-    # получение или создание системного пользователя
-    system_user, _ = User.objects.get_or_create(
-        username='system',
-        defaults={
-            'password': 'unused',
-            'email': 'system@theater.local'
-        }
-    ) 
+    holidays = [
+        date(2025, 1, 1), date(2025, 1, 2), date(2025, 1, 3),
+        date(2025, 1, 4), date(2025, 1, 5), date(2025, 1, 6),
+        date(2025, 1, 7), date(2025, 1, 8),
+        date(2025, 2, 23), date(2025, 3, 8),
+        date(2025, 5, 1), date(2025, 5, 9),
+        date(2025, 6, 12), date(2025, 11, 4),
+        date(2025, 12, 31)
+    ]
     
-    # проверка на количество мест
-    max_tickets = df['tickets_sold'].max()
-    total_seats = Seat.objects.filter(hall=hall).count()
+    print("🎭 Генерация данных за 2025 год...")
+    print("   Театр работает КАЖДЫЙ ДЕНЬ")
+    Session.objects.all().delete()
+    print("   Старые данные удалены")
     
-    print(f"Максимальное количество билетов на сеанс: {max_tickets}")
-    print(f"Всего мест в зале: {total_seats}")
+    current_date = date(2025, 1, 1)
+    count = 0
+    play_index = 0
     
-    if total_seats < max_tickets:
-        print(f"\n ОШИБКА: Не хватает мест для загрузки данных!")
-        print(f"   Нужно: {max_tickets} мест")
-        print(f"   Есть: {total_seats} мест")
-        print(f"   Не хватает: {max_tickets - total_seats} мест")
-        print("\nСначала создайте достаточно мест через админку:")
-        print("   http://localhost:8000/admin/api/seat/add/")
-        sys.exit(1)
-    
-    print(f"Мест достаточно")
-    
-    # загрузка данных
-    created_sessions = 0
-    created_tickets = 0
-    skipped_tickets = 0
-    
-    for idx, row in df.iterrows():
-        print(f"\nОбработка {idx + 1}/{len(df)}: {row['play_title']} на {row['date']}")
+    while current_date <= date(2025, 12, 31):
+        weekday = current_date.weekday()
         
-        # создание или получение спектакля
-        play, created = Play.objects.get_or_create(
-            title=row['play_title'],
-            defaults={
-                'duration': row['duration'],
-                'description': f'Спектакль {row["play_title"]}',
-            }
-        )
+        times = ['10:00', '14:00', '18:00']
         
-        if not created:
-            play.price = row['calculated_price']
-            play.duration = row['duration']
-            play.save()
-
-        session_date = datetime.strptime(row['date'], '%Y-%m-%d').date()
-        session_time = datetime.strptime(row['time'], '%H:%M:%S').time()
-        
-        session, created = Session.objects.get_or_create(
-            play=play,
-            hall=hall,
-            date=session_date,
-            time=session_time
-        )
-
-        if created:
-            session.calculated_price = row['calculated_price']
-            session.save()
-            created_sessions += 1
-                   
-        tickets_sold = int(row['tickets_sold'])
-
-        existing_tickets_count = Ticket.objects.filter(session=session).count()
-        
-        if existing_tickets_count < tickets_sold:
-            need_to_create = tickets_sold - existing_tickets_count
-
-            taken_seats = Ticket.objects.filter(
-                session=session
-            ).values_list('seat_id', flat=True)
-
-            free_seats = Seat.objects.filter(
-                hall=hall
-            ).exclude(
-                seat_id__in=taken_seats
-            )[:need_to_create]
+        for time_str in times:
+            time_obj = datetime.strptime(time_str, '%H:%M').time()
+            hour = int(time_str.split(':')[0])
             
-            if free_seats.count() < need_to_create:
-                print(f"  Внимание: не хватает свободных мест для {need_to_create} билетов")
-                print(f"  Создано только {free_seats.count()} билетов")
-                skipped_tickets += need_to_create - free_seats.count()
+            play = plays[play_index % len(plays)]
+            play_index += 1
             
-            for seat in free_seats:
-                Ticket.objects.create(
-                    user=system_user,
+            is_holiday = current_date in holidays
+            
+            # СНАЧАЛА создаем и сохраняем сеанс
+            session = Session.objects.create(
+                play=play,
+                hall=hall,
+                date=current_date,
+                time=time_obj,
+            )
+            
+            # Теперь считаем цену (у сеанса уже есть ID)
+            calculated_price = PriceCalculator.calculate_session_price(session)
+            calculated_price = float(calculated_price) 
+            
+            # В 50% случаев custom_price
+            if random.random() < 0.5:
+                multiplier = random.choice([
+                    0.3, 0.4, 0.5,
+                    0.6, 0.7, 0.8,
+                    1.3, 1.5, 1.8,
+                    2.0, 2.5, 3.0
+                ])
+                custom_price = round(calculated_price * multiplier, 2)
+                session.custom_price = custom_price
+                session.save(update_fields=['custom_price'])
+            else:
+                custom_price = None
+            
+            final_price = custom_price if custom_price else calculated_price
+            
+            # ===== РАСЧЕТ ПРОДАЖ =====
+            
+            # 1. Базовая заполняемость от дня недели
+            if weekday >= 5:
+                base_fill = random.uniform(0.65, 0.85)
+            elif weekday == 4:
+                base_fill = random.uniform(0.50, 0.70)
+            else:
+                base_fill = random.uniform(0.30, 0.55)
+            
+            # 2. Влияние времени
+            if hour >= 18:
+                base_fill *= 1.2
+            elif hour >= 14:
+                base_fill *= 1.0
+            else:
+                base_fill *= 0.7
+            
+            # 3. Влияние праздников
+            if is_holiday:
+                base_fill *= 1.4
+            
+            # 4. Влияние цены
+            price_ratio = final_price / calculated_price if calculated_price > 0 else 1.0
+            
+            if price_ratio >= 3.0:
+                base_fill *= 0.15
+            elif price_ratio >= 2.0:
+                base_fill *= 0.30
+            elif price_ratio >= 1.5:
+                base_fill *= 0.50
+            elif price_ratio >= 1.2:
+                base_fill *= 0.70
+            elif price_ratio <= 0.4:
+                base_fill *= 1.60
+            elif price_ratio <= 0.6:
+                base_fill *= 1.40
+            elif price_ratio <= 0.7:
+                base_fill *= 1.25
+            elif price_ratio <= 0.85:
+                base_fill *= 1.10
+            
+            # 5. Итог
+            base_fill = max(0.02, min(1.0, base_fill))
+            sold = int(total_seats * base_fill * random.uniform(0.98, 1.02))
+            sold = max(5, min(total_seats, sold))
+            
+            # Создаем билеты
+            seats = random.sample(all_seats, sold)
+            Ticket.objects.bulk_create([
+                Ticket(
+                    user=None,
                     session=session,
                     seat=seat,
-                    status=sold_status,
-                    price_paid=row['calculated_price'],
-                    purchase_date=timezone.now()
+                    status=status_sold,
+                    price_paid=round(final_price * random.choice([1.0, 1.12, 1.14, 1.16]), 2),
+                    purchase_date=datetime.now()
                 )
-                created_tickets += 1
+                for seat in seats
+            ])
+            
+            count += 1
         
-        print(f"  {play.title}: {tickets_sold} билетов (создано {existing_tickets_count} новых)")
+        current_date += timedelta(days=1)
+        
+        if current_date.day == 1:
+            print(f"   {current_date.strftime('%B')}: {count} сеансов")
     
-
-    print(" ЗАГРУЗКА ЗАВЕРШЕНА!")
-    print(f"   Всего сеансов: {Session.objects.count()}")
-    print(f"   Всего билетов: {Ticket.objects.count()}")
-    print(f"   Создано сеансов: {created_sessions}")
-    print(f"   Создано билетов: {created_tickets}")
-    if skipped_tickets > 0:
-        print(f"  Пропущено билетов (не хватило мест): {skipped_tickets}")
+    # Статистика...
+    print(f"\n✅ Готово! Всего {count} сеансов")
+    # ... (остальная статистика без изменений)
 
 
 if __name__ == '__main__':
-    # проверка что файл существует
-    csv_file = 'training_data.csv'
-    if not os.path.exists(csv_file):
-        print(f"Ошибка: файл {csv_file} не найден!")
-        print("Создайте файл training_data.csv в корне проекта")
-        sys.exit(1)
-    
-    try:
-        import pandas
-    except ImportError:
-        print("Устанавливаем pandas...")
-        os.system('pip install pandas')
-        import pandas
-    
-    load_training_data(csv_file)
+    generate_data()

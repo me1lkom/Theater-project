@@ -1,201 +1,154 @@
+# api/ml_service.py
 import numpy as np
+import xgboost as xgb
 import joblib
 import os
-from datetime import timedelta
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, accuracy_score
-from .price_service import PriceCalculator
-from .models import Session, Ticket
+from datetime import date
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, mean_absolute_percentage_error
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MODEL_DIR = os.path.join(BASE_DIR, 'api', 'models')
-MODEL_PATH = os.path.join(MODEL_DIR, 'sales_predictor.pkl')
+MODEL_PATH = os.path.join(BASE_DIR, 'api', 'models', 'sales_model.pkl')
+os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
 
-os.makedirs(MODEL_DIR, exist_ok=True)
+# Праздники
+HOLIDAYS = [
+    date(2025, 1, 1), date(2025, 1, 7), date(2025, 2, 23),
+    date(2025, 3, 8), date(2025, 5, 1), date(2025, 5, 9),
+    date(2025, 6, 12), date(2025, 11, 4), date(2025, 12, 31)
+]
 
 
 class SalesPredictor:
+    """Предсказатель на XGBoost с оптимизированными параметрами"""
     
     def __init__(self):
         self.model = None
         self.is_trained = False
-        self._load_model()
-    
-    def _load_model(self):
-
+        
         if os.path.exists(MODEL_PATH):
-            try:
-                self.model = joblib.load(MODEL_PATH)
-                self.is_trained = True
-                print(f"Модель загружена из {MODEL_PATH}")
-            except Exception as e:
-                print(f"Ошибка загрузки модели: {e}")
-        else:
-            self.is_trained = False 
+            self.model = joblib.load(MODEL_PATH)
+            self.is_trained = True
+            print("✅ Модель загружена")
     
-    def _save_model(self):
-
-        if self.model:
-            joblib.dump(self.model, MODEL_PATH)
-            print(f"Модель сохранена в {MODEL_PATH}")
+    def _get_features(self, session):
+        """4 признака: день, час, праздник, цена"""
+        return np.array([
+            session.date.weekday(),
+            session.time.hour,
+            1 if session.date in HOLIDAYS else 0,
+            float(session.custom_price or session.calculated_price)
+        ])
     
-    def _get_avg_sales_last_days(self, session, days):
-
-        from .models import Session, Ticket
+    def train(self):
+        """Обучение с подбором параметров"""
+        from api.models import Session, Ticket
         
-        cutoff_date = session.date - timedelta(days=days)
+        sessions = Session.objects.all()
         
-        past_sessions = Session.objects.filter(
-            play=session.play,
-            date__gte=cutoff_date,
-            date__lt=session.date
+        X, y = [], []
+        for s in sessions:
+            sold = Ticket.objects.filter(session=s, status__name='продан').count()
+            if sold > 0:
+                X.append(self._get_features(s))
+                y.append(sold)
+        
+        if len(X) < 20:
+            print(f"❌ Мало данных: {len(X)} сеансов")
+            return False, {'error': f'Нужно 20+ сеансов, есть {len(X)}'}
+        
+        X, y = np.array(X), np.array(y)
+        
+        # ОПТИМИЗИРОВАННЫЕ параметры для уменьшения ошибки
+        self.model = xgb.XGBRegressor(
+            n_estimators=300,          # больше деревьев (было 100)
+            max_depth=8,               # глубже (было 10 - переобучение)
+            learning_rate=0.03,        # медленнее (было 0.1)
+            min_child_weight=5,        # меньше переобучения
+            subsample=0.8,             # случайные 80% данных
+            colsample_bytree=0.8,      # случайные 80% признаков
+            gamma=0.1,                 # регуляризация
+            reg_alpha=0.1,             # L1 регуляризация
+            reg_lambda=1.0,            # L2 регуляризация
+            random_state=42,
+            verbosity=0
         )
-        
-        if not past_sessions.exists():
-            return 0
-        
-        total_sales = 0
-        count = 0
-        
-        for past in past_sessions:
-            sold = Ticket.objects.filter(
-                session=past,
-                status__name='продан'
-            ).count()
-            total_sales += sold
-            count += 1
-        
-        return total_sales / count if count > 0 else 0
-    
-    def _extract_features(self, session):
+        self.model.fit(X, y)
 
-        weekday = session.date.weekday()  # 0-6 (пн-вс)
-        month = session.date.month        # 1-12
-        is_weekend = 1 if weekday >= 5 else 0
-        duration = session.play.duration
-        
-        price = session.custom_price if session.custom_price else session.calculated_price
+        predictions = self.model.predict(X)
+        predictions = np.clip(predictions, 0, 300)
 
-        avg_sales_7d = self._get_avg_sales_last_days(session, 7)
-        avg_sales_30d = self._get_avg_sales_last_days(session, 30)
+        mae = mean_absolute_error(y, predictions)
+        rmse = np.sqrt(mean_squared_error(y, predictions))
+        mape = mean_absolute_percentage_error(y, predictions) * 100
+        r2 = r2_score(y, predictions)
         
-        return [weekday, month, is_weekend, price, duration, avg_sales_7d, avg_sales_30d]
-    
-    def prepare_features(self, session_data, historical_sales):
-
-        features = []
-        targets = []
+        # Важность признаков
+        importance = dict(zip(
+            ['day_of_week', 'hour', 'is_holiday', 'price'],
+            self.model.feature_importances_.round(4)
+        ))
         
-         # извлекаем признаки
-        for session in session_data:
-           
-            feat = self._extract_features(session)
-            features.append(feat)
-            
-            # целевая переменная
-            target = historical_sales.get(session.session_id, 0)
-            targets.append(target)
-        
-        return np.array(features), np.array(targets)
-    
-    def train(self, session_data, historical_sales):
-
-        if len(session_data) < 10:
-            self.is_trained = False
-            return False, {
-                'error': f'Недостаточно данных. Нужно минимум 10 сеансов, получено: {len(session_data)}'
-            }
-        
-        # подготавка данных
-        X, y = self.prepare_features(session_data, historical_sales)
-        
-        # разделение на обучающую и тестовую выборки
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, random_state=42
-        )
-        
-        self.model = RandomForestRegressor(
-            n_estimators=100,      # количество деревьев
-            max_depth=10,          # максимальная глубина
-            random_state=42,       # для воспроизводимости
-        )
-        
-        # обучение
-        self.model.fit(X_train, y_train)
-
-        # оценка качества
-        y_pred = self.model.predict(X_test)
-        mae = mean_absolute_error(y_test, y_pred)
-        rmse = np.sqrt(mean_squared_error(y_test, y_pred))
-        r2 = r2_score(y_test, y_pred)
-        mape = np.mean(np.abs((y_test - y_pred) / y_test)) * 100
-
-        self._save_model()
         self.is_trained = True
+        joblib.dump(self.model, MODEL_PATH)
+        
+        print(f"✅ Обучено!")
+        print(f"   MAE={mae:.1f}, RMSE={rmse:.1f}, MAPE={mape:.1f}%, R²={r2:.3f}")
+        print(f"📊 Важность: {importance}")
         
         return True, {
-            'mae': round(mae, 2),
-            'rmse': round(rmse, 2),
-            'r2': round(r2, 2),
-            'train_samples': len(X_train),
-            'mape': round(mape, 2),
-            'test_samples': len(X_test),
-            'total_samples': len(X),
-            'feature_importance': self._get_feature_importance()
+            'samples': len(X),
+            'mae': round(float(mae), 1),
+            'rmse': round(float(rmse), 1),
+            'mape': round(float(mape), 1),
+            'r2': round(float(r2), 3),
+            'importance': importance
         }
     
-    def _get_feature_importance(self):
-        if not self.model:
-            return {}
-        
-        feature_names = [
-            'day_of_week', 
-            'month', 
-            'is_weekend', 
-            'price', 
-            'duration',
-            'avg_sales_7d',
-            'avg_sales_30d'
-        ]
-        
-        importance = {}
-        for name, imp in zip(feature_names, self.model.feature_importances_):
-            importance[name] = round(imp, 3)
-        
-        return importance
-    
-
-    def predict_for_session(self, session):
-        if not self.is_trained or self.model is None:
+    def predict(self, session):
+        """Предсказать продажи"""
+        if not self.is_trained:
             return None
-
-        features = self._extract_features(session)
-
-        features_array = np.array([features])
-        prediction = self.model.predict(features_array)[0]
-
-        return max(0, int(prediction))
+        
+        features = self._get_features(session).reshape(1, -1)
+        pred = self.model.predict(features)[0]
+        return max(0, min(300, int(pred)))
     
-    def get_model_info(self):
+    def find_best_price(self, session):
+        """Найти цену с максимальной выручкой"""
+        if not self.is_trained:
+            return None
+        
+        base = float(session.play.price)
+        best_price = base
+        best_revenue = 0
+        results = []
+        
+        for mult in [0.5, 0.7, 1.0, 1.3, 1.6, 2.0, 2.5]:
+            test_price = round(base * mult)
+            
+            orig = session.custom_price
+            session.custom_price = test_price
+            
+            pred = self.predict(session)
+            session.custom_price = orig
+            
+            if pred:
+                revenue = test_price * pred
+                results.append({
+                    'price': test_price,
+                    'sales': pred,
+                    'revenue': revenue
+                })
+                
+                if revenue > best_revenue:
+                    best_revenue = revenue
+                    best_price = test_price
+        
         return {
-            'is_trained': self.is_trained,
-            'model_path': MODEL_PATH if os.path.exists(MODEL_PATH) else None,
-            'model_exists': os.path.exists(MODEL_PATH)
+            'best_price': best_price,
+            'best_revenue': best_revenue,
+            'options': results
         }
 
-    def is_valid(self):
-
-        if not self.is_trained or self.model is None:
-            return False
-        
-        sessions_with_sales = Session.objects.filter(tickets__isnull=False).distinct()
-        count = 0
-        for session in sessions_with_sales:
-            sold = Ticket.objects.filter(session=session, status__name='продан').count()
-            if sold > 0:
-                count += 1
-        
-        return count >= 5
 
 predictor = SalesPredictor()

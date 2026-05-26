@@ -2515,121 +2515,148 @@ def get_panorama_by_id(request, panorama_id):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def train_ml_model(request):
-
-    # Обучает модель Random Forest на исторических данных
-    # POST /api/ml/train/
-
+    """Обучение модели"""
     if not is_admin_or_manager(request.user):
-        return Response(
-            {'error': 'Недостаточно прав. Требуется роль администратора или руководителя'},
-            status=status.HTTP_403_FORBIDDEN
-        )
+        return Response({'error': 'Нет прав'}, status=403)
     
-    sessions_with_sales = Session.objects.filter(tickets__isnull=False).distinct()
-    
-    session_data = []
-    historical_sales = {}
-    
-    for session in sessions_with_sales:
-        sold_count = Ticket.objects.filter(
-            session=session,
-            status__name='продан'
-        ).count()
-        
-        if sold_count > 0:
-            session_data.append(session)
-            historical_sales[session.session_id] = sold_count
-    
-    if len(session_data) < 5:
-        return Response({
-            'error': f'Недостаточно данных для обучения. Нужно минимум 5 сеансов с продажами, найдено: {len(session_data)}'
-        }, status=status.HTTP_400_BAD_REQUEST)
-
-    success, result = predictor.train(session_data, historical_sales)
+    success, result = predictor.train()
     
     if not success:
-        return Response(result, status=status.HTTP_400_BAD_REQUEST)
-        
+        return Response({'error': result.get('error')}, status=400)
+    
     ActionLog.objects.create(
         user_id=request.user.id,
-        action_type='TRAIN_MODEL',
-        description=f'Обучена модель'
+        action_type='MODEL_TRAIN',
+        description=f"Модель обучена на {result['samples']} сеансах, R²={result['r2']}"
     )
-
+    
     return Response({
         'success': True,
-        'message': 'Модель Random Forest успешно обучена',
-        'metrics': {
-            'mae': result['mae'],
-            'rmse': result['rmse'],
-            'r2': result.get('r2'),
-            'mape': result.get('mape'),
-            'train_samples': result['train_samples'],
-            'test_samples': result['test_samples'],
-            'total_samples': result['total_samples']
-        },
-        'feature_importance': result['feature_importance']
-    }, status=status.HTTP_200_OK)
-
+        'message': 'Модель обучена',
+        'metrics': result
+    })
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def demand_predict(request):
-
-    # Создает или обновляет прогноз для указанного сеанса
-    # POST /api/ml/demand-predict/?session_id=1
-
+    """
+    Предсказание продаж для сеанса
+    POST /api/ml/predict/?session_id=1
+    """
     if not is_admin_or_manager(request.user):
-        return Response(
-            {'error': 'Недостаточно прав'},
-            status=status.HTTP_403_FORBIDDEN
-        )
+        return Response({'error': 'Нет прав'}, status=403)
+    
+    if not predictor.is_trained:
+        return Response({'error': 'Модель не обучена. Сначала POST /api/ml/train/'}, status=400)
     
     session_id = request.query_params.get('session_id')
     if not session_id:
-        return Response({'error': 'Не указан session_id'}, status=400)
+        return Response({'error': 'Укажите session_id'}, status=400)
     
     try:
-        session = Session.objects.get(pk=session_id)
+        session = Session.objects.select_related('play').get(pk=session_id)
     except Session.DoesNotExist:
         return Response({'error': 'Сеанс не найден'}, status=404)
     
-    if not predictor.is_valid():
-        return Response({
-            'error': 'Модель не обучена. Сначала выполните POST /api/ml/train/'
-        }, status=400)
-
-    predicted = predictor.predict_for_session(session)
+    # Предсказание
+    predicted = predictor.predict(session)
     
     if predicted is None:
-        return Response({'error': 'Ошибка при прогнозировании'}, status=500)
+        return Response({'error': 'Ошибка предсказания'}, status=500)
     
     total_seats = Seat.objects.count() or 300
-    predicted = min(predicted, total_seats)
-    prediction, created = AIPrediction.objects.update_or_create(
+    current_price = float(session.custom_price or session.calculated_price)
+    
+    # Текущие продажи
+    current_sales = Ticket.objects.filter(
+        session=session,
+        status__name='продан'
+    ).count()
+    
+    # Сохраняем предсказание в БД
+    prediction_obj, created = AIPrediction.objects.update_or_create(
         session=session,
         defaults={
             'predicted_tickets': predicted,
             'prediction_date': timezone.now().date()
         }
     )
-
+    
     ActionLog.objects.create(
         user_id=request.user.id,
-        action_type='SESSION_PREDICT',
-        description=f'Сделан прогноз на сеанс {session_id}'
+        action_type='DEMAND_PREDICT',
+        description=f'Прогноз для сеанса {session_id}: {predicted} билетов'
     )
-    serializer = SessionSerializer(session)
+    
     return Response({
-        
         'success': True,
-        'created': created,
-        'session': serializer.data,
+        'session': {
+            'id': session.session_id,
+            'play': session.play.title,
+            'date': session.date,
+            'time': session.time.strftime('%H:%M'),
+            'day_of_week': ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'][session.date.weekday()],
+            'calculated_price': float(session.calculated_price),
+            'custom_price': float(session.custom_price) if session.custom_price else None,
+            'current_price': current_price
+        },
         'prediction': {
-            'predicted_tickets': prediction.predicted_tickets,
-            'prediction_date': prediction.prediction_date
-        }
+            'predicted_tickets': predicted,
+            'occupancy': f"{predicted/total_seats*100:.0f}%",
+            'estimated_revenue': round(predicted * current_price, 2)
+        },
+        'current': {
+            'sales': current_sales,
+            'occupancy': f"{current_sales/total_seats*100:.0f}%"
+        },
+        'total_seats': total_seats
     })
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def optimize_price(request):
+    """Поиск оптимальной цены для максимальной выручки"""
+    if not is_admin_or_manager(request.user):
+        return Response({'error': 'Нет прав'}, status=403)
+    
+    if not predictor.is_trained:
+        return Response({'error': 'Модель не обучена'}, status=400)
+    
+    session_id = request.query_params.get('session_id')
+    if not session_id:
+        return Response({'error': 'Укажите session_id'}, status=400)
+    
+    try:
+        session = Session.objects.select_related('play').get(pk=session_id)
+    except Session.DoesNotExist:
+        return Response({'error': 'Сеанс не найден'}, status=404)
+    
+    result = predictor.find_optimal_price(session)
+    
+    if result is None:
+        return Response({'error': 'Ошибка оптимизации'}, status=500)
+    
+    ActionLog.objects.create(
+        user_id=request.user.id,
+        action_type='PRICE_OPTIMIZE',
+        description=f'Оптимальная цена для сеанса {session_id}: {result["optimal"]["custom_price"]}₽'
+    )
+    
+    return Response({
+        'session_id': session.session_id,
+        'play': session.play.title,
+        'date': session.date,
+        'time': session.time.strftime('%H:%M'),
+        'base_price': float(session.play.price),
+        **result
+    })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def model_info(request):
+    """Информация о модели"""
+    return Response(predictor.get_model_info())
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -2824,20 +2851,20 @@ def all_tickets(request):
         'results': result
     })
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def model_info(request):
+# @api_view(['GET'])
+# @permission_classes([IsAuthenticated])
+# def model_info(request):
 
-    # Возвращает информацию о текущей модели
-    # GET /api/ml/info/
+#     # Возвращает информацию о текущей модели
+#     # GET /api/ml/info/
 
-    if not is_admin_or_manager(request.user):
-        return Response(
-            {'error': 'Недостаточно прав'},
-            status=status.HTTP_403_FORBIDDEN
-        )
+#     if not is_admin_or_manager(request.user):
+#         return Response(
+#             {'error': 'Недостаточно прав'},
+#             status=status.HTTP_403_FORBIDDEN
+#         )
     
-    return Response(predictor.get_model_info())
+#     return Response(predictor.get_model_info())
 
 
 @api_view(['GET'])

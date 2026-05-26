@@ -102,10 +102,9 @@ class PriceCalculator:
     def calculate_ticket_price(cls, session, seat) -> Decimal:
 
         session_price = cls.get_session_price(session)
-        sector_coeff = seat.sector.price_coefficient
         row_coeff = cls.get_row_coefficient(seat.row_number)
         
-        result = session_price * sector_coeff * row_coeff
+        result = session_price * row_coeff
         result = cls.round_price(result)
         
         return result
