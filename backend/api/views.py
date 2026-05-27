@@ -2515,7 +2515,7 @@ def get_panorama_by_id(request, panorama_id):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def train_ml_model(request):
-    """Обучение модели"""
+
     if not is_admin_or_manager(request.user):
         return Response({'error': 'Нет прав'}, status=403)
     
@@ -2539,10 +2539,10 @@ def train_ml_model(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def demand_predict(request):
-    """
-    Предсказание продаж для сеанса
-    POST /api/ml/predict/?session_id=1
-    """
+
+    # Предсказание продаж для сеанса
+    # POST /api/ml/predict/?session_id=1
+
     if not is_admin_or_manager(request.user):
         return Response({'error': 'Нет прав'}, status=403)
     
@@ -2603,7 +2603,7 @@ def demand_predict(request):
         'prediction': {
             'predicted_tickets': predicted,
             'occupancy': f"{predicted/total_seats*100:.0f}%",
-            'estimated_revenue': round(predicted * current_price, 2)
+            # 'estimated_revenue': round(predicted * current_price, 2)
         },
         'current': {
             'sales': current_sales,
@@ -2612,50 +2612,52 @@ def demand_predict(request):
         'total_seats': total_seats
     })
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def optimize_price(request):
-    """Поиск оптимальной цены для максимальной выручки"""
-    if not is_admin_or_manager(request.user):
-        return Response({'error': 'Нет прав'}, status=403)
+# @api_view(['POST'])
+# @permission_classes([IsAuthenticated])
+# def optimize_price(request):
+#     # Поиск оптимальной цены для максимальной выручки
+#     if not is_admin_or_manager(request.user):
+#         return Response({'error': 'Нет прав'}, status=403)
     
-    if not predictor.is_trained:
-        return Response({'error': 'Модель не обучена'}, status=400)
+#     if not predictor.is_trained:
+#         return Response({'error': 'Модель не обучена'}, status=400)
     
-    session_id = request.query_params.get('session_id')
-    if not session_id:
-        return Response({'error': 'Укажите session_id'}, status=400)
+#     session_id = request.query_params.get('session_id')
+#     if not session_id:
+#         return Response({'error': 'Укажите session_id'}, status=400)
     
-    try:
-        session = Session.objects.select_related('play').get(pk=session_id)
-    except Session.DoesNotExist:
-        return Response({'error': 'Сеанс не найден'}, status=404)
+#     try:
+#         session = Session.objects.select_related('play').get(pk=session_id)
+#     except Session.DoesNotExist:
+#         return Response({'error': 'Сеанс не найден'}, status=404)
     
-    result = predictor.find_optimal_price(session)
+#     result = predictor.find_optimal_price(session)
     
-    if result is None:
-        return Response({'error': 'Ошибка оптимизации'}, status=500)
+#     if result is None:
+#         return Response({'error': 'Ошибка оптимизации'}, status=500)
     
-    ActionLog.objects.create(
-        user_id=request.user.id,
-        action_type='PRICE_OPTIMIZE',
-        description=f'Оптимальная цена для сеанса {session_id}: {result["optimal"]["custom_price"]}₽'
-    )
+#     ActionLog.objects.create(
+#         user_id=request.user.id,
+#         action_type='PRICE_OPTIMIZE',
+#         description=f'Оптимальная цена для сеанса {session_id}: {result["optimal"]["custom_price"]}₽'
+#     )
     
-    return Response({
-        'session_id': session.session_id,
-        'play': session.play.title,
-        'date': session.date,
-        'time': session.time.strftime('%H:%M'),
-        'base_price': float(session.play.price),
-        **result
-    })
+#     return Response({
+#         'session_id': session.session_id,
+#         'play': session.play.title,
+#         'date': session.date,
+#         'time': session.time.strftime('%H:%M'),
+#         'base_price': float(session.play.price),
+#         **result
+#     })
 
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def model_info(request):
-    """Информация о модели"""
+    # Информация о модели
+    # GET /api/ml/info/
+    
     return Response(predictor.get_model_info())
 
 @api_view(['GET'])

@@ -28,10 +28,10 @@ def generate_data():
         date(2025, 12, 31)
     ]
     
-    print("🎭 Генерация данных за 2025 год...")
-    print("   Театр работает КАЖДЫЙ ДЕНЬ")
+    print(" Генерация данных за 2025 год...")
+    print(" Театр работает КАЖДЫЙ ДЕНЬ")
     Session.objects.all().delete()
-    print("   Старые данные удалены")
+    print(" Старые данные удалены")
     
     current_date = date(2025, 1, 1)
     count = 0
@@ -50,8 +50,7 @@ def generate_data():
             play_index += 1
             
             is_holiday = current_date in holidays
-            
-            # СНАЧАЛА создаем и сохраняем сеанс
+
             session = Session.objects.create(
                 play=play,
                 hall=hall,
@@ -59,11 +58,9 @@ def generate_data():
                 time=time_obj,
             )
             
-            # Теперь считаем цену (у сеанса уже есть ID)
             calculated_price = PriceCalculator.calculate_session_price(session)
             calculated_price = float(calculated_price) 
-            
-            # В 50% случаев custom_price
+
             if random.random() < 0.5:
                 multiplier = random.choice([
                     0.3, 0.4, 0.5,
@@ -79,25 +76,20 @@ def generate_data():
             
             final_price = custom_price if custom_price else calculated_price
             
-            # ===== РАСЧЕТ ПРОДАЖ =====
-            
-            # 1. Базовая заполняемость от дня недели
             if weekday >= 5:
                 base_fill = random.uniform(0.65, 0.85)
             elif weekday == 4:
                 base_fill = random.uniform(0.50, 0.70)
             else:
                 base_fill = random.uniform(0.30, 0.55)
-            
-            # 2. Влияние времени
+
             if hour >= 18:
                 base_fill *= 1.2
             elif hour >= 14:
                 base_fill *= 1.0
             else:
                 base_fill *= 0.7
-            
-            # 3. Влияние праздников
+
             if is_holiday:
                 base_fill *= 1.4
             
@@ -147,10 +139,5 @@ def generate_data():
         if current_date.day == 1:
             print(f"   {current_date.strftime('%B')}: {count} сеансов")
     
-    # Статистика...
-    print(f"\n✅ Готово! Всего {count} сеансов")
-    # ... (остальная статистика без изменений)
-
-
 if __name__ == '__main__':
     generate_data()

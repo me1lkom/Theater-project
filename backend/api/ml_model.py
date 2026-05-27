@@ -5,12 +5,14 @@ import joblib
 import os
 from datetime import date
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score, mean_absolute_percentage_error
+from sklearn.model_selection import train_test_split
+from api.models import Session, Ticket
+
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODEL_PATH = os.path.join(BASE_DIR, 'api', 'models', 'sales_model.pkl')
 os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
 
-# Праздники
 HOLIDAYS = [
     date(2025, 1, 1), date(2025, 1, 7), date(2025, 2, 23),
     date(2025, 3, 8), date(2025, 5, 1), date(2025, 5, 9),
@@ -19,7 +21,6 @@ HOLIDAYS = [
 
 
 class SalesPredictor:
-    """Предсказатель на XGBoost с оптимизированными параметрами"""
     
     def __init__(self):
         self.model = None
@@ -28,10 +29,10 @@ class SalesPredictor:
         if os.path.exists(MODEL_PATH):
             self.model = joblib.load(MODEL_PATH)
             self.is_trained = True
-            print("✅ Модель загружена")
+            print(" Модель загружена")
     
     def _get_features(self, session):
-        """4 признака: день, час, праздник, цена"""
+
         return np.array([
             session.date.weekday(),
             session.time.hour,
@@ -39,10 +40,9 @@ class SalesPredictor:
             float(session.custom_price or session.calculated_price)
         ])
     
+
     def train(self):
-        """Обучение с подбором параметров"""
-        from api.models import Session, Ticket
-        
+
         sessions = Session.objects.all()
         
         X, y = [], []
@@ -53,12 +53,22 @@ class SalesPredictor:
                 y.append(sold)
         
         if len(X) < 20:
-            print(f"❌ Мало данных: {len(X)} сеансов")
+            print(f" Недостаточно данных для обучения: {len(X)} сеансов")
             return False, {'error': f'Нужно 20+ сеансов, есть {len(X)}'}
         
         X, y = np.array(X), np.array(y)
         
-        # ОПТИМИЗИРОВАННЫЕ параметры для уменьшения ошибки
+        # === РАЗДЕЛЯЕМ НА ОБУЧАЮЩУЮ И ТЕСТОВУЮ ВЫБОРКИ ===
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, 
+            test_size=0.2,        # 20% на тест
+            random_state=42       # для воспроизводимости
+        )
+        
+        print(f"Обучающая выборка: {len(X_train)} сеансов")
+        print(f"Тестовая выборка: {len(X_test)} сеансов")
+        
+        # Обучаем XGBoost
         self.model = xgb.XGBRegressor(
             n_estimators=300,          # больше деревьев (было 100)
             max_depth=8,               # глубже (было 10 - переобучение)
@@ -72,17 +82,18 @@ class SalesPredictor:
             random_state=42,
             verbosity=0
         )
-        self.model.fit(X, y)
-
-        predictions = self.model.predict(X)
-        predictions = np.clip(predictions, 0, 300)
-
-        mae = mean_absolute_error(y, predictions)
-        rmse = np.sqrt(mean_squared_error(y, predictions))
-        mape = mean_absolute_percentage_error(y, predictions) * 100
-        r2 = r2_score(y, predictions)
+        self.model.fit(X_train, y_train)
         
-        # Важность признаков
+        # === МЕТРИКИ НА ТЕСТОВОЙ ВЫБОРКЕ ===
+        predictions = self.model.predict(X_test)
+        predictions = np.clip(predictions, 0, 300)
+        
+        mae = mean_absolute_error(y_test, predictions)
+        rmse = np.sqrt(mean_squared_error(y_test, predictions))
+        mape = mean_absolute_percentage_error(y_test, predictions) * 100
+        r2 = r2_score(y_test, predictions)
+        
+        # Важность признаков (на всех данных)
         importance = dict(zip(
             ['day_of_week', 'hour', 'is_holiday', 'price'],
             self.model.feature_importances_.round(4)
@@ -91,21 +102,23 @@ class SalesPredictor:
         self.is_trained = True
         joblib.dump(self.model, MODEL_PATH)
         
-        print(f"✅ Обучено!")
+        print(f"Обучено!")
+        print(f"   Обучающих: {len(X_train)}, Тестовых: {len(X_test)}")
         print(f"   MAE={mae:.1f}, RMSE={rmse:.1f}, MAPE={mape:.1f}%, R²={r2:.3f}")
-        print(f"📊 Важность: {importance}")
+        print(f"Важность на ТЕСТОВОЙ выборке: {importance}")
         
         return True, {
-            'samples': len(X),
+            'samples': len(X_train) + len(X_test),
+            'test_samples': len(X_test),
             'mae': round(float(mae), 1),
             'rmse': round(float(rmse), 1),
             'mape': round(float(mape), 1),
             'r2': round(float(r2), 3),
             'importance': importance
         }
-    
+        
     def predict(self, session):
-        """Предсказать продажи"""
+
         if not self.is_trained:
             return None
         
@@ -114,7 +127,7 @@ class SalesPredictor:
         return max(0, min(300, int(pred)))
     
     def find_best_price(self, session):
-        """Найти цену с максимальной выручкой"""
+
         if not self.is_trained:
             return None
         
@@ -149,6 +162,23 @@ class SalesPredictor:
             'best_revenue': best_revenue,
             'options': results
         }
+    
+    def get_model_info(self):
+        
+        info = {
+            'is_trained': self.is_trained,
+            'model_path': MODEL_PATH if os.path.exists(MODEL_PATH) else None,
+            'features': ['day_of_week', 'hour', 'is_holiday', 'price']
+        }
+        
+        if hasattr(self, 'model') and self.model:
+            info['model_type'] = 'XGBoost'
+            info['feature_importance'] = dict(zip(
+                ['day_of_week', 'hour', 'is_holiday', 'price'],
+                self.model.feature_importances_.round(4)
+            ))
+        
+        return info
 
 
 predictor = SalesPredictor()
