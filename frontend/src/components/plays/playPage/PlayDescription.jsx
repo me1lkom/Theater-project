@@ -49,32 +49,33 @@ export default function PlayDescription({ play, selectedSession, onChangeSession
                             <div className={styles.actors}>Выберите дату и время, чтобы отобразить актеров</div>
                         )}
                     </div>
+                    <div className={styles.seatsInfo}>
+                        <select
+                            className={styles.select}
+                            value={selectedSession || ''}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                onChangeSession(value === '' ? null : Number(value));
+                            }}
+                        >
+                            <option value="">
+                                {neededSessions.length == 0 ? (
+                                    <>Сеансы отсутствуют</>
+                                ) : (
+                                    <>Выберите дату и время сеанса</>
+                                )}
+                            </option>
+                            {neededSessions?.map(session => (
+                                <option key={session.session_id} value={session.session_id}>
+                                    {session.date} {session.time}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
             </div>
 
-            <div className={styles.seatsInfo}>
-                <select
-                    className={styles.select}
-                    value={selectedSession || ''}
-                    onChange={(e) => {
-                        const value = e.target.value;
-                        onChangeSession(value === '' ? null : Number(value));
-                    }}
-                >
-                    <option value="">
-                        {neededSessions.length == 0 ? (
-                            <>Сеансы отсутствуют</>
-                        ) : (
-                            <>Выберите дату и время сеанса</>
-                        )}
-                    </option>
-                    {neededSessions?.map(session => (
-                        <option key={session.session_id} value={session.session_id}>
-                            {session.date} {session.time}
-                        </option>
-                    ))}
-                </select>
-            </div>
+
         </div>
     )
 }

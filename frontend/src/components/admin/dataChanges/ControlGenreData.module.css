@@ -54,7 +54,6 @@
 .genreCard:hover {
     background: var(--accent-bg);
     border-color: var(--accent);
-    transform: translateX(4px);
 }
 
 .genreCard.selected {
