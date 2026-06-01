@@ -60,7 +60,7 @@ export default function PlayCard({ play, onClick }) {
               <div>Нет доступных сеансов</div>
             )}
           </div>
-          <div className={styles.price}>{price}₽</div>
+          <div className={styles.price}>от {price}₽</div>
         </div>
       </div>
     </article>

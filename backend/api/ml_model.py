@@ -1,4 +1,3 @@
-# api/ml_service.py
 import numpy as np
 import xgboost as xgb
 import joblib
@@ -57,8 +56,7 @@ class SalesPredictor:
             return False, {'error': f'Нужно 20+ сеансов, есть {len(X)}'}
         
         X, y = np.array(X), np.array(y)
-        
-        # === РАЗДЕЛЯЕМ НА ОБУЧАЮЩУЮ И ТЕСТОВУЮ ВЫБОРКИ ===
+    
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, 
             test_size=0.2,        # 20% на тест
@@ -70,9 +68,9 @@ class SalesPredictor:
         
         # Обучаем XGBoost
         self.model = xgb.XGBRegressor(
-            n_estimators=300,          # больше деревьев (было 100)
-            max_depth=8,               # глубже (было 10 - переобучение)
-            learning_rate=0.03,        # медленнее (было 0.1)
+            n_estimators=300,          # 300 деревьев
+            max_depth=8,               # глубже 
+            learning_rate=0.03,        # медленнее 
             min_child_weight=5,        # меньше переобучения
             subsample=0.8,             # случайные 80% данных
             colsample_bytree=0.8,      # случайные 80% признаков
@@ -84,7 +82,6 @@ class SalesPredictor:
         )
         self.model.fit(X_train, y_train)
         
-        # === МЕТРИКИ НА ТЕСТОВОЙ ВЫБОРКЕ ===
         predictions = self.model.predict(X_test)
         predictions = np.clip(predictions, 0, 300)
         
@@ -93,7 +90,6 @@ class SalesPredictor:
         mape = mean_absolute_percentage_error(y_test, predictions) * 100
         r2 = r2_score(y_test, predictions)
         
-        # Важность признаков (на всех данных)
         importance = dict(zip(
             ['day_of_week', 'hour', 'is_holiday', 'price'],
             self.model.feature_importances_.round(4)

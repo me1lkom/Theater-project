@@ -5,7 +5,7 @@ import styles from './PanoramaPage.module.css';
 import { useGetAllPanoramas } from '../../hooks/useGetAllPanoramas';
 
 export default function PanoramaPage() {
-    const defaultImage = 'https://s3.twcstorage.ru/f6d90d88-c142-44fd-b70d-0a879c5125f7/panoramas/1-1.jpg';
+    const defaultImage = 'https://s3.twcstorage.ru/f6d90d88-c142-44fd-b70d-0a879c5125f7/Panoramas_V2/default.jpg';
     const [imageUrl, setImageUrl] = useState(null);
     const [title, setTitle] = useState(null);
 

@@ -1,6 +1,8 @@
 import PlayCard from './PlayCard';
 import styles from './PlayList.module.css';
 import PlayAvailableSeats from './playPage/PlayAvailableSeats';
+import PlayAvailableSeatsV2 from './PlayAvailableSeatsV2/PlayAvailableSeatsV2';
+
 
 export default function PlayList({ plays, selectedSession, selectedPlayId, onChangeSession, onChangePlayId }) {
   if (!plays || plays.length === 0) {
@@ -19,7 +21,7 @@ export default function PlayList({ plays, selectedSession, selectedPlayId, onCha
             onChangePlayId={onChangePlayId}
           />
           {selectedSession && selectedPlayId == play.play_id && (
-            <PlayAvailableSeats sessionId={selectedSession} />
+            <PlayAvailableSeatsV2 sessionId={selectedSession} />
           )}
         </>
       ))}

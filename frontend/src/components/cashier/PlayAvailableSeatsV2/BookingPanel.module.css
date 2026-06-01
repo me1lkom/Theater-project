@@ -1,0 +1,28 @@
+.infoPanel {
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    text-align: center;
+    width: 100%;
+    max-width: 800px;
+}
+
+.buyButton {
+    margin-top: var(--space-sm);
+    padding: var(--space-sm) var(--space-lg);
+    background: var(--accent);
+    border: none;
+    border-radius: var(--radius-sm);
+    color: white;
+    cursor: pointer;
+    font-size: var(--font-md);
+    transition: opacity 0.2s;
+}
+
+.buyButton:hover {
+    opacity: 0.9;
+}
+
+.buyButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

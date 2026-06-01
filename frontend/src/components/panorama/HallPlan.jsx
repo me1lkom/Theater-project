@@ -137,10 +137,10 @@ export default function HallPlan({ panoramas, onClick }) {
                     viewBox="0 0 800 1000"
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
-                    style={{ background: '#ffffff', borderRadius: 8 }}
+                    style={{  borderRadius: 8 }}
                 >
                     <g clipPath="url(#clip0_245_4)">
-                        <rect width="800" height="1000" fill="#ffffff" />
+                        <rect width="800" height="1000" />
                         <path d="M800 0C800 23.8695 757.857 46.7613 682.843 63.6396C607.828 80.5179 506.087 90 400 90C293.913 90 192.172 80.5179 117.157 63.6396C42.1428 46.7614 1.60186e-05 23.8695 0 1.52588e-05L400 0H800Z" fill="#6d6767" />
 
                         <rect x="11" y="154" width="30" height="30" />

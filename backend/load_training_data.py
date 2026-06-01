@@ -1,4 +1,3 @@
-# load_training_data.py
 import os
 import django
 
@@ -93,7 +92,6 @@ def generate_data():
             if is_holiday:
                 base_fill *= 1.4
             
-            # 4. Влияние цены
             price_ratio = final_price / calculated_price if calculated_price > 0 else 1.0
             
             if price_ratio >= 3.0:
@@ -112,13 +110,11 @@ def generate_data():
                 base_fill *= 1.25
             elif price_ratio <= 0.85:
                 base_fill *= 1.10
-            
-            # 5. Итог
+    
             base_fill = max(0.02, min(1.0, base_fill))
             sold = int(total_seats * base_fill * random.uniform(0.98, 1.02))
             sold = max(5, min(total_seats, sold))
             
-            # Создаем билеты
             seats = random.sample(all_seats, sold)
             Ticket.objects.bulk_create([
                 Ticket(

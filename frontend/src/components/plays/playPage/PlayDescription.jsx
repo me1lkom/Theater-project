@@ -36,7 +36,7 @@ export default function PlayDescription({ play, selectedSession, onChangeSession
 
                         <div className={styles.meta}>
                             <div className={styles.duration}><img src={time} alt="Продолжиьтельность" /> {hours}ч {minutes}мин</div>
-                            <div className={styles.price}>Стоимость билета: {price}₽</div>
+                            <div className={styles.price}>Стоимость билета от {price}₽</div>
                         </div>
                     </div>
 
