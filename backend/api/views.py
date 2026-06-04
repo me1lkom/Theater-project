@@ -672,6 +672,7 @@ def available_seats(request, pk):
             status=status.HTTP_404_NOT_FOUND
         )
     
+    Basket.objects.filter(expires_at__lt=timezone.now()).delete()
     session_datetime = timezone.datetime.combine(session.date, session.time)
     session_datetime = timezone.make_aware(session_datetime)
     
@@ -1021,36 +1022,35 @@ def my_basket(request):
 @permission_classes([IsAuthenticated])
 def return_ticket(request, ticket_id):
 
-    # Возврат билета
+    # Возврат билета с реальным возвратом денег через ЮKassa
     # POST api/tickets/return/<int:ticket_id>/
-
+    
     data = request.data
     user = request.user
     reason = data.get('reason', 'Причина не указана')
-        
-    if not is_admin_or_cashier:
+    
+    if not is_admin_or_cashier(user):
         return Response(
             {'error': 'Недостаточно прав. Требуется роль администратора или кассира'},
             status=status.HTTP_403_FORBIDDEN
         )
-    
-    # Получаем билет
+
     try:
-        ticket = Ticket.objects.select_related('session', 'session__play', 'user').get(pk=ticket_id)
+        ticket = Ticket.objects.select_related(
+            'session', 'session__play', 'user', 'payment'
+        ).get(pk=ticket_id)
     except Ticket.DoesNotExist:
         return Response(
             {'error': 'Билет не найден'},
             status=status.HTTP_404_NOT_FOUND
         )
     
-    # Проверка статуса билета
     if ticket.status.name != 'продан':
         return Response(
             {'error': 'Можно вернуть только проданный билет'},
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    # Проверка дедлайна (не позднее чем за 3 дня до спектакля)
     session_datetime = timezone.datetime.combine(
         ticket.session.date,
         ticket.session.time
@@ -1064,7 +1064,15 @@ def return_ticket(request, ticket_id):
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    # Получаем статус "возврат"
+    if ticket.payment:
+        from .payment import refund_ticket
+        success, message = refund_ticket(ticket)
+        if not success:
+            return Response({'error': message}, status=500)
+    else:
+        # Если билет не связан с платежом, просто меняем статус
+        print(f"Билет {ticket_id} не связан с платежом, деньги не возвращаются")
+    
     try:
         returned_status = TicketStatus.objects.get(name='возврат')
     except TicketStatus.DoesNotExist:
@@ -1073,15 +1081,13 @@ def return_ticket(request, ticket_id):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
     
-    # Возвращаем билет
     ticket.status = returned_status
     ticket.save()
     
-    # Логируем действие
     ActionLog.objects.create(
         user_id=user.id,
         action_type='RETURN_TICKET',
-        description=f'Возврат билета {ticket_id} на спектакль {ticket.session.play.title} пользователем {ticket.user.username}. Причина: {reason}'
+        description=f'Возврат билета {ticket_id} на спектакль {ticket.session.play.title}. Причина: {reason}. Сумма: {ticket.price_paid}'
     )
     
     return Response({

@@ -1,7 +1,7 @@
 from yookassa import Configuration, Payment, Refund
 import uuid
 from django.conf import settings
-from api.models import TicketStatus
+from api.models import TicketStatus, Basket
 
 Configuration.account_id = settings.YOOKASSA_SHOP_ID 
 Configuration.secret_key = settings.YOOKASSA_SECRET_KEY
@@ -60,18 +60,26 @@ def refund_ticket(ticket):
         return False, "Билет не связан с платежом"
     
     try:
+        amount = str(ticket.price_paid)
         refund = Refund.create({
             "payment_id": ticket.payment.payment_id,
             "amount": {
-                "value": str(ticket.price_paid),
+                "value": amount,
                 "currency": "RUB"
             }
         })
+    
         
         if refund.status == "succeeded":
             returned_status = TicketStatus.objects.get(name='возврат')
             ticket.status = returned_status
             ticket.save()
+
+            Basket.objects.filter(
+                session=ticket.session,
+                seat=ticket.seat
+            ).delete()
+            
             return True, f"Возвращено {ticket.price_paid} руб."
         else:
             return False, "Ошибка возврата"

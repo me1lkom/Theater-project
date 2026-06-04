@@ -1,6 +1,3 @@
-"""
-Утилиты для работы с Redis: хранение и проверка refresh токенов
-"""
 from django.core.cache import cache
 from django.utils import timezone
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
