@@ -10,7 +10,6 @@ from django.contrib.auth.models import User
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from .ml_model import predictor
 from django.db.models import Sum, Count
-from .redis_blacklist import RedisTokenBlacklist
 from django.conf import settings
 from rest_framework_simplejwt.tokens import RefreshToken
 from datetime import datetime, date
@@ -119,127 +118,6 @@ class GenreView(generics.ListAPIView):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
 
-# @api_view(['POST'])
-# @permission_classes([IsAuthenticated])
-# def buy_ticket(request):
-#     data = request.data
-    
-#     session_id = data.get('session_id')
-#     seat_id = data.get('seat_id')
-#     user_id = data.get('user_id')
-    
-#     if not user_id:
-#         user_id = request.user.id
-#     else:
-#         if user_id != request.user.id:
-#             if not is_cashier(request.user):
-#                 return Response(
-#                     {'error': 'Только кассир может покупать билеты для других'},
-#                     status=status.HTTP_403_FORBIDDEN
-#                 )
-
-#     # проверка что все нужные данные прислали
-#     if not all([session_id, seat_id, user_id]):
-#         return Response(
-#             {'error': 'Не указаны все необходимые данные'},
-#             status=status.HTTP_400_BAD_REQUEST
-#         )
-    
-#     # проверка существует ли такой сеанс
-#     try:
-#         session = Session.objects.get(pk=session_id)
-#     except Session.DoesNotExist:
-#         return Response(
-#             {'error': 'Сеанс не найден'},
-#             status=status.HTTP_404_NOT_FOUND
-#         )
-    
-#     session_datetime = timezone.datetime.combine(session.date, session.time)
-#     session_datetime = timezone.make_aware(session_datetime)
-    
-#     if session_datetime < timezone.now():
-#         return Response(
-#             {'error': 'Нельзя забронировать место на прошедший сеанс'},
-#             status=status.HTTP_400_BAD_REQUEST
-#         )
-
-#     if session_datetime - timedelta(minutes=5) < timezone.now():
-#         return Response(
-#             {'error': 'Продажа билетов на этот сеанс закрыта за 5 минут до начала'},
-#             status=status.HTTP_400_BAD_REQUEST
-#         )
-    
-#     # проверка существует ли такое место
-#     try:
-#         seat = Seat.objects.get(pk=seat_id)
-#     except Seat.DoesNotExist:
-#         return Response(
-#             {'error': 'Место не найдено'},
-#             status=status.HTTP_404_NOT_FOUND
-#         )
-    
-#     existing_basket = Basket.objects.filter(
-#         session=session,
-#         seat=seat,
-#         expires_at__gt=timezone.now()
-#     ).first()
-    
-#     if existing_basket:
-#         if existing_basket.user_id == user_id:
-#             # Своя бронь — удаляем и продолжаем покупку
-#             existing_basket.delete()
-#         else:
-#             # Чужая бронь — ошибка
-#             return Response(
-#                 {'error': 'Это место уже забронировано другим пользователем'},
-#                 status=status.HTTP_400_BAD_REQUEST
-#             )
-
-    
-#     active_ticket = Ticket.objects.filter(
-#         session=session, 
-#         seat=seat
-#     ).exclude(
-#         status__name='возврат'
-#     ).first()
-    
-#     if active_ticket:
-#         return Response(
-#             {'error': 'Это место уже занято'},
-#             status=400
-#         )
-    
-#     # Удаляем старый возвращенный билет (если есть)
-#     Ticket.objects.filter(
-#         session=session,
-#         seat=seat,
-#         status__name='возврат'
-#     ).delete()
-    
-#     # Создаем новый билет
-#     try:
-#         sold_status = TicketStatus.objects.get(name='продан')
-#     except TicketStatus.DoesNotExist:
-#         return Response(
-#             {'error': 'Статус "продан" не найден'},
-#             status=500
-#         )
-    
-#     ticket = Ticket.objects.create(
-#         session=session,
-#         seat=seat,
-#         user_id=user_id,
-#         status=sold_status,
-#         price_paid=session.play.price,
-#         purchase_date=timezone.now()
-#     )
-    
-#     return Response({
-#         'success': True,
-#         'ticket_id': ticket.ticket_id,
-#         'message': 'Билет успешно куплен'
-#     }, status=201)
-
 
 @api_view(['GET'])
 def session_with_actors(request, session_id):
@@ -256,11 +134,11 @@ def session_with_actors(request, session_id):
 @permission_classes([IsAuthenticated])
 def manage_actors(request, actor_id=None):
     
-    # GET    /api/actors/manage/           - список всех актеров
-    # GET    /api/actors/manage/{id}/      - детали актера
-    # POST   /api/actors/manage/           - создать актера
-    # PUT    /api/actors/manage/{id}/      - обновить актера
-    # DELETE /api/actors/manage/{id}/      - удалить актера
+    # GET    /api/actors/manage/           
+    # GET    /api/actors/manage/{id}/      
+    # POST   /api/actors/manage/          
+    # PUT    /api/actors/manage/{id}/      
+    # DELETE /api/actors/manage/{id}/    
 
     if request.method in ['POST', 'PUT', 'DELETE']:
         if not is_admin_or_manager(request.user):
@@ -353,11 +231,11 @@ def manage_actors(request, actor_id=None):
 def manage_genres(request, genre_id=None):
 
     
-    # GET           /api/genres/manage/           - список всех жанров
-    # GET           /api/genres/manage/{id}/      - детали жанра
-    # POST          /api/genres/manage/           - создать жанр
-    # PUT/PATCH     /api/genres/manage/{id}/      - обновить жанр
-    # DELETE        /api/genres/manage/{id}/      - удалить жанр
+    # GET           /api/genres/manage/          
+    # GET           /api/genres/manage/{id}/   
+    # POST          /api/genres/manage/          
+    # PUT/PATCH     /api/genres/manage/{id}/
+    # DELETE        /api/genres/manage/{id}/ 
 
     if request.method in ['POST', 'PUT', 'DELETE']:
         if not is_admin_or_manager(request.user):
@@ -449,8 +327,6 @@ def manage_genres(request, genre_id=None):
 def buy_tickets_bulk(request):
 
     # Покупка нескольких билетов одной операцией
-    # Обычный пользователь: покупает только для себя
-    # Кассир: может купить для любого пользователя (указав user_id или phone)
     # POST /api/tickets/buy/bulk/
 
     current_user = request.user
@@ -462,7 +338,7 @@ def buy_tickets_bulk(request):
     session_id = serializer.validated_data['session_id']
     seat_ids = serializer.validated_data['seat_ids']
     target_user_id = serializer.validated_data.get('user_id')
-    phone = serializer.validated_data.get('phone')  # ← добавляем телефон
+    phone = serializer.validated_data.get('phone')
     
     buyer_user_id = None
     buyer_info = None
@@ -616,47 +492,6 @@ def buy_tickets_bulk(request):
         ]
     }, status=status.HTTP_201_CREATED)
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def my_tickets(request):
-
-    # возвращает список билетов текущего пользователя
-    # GET /api/tickets/my/
-
-    user = request.user
-    
-    # получаем все билеты пользователя, исключая возвращенные
-    tickets = Ticket.objects.filter(
-        user=user
-    ).exclude(
-        status__name='возврат'
-    ).select_related(
-        'session', 
-        'session__play', 
-        'seat', 
-        'seat__sector',
-        'status'
-    ).order_by('-purchase_date')
-    
-    result = []
-    for ticket in tickets:
-        result.append({
-            'ticket_id': ticket.ticket_id,
-            'play_title': ticket.session.play.title,
-            'play_duration': ticket.session.play.duration,
-            'date': ticket.session.date,
-            'time': ticket.session.time,
-            'hall': ticket.session.hall.name,
-            'sector': ticket.seat.sector.name if ticket.seat.sector else None,
-            'row': ticket.seat.row_number,
-            'seat': ticket.seat.seat_number,
-            'price': str(ticket.price_paid),
-            'status': ticket.status.name,
-            'purchase_date': ticket.purchase_date,
-            'session_id': ticket.session.session_id
-        })
-    
-    return Response(result)
 
 @api_view(['GET'])
 def available_seats(request, pk):
@@ -690,7 +525,7 @@ def available_seats(request, pk):
     # занятые из активных броней
     busy_from_basket = Basket.objects.filter(session=session,expires_at__gt=timezone.now()).values_list('seat_id', flat=True)
     
-    # объединяем
+    # объединение
     busy_seat_ids = set(busy_from_tickets) | set(busy_from_basket)
     
     available_seats = all_seats.exclude(seat_id__in=busy_seat_ids)
@@ -714,104 +549,6 @@ def available_seats(request, pk):
         'seats': available_seats_data,
     })
 
-# @api_view(['POST'])
-# @permission_classes([IsAuthenticated])
-# def add_to_basket(request):
-#     data = request.data
-
-#     session_id = data.get('session_id')
-#     seat_id = data.get('seat_id')
-#     user_id = request.user.id
-
-#     if not all([session_id, seat_id, user_id]):
-#         return Response(
-#             {'error': 'Не указаны все необходимые данные'},
-#             status=status.HTTP_400_BAD_REQUEST
-#         )
-    
-#     try:
-#         session = Session.objects.get(pk=session_id)
-#     except Session.DoesNotExist:
-#         return Response(
-#             {'error': 'Сеанс не найден'},
-#             status=status.HTTP_404_NOT_FOUND
-#         )
-
-#     try:
-#         seat = Seat.objects.get(pk=seat_id)
-#     except Seat.DoesNotExist:
-#         return Response(
-#             {'error': 'Место не найдено'},
-#             status=status.HTTP_404_NOT_FOUND
-#         )
-
-#     session_datetime = timezone.datetime.combine(session.date, session.time)
-#     session_datetime = timezone.make_aware(session_datetime)
-    
-#     if session_datetime < timezone.now():
-#         return Response(
-#             {'error': 'Нельзя забронировать место на прошедший сеанс'},
-#             status=status.HTTP_400_BAD_REQUEST
-#         )
-
-#     if session_datetime - timedelta(minutes=5) < timezone.now():
-#         return Response(
-#             {'error': 'Продажа билетов на этот сеанс закрыта за 5 минут до начала'},
-#             status=status.HTTP_400_BAD_REQUEST
-#         )
-
-#     existing_ticket = Ticket.objects.filter(
-#         session=session, 
-#         seat=seat
-#     ).exclude(
-#         status__name='возврат'
-#     ).first()
-    
-#     if existing_ticket:
-#         return Response(
-#             {'error': 'Это место уже занято'},
-#             status=status.HTTP_400_BAD_REQUEST
-#         )
-
-#     Basket.objects.filter(
-#         session_id=session_id,
-#         seat_id=seat_id,
-#         expires_at__lt=timezone.now()
-#     ).delete()
-    
-#     existing_basket = Basket.objects.filter(
-#         session_id=session_id,
-#         seat_id=seat_id,
-#         expires_at__gt=timezone.now()
-#     ).first()
-
-#     if existing_basket:
-#         if existing_basket.user_id == user_id:
-#             return Response(
-#                 {'error': 'Это место уже в вашей корзине'},
-#                 status=status.HTTP_400_BAD_REQUEST
-#             )
-#         else:
-#             return Response(
-#                 {'error': 'Это место уже забронировано другим пользователем'},
-#                 status=status.HTTP_400_BAD_REQUEST
-#             )
-        
-#     expires_at = timezone.now() + timedelta(minutes=15)
-
-#     basket = Basket.objects.create(
-#         user_id=user_id,
-#         session=session,
-#         seat=seat,
-#         expires_at=expires_at
-#     )
-
-#     return Response({
-#         'success': True,
-#         'basket_id': basket.basket_id,
-#         'expires_at': basket.expires_at,
-#         'message': f"Место забронировано до {basket.expires_at}"
-#     }, status=status.HTTP_201_CREATED)
 
 def get_active_baskets(user):
     # Сначала удаляем просроченные
@@ -822,7 +559,6 @@ def get_active_baskets(user):
     
     return Basket.objects.filter(user=user, expires_at__gt=timezone.now())
 
-from .price_service import PriceCalculator
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -1022,7 +758,7 @@ def my_basket(request):
 @permission_classes([IsAuthenticated])
 def return_ticket(request, ticket_id):
 
-    # Возврат билета с реальным возвратом денег через ЮKassa
+    # Возврат билета с возвратом денег через ЮKassa
     # POST api/tickets/return/<int:ticket_id>/
     
     data = request.data
@@ -1065,12 +801,10 @@ def return_ticket(request, ticket_id):
         )
     
     if ticket.payment:
-        from .payment import refund_ticket
         success, message = refund_ticket(ticket)
         if not success:
             return Response({'error': message}, status=500)
     else:
-        # Если билет не связан с платежом, просто меняем статус
         print(f"Билет {ticket_id} не связан с платежом, деньги не возвращаются")
     
     try:
@@ -1097,102 +831,16 @@ def return_ticket(request, ticket_id):
         'refund_amount': str(ticket.price_paid)
     }, status=status.HTTP_200_OK)
 
-# перенести в redic
-# redic развернуть в docker
-# posgres в docker
-# ифслутв d docker
-# @api_view(['POST'])
-# @permission_classes([AllowAny])  # разрешаем доступ без токена
-# def register(request):
-#     serializer = RegisterSerializer(data=request.data)
-
-#     if serializer.is_valid():
-#         user = serializer.save()
-
-#         refresh = RefreshToken.for_user(user)
-
-#         return Response({
-#             'success': True,
-#             'user': {
-#                 'id': user.id,
-#                 'username': user.username,
-#                 'email': user.email,
-#                 'first_name': user.first_name,
-#                 'last_name': user.last_name
-#             },
-#             'access_token': str(refresh.access_token),
-#             'refresh_token': str(refresh)
-#         }, status=status.HTTP_201_CREATED)
-    
-#     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-# from .redis_blacklist import RedisTokenBlacklist
-
-# @api_view(['POST'])
-# @permission_classes([IsAuthenticated])
-# def logout(request):
-
-#     try:
-#         refresh_token = request.data.get('refresh')
-#         if not refresh_token:
-#             return Response(
-#                 {'error': 'Не указан refresh токен'},
-#                 status=status.HTTP_400_BAD_REQUEST
-#             )
-
-#         if RedisTokenBlacklist.add_refresh(refresh_token):
-#             auth_header = request.headers.get('Authorization')
-#             if auth_header:
-#                 access_token = auth_header.split(' ')[1]
-#                 RedisTokenBlacklist.add_access(access_token)
-            
-#             return Response({
-#                 'success': True,
-#                 'message': 'Выход выполнен успешно'
-#             })
-#         else:
-#             return Response(
-#                 {'error': 'Не удалось добавить токен в черный список'},
-#                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
-#             )
-            
-#     except Exception as e:
-#         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-# @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
-# def me(request):
-
-#     # возвращает информацию о текущем пользователе
-#     # GET /api/auth/me/
-
-#     user = request.user
-    
-#     try:
-#         profile = user.profile
-#         role_name = profile.role.name if profile.role else None
-#         phone = profile.phone
-#     except Profile.DoesNotExist:
-#         role_name = None
-#         phone = ''
-    
-#     return Response({
-#         'id': user.id,
-#         'username': user.username,
-#         'email': user.email,
-#         'first_name': user.first_name,
-#         'last_name': user.last_name,
-#         'phone': phone,
-#         'role': role_name
-#     })
 
 @api_view(['PUT', 'PATCH'])
 @permission_classes([IsAuthenticated])
 def update_profile(request):
+
     # Изменение профиля
     # PUT /api/auth/profile/
     # PATCH /api/auth/profile/
     # PUT - полное обновление, PATCH - частичное обновление
+
     user = request.user
     
     try:
@@ -1230,105 +878,17 @@ def update_profile(request):
         }
     })
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def my_tickets(request):
-    user = request.user
-    
-    tickets = Ticket.objects.filter(
-        user=user
-    ).select_related(
-        'session', 'session__play', 'seat', 'status'
-    ).order_by('-purchase_date')
-    
-    result = []
-    for ticket in tickets:
-        result.append({
-            'ticket_id': ticket.ticket_id,
-            'play_title': ticket.session.play.title,
-            'date': ticket.session.date,
-            'time': ticket.session.time,
-            'row': ticket.seat.row_number,
-            'seat': ticket.seat.seat_number,
-            'price': str(ticket.price_paid),
-            'status': ticket.status.name,
-            'purchase_date': ticket.purchase_date
-        })
-    
-    return Response(result)
-
-# @api_view(['POST', 'PUT', 'DELETE'])
-# @permission_classes([IsAuthenticated])
-# def manage_play(request, play_id=None):
-#     if not is_admin_or_manager(request.user):
-#         return Response(
-#             {'error': 'Недостаточно прав'},
-#             status=status.HTTP_403_FORBIDDEN
-#         )
-    
-#     if request.method == 'POST':
-#         data = request.data
-        
-#         play = Play.objects.create(
-#             title=data['title'],
-#             duration=data['duration'],
-#             description=data.get('description', ''),
-#             price=data['price'],
-#             poster_url=data.get('poster_url', '')
-#         )
-        
-#         return Response({
-#             'success': True,
-#             'play_id': play.play_id
-#         }, status=status.HTTP_201_CREATED)
-    
-#     elif request.method in ['PUT', 'PATCH']:
-#         try:
-#             play = Play.objects.get(pk=play_id)
-#         except Play.DoesNotExist:
-#             return Response(
-#                 {'error': 'Спектакль не найден'},
-#                 status=status.HTTP_404_NOT_FOUND
-#             )
-        
-#         data = request.data
-        
-#         if 'title' in data:
-#             play.title = data['title']
-#         if 'duration' in data:
-#             play.duration = data['duration']
-#         if 'description' in data:
-#             play.description = data['description']
-#         if 'price' in data:
-#             play.price = data['price']
-#         if 'poster_url' in data:
-#             play.poster_url = data['poster_url']
-#         play.save()
-        
-#         return Response({'success': True})
-    
-#     elif request.method == 'DELETE':
-#         try:
-#             play = Play.objects.get(pk=play_id)
-#         except Play.DoesNotExist:
-#             return Response(
-#                 {'error': 'Спектакль не найден'},
-#                 status=status.HTTP_404_NOT_FOUND
-#             )
-        
-#         play.delete()
-#         return Response({'success': True})
 
 @api_view(['GET', 'POST', 'PUT', 'PATCH', 'DELETE'])
 @permission_classes([IsAuthenticated])
 def manage_sessions(request, session_id=None):
 
     # Управление сеансами
-    # GET    /api/sessions/manage/ - список всех сеансов
-    # GET    /api/sessions/manage/{id}/ - детали сеанса
-    # POST   /api/sessions/manage/ - создать сеанс
-    # PUT    /api/sessions/manage/{id}/ - изменить сеанс
-    # DELETE /api/sessions/manage/{id}/ - удалить сеанс
+    # GET    /api/sessions/manage/
+    # GET    /api/sessions/manage/{id}/ 
+    # POST   /api/sessions/manage/
+    # PUT    /api/sessions/manage/{id}/
+    # DELETE /api/sessions/manage/{id}/
 
     if request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
         if not is_admin_or_manager(request.user):
@@ -1637,47 +1197,6 @@ def past_sessions(request):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def action_log(request):
-    if not is_admin_or_manager(request.user):
-        return Response(
-            {'error': 'Недостаточно прав'},
-            status=status.HTTP_403_FORBIDDEN
-        )
-    
-    user_id = request.query_params.get('user_id')
-    action_type = request.query_params.get('action_type')
-    date_from = request.query_params.get('date_from')
-    date_to = request.query_params.get('date_to')
-    limit = request.query_params.get('limit')
-
-    logs = ActionLog.objects.all().order_by('-action_date')
-    
-    if user_id:
-        logs = logs.filter(user_id=user_id)
-    if action_type:
-        logs = logs.filter(action_type=action_type)
-    if date_from:
-        logs = logs.filter(action_date__gte=date_from)
-    if date_to:
-        logs = logs.filter(action_date__lte=date_to)
-    if limit:
-        limit = int(limit)
-        logs = logs[:limit]
-    
-    result = []
-    for log in logs:
-        result.append({
-            'log_id': log.log_id,
-            'user': log.user.username if log.user else 'Система',
-            'action_type': log.action_type,
-            'description': log.description,
-            'action_date': log.action_date
-        })
-    
-    return Response(result)
-
-@api_view(['GET'])
 @permission_classes([AllowAny]) 
 def get_hall(request):
     try:
@@ -1753,11 +1272,11 @@ def update_hall(request):
 @permission_classes([IsAuthenticated])
 def manage_sectors(request, sector_id=None):
     
-    # GET    - список всех секторов (любой авторизованный)
-    # GET /api/sectors/{id}/ - конкретный сектор
-    # POST /api/sectors/ - создание сектора (только админ/руководитель)
-    # PUT /api/sectors/{id}/ - изменение сектора (только админ/руководитель)
-    # DELETE /api/sectors/{id}/ - удаление сектора (только админ/руководитель)
+    # GET  /api/sectors/ 
+    # GET /api/sectors/{id}/ 
+    # POST /api/sectors/
+    # PUT /api/sectors/{id}/ 
+    # DELETE /api/sectors/{id}/
 
     if request.method == 'GET':
         if sector_id:
@@ -1857,11 +1376,11 @@ def manage_sectors(request, sector_id=None):
 @permission_classes([IsAuthenticated])
 def manage_plays(request, play_id=None):
 
-    # GET /api/plays/manage/ - список всех спектаклей (для всех авторизованных)
-    # GET /api/plays/manage/{id}/ - конкретный спектакль (для всех авторизованных)
-    # POST /api/plays/manage/ - создание спектакля (только админ/руководитель)
-    # PUT/PATCH /api/plays/manage/{id}/ - изменение спектакля (только админ/руководитель)
-    # DELETE /api/plays/manage/{id}/ - удаление спектакля (только админ/руководитель)
+    # GET /api/plays/manage/
+    # GET /api/plays/manage/{id}/
+    # POST /api/plays/manage/
+    # PUT/PATCH /api/plays/manage/{id}/
+    # DELETE /api/plays/manage/{id}/
 
     # if request.method == 'GET':
     #     if play_id:
@@ -1977,9 +1496,9 @@ def manage_plays(request, play_id=None):
 @permission_classes([IsAuthenticated])
 def manage_seats(request, sector_id=None):
 
-    # GET /api/seats/manage/?sector_id=1 - все места в секторе (для всех авторизованных)
-    # POST /api/seats/manage/bulk/ - массовое создание мест (только админ/руководитель)
-    # DELETE /api/seats/manage/clear/?sector_id=1 - удалить все места в секторе (только админ/руководитель)
+    # GET /api/seats/manage/?sector_id=1
+    # POST /api/seats/manage/bulk/ 
+    # DELETE /api/seats/manage/clear/?sector_id=1
 
     if request.method == 'GET':
         sector_id = request.query_params.get('sector_id')
@@ -2111,9 +1630,9 @@ def manage_seats(request, sector_id=None):
 @permission_classes([IsAuthenticated])
 def manage_seat_detail(request, seat_id):
 
-    # GET /api/seats/manage/detail/{id}/ - получить одно место
-    # PUT/PATCH /api/seats/manage/detail/{id}/ - изменить место
-    # DELETE /api/seats/manage/detail/{id}/ - удалить место
+    # GET /api/seats/manage/detail/{id}/
+    # PUT/PATCH /api/seats/manage/detail/{id}/
+    # DELETE /api/seats/manage/detail/{id}/
 
     try:
         seat = Seat.objects.get(pk=seat_id)
@@ -2175,55 +1694,45 @@ def manage_seat_detail(request, seat_id):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def action_log_list(request):
-
-    # поддерживает фильтрацию:
-    # ?user_id=1 - по пользователю
-    # ?action_type=BUY_TICKET - по типу действия
-    # ?date_from=2026-03-01 - с даты
-    # ?date_to=2026-03-31 - по дату
-    # ?limit=50 - ограничить количество записей
-
+def action_log(request):
     if not is_admin_or_manager(request.user):
         return Response(
-            {'error': 'Недостаточно прав. Требуется роль администратора или руководителя'},
+            {'error': 'Недостаточно прав'},
             status=status.HTTP_403_FORBIDDEN
         )
-    logs = ActionLog.objects.all().select_related('user')
-
+    
     user_id = request.query_params.get('user_id')
+    action_type = request.query_params.get('action_type')
+    date_from = request.query_params.get('date_from')
+    date_to = request.query_params.get('date_to')
+    limit = request.query_params.get('limit')
+
+    logs = ActionLog.objects.all().order_by('-action_date')
+    
     if user_id:
         logs = logs.filter(user_id=user_id)
-    
-    action_type = request.query_params.get('action_type')
     if action_type:
         logs = logs.filter(action_type=action_type)
-    
-    date_from = request.query_params.get('date_from')
     if date_from:
-        logs = logs.filter(action_date__date__gte=date_from) # __gte - greater than or equal
-    
-    date_to = request.query_params.get('date_to')
+        logs = logs.filter(action_date__gte=date_from)
     if date_to:
-        logs = logs.filter(action_date__date__lte=date_to) # __lte - less than or equal
-
-    limit = request.query_params.get('limit', 100)
-    try:
+        logs = logs.filter(action_date__lte=date_to)
+    if limit:
         limit = int(limit)
-        if limit > 500:
-            limit = 500 
-    except ValueError:
-        limit = 100
+        logs = logs[:limit]
     
-    logs = logs[:limit]
+    result = []
+    for log in logs:
+        result.append({
+            'log_id': log.log_id,
+            'user': log.user.username if log.user else 'Система',
+            'action_type': log.action_type,
+            'description': log.description,
+            'action_date': log.action_date
+        })
     
-    serializer = ActionLogSerializer(logs, many=True)
-    
-    return Response({
-        'count': logs.count(),
-        'limit': limit,
-        'results': serializer.data
-    })
+    return Response(result)
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -2244,15 +1753,16 @@ def action_types(request):
     
     return Response(sorted(list(clean_types)))
 
+
 @api_view(['GET', 'POST', 'PUT', 'DELETE'])
 @permission_classes([IsAuthenticated])
 def manage_panoramas(request, panorama_id=None):
 
-    # GET /api/panoramas/manage/ - список всех панорам
-    # GET /api/panoramas/manage/?sector_id=1 - панорамы сектора
-    # POST /api/panoramas/manage/ - создать панораму (админ/руководитель)
-    # PUT /api/panoramas/manage/{id}/ - изменить панораму
-    # DELETE /api/panoramas/manage/{id}/ - удалить панораму
+    # GET /api/panoramas/manage/ 
+    # GET /api/panoramas/manage/?sector_id=1
+    # POST /api/panoramas/manage/
+    # PUT /api/panoramas/manage/{id}/
+    # DELETE /api/panoramas/manage/{id}/
 
     if request.method == 'GET':
         if panorama_id:
@@ -2267,10 +1777,9 @@ def manage_panoramas(request, panorama_id=None):
                 )
         else:
             panoramas = Panorama.objects.all()
-            sector_id = request.query_params.get('sector_id')
-            if sector_id:
-                # Исправлено: фильтруем по сектору через место
-                panoramas = panoramas.filter(seat__sector_id=sector_id)
+            seat_id = request.query_params.get('seat_id')
+            if seat_id:
+                panoramas = panoramas.filter(seat__seat_id=seat_id)
             
             serializer = PanoramaSerializer(panoramas, many=True)
             return Response(serializer.data)
@@ -2337,77 +1846,12 @@ def manage_panoramas(request, panorama_id=None):
         
         return Response({'success': True})
 
-@api_view(['GET', 'POST', 'DELETE'])
-@permission_classes([IsAuthenticated])
-def manage_panorama_links(request, link_id=None):
-
-    # GET /api/panorama-links/?panorama_id=1 - связи для панорамы
-    # POST /api/panorama-links/ - создать связь
-    # DELETE /api/panorama-links/{id}/ - удалить связь
-
-    if request.method == 'GET':
-        if link_id:
-            try:
-                link = PanoramaLink.objects.get(pk=link_id)
-                serializer = PanoramaLinkSerializer(link)
-                return Response(serializer.data)
-            except PanoramaLink.DoesNotExist:
-                return Response(
-                    {'error': 'Связь не найдена'},
-                    status=status.HTTP_404_NOT_FOUND
-                )
-        else:
-            links = PanoramaLink.objects.all()
-            panorama_id = request.query_params.get('panorama_id')
-            if panorama_id:
-                links = links.filter(from_panorama_id=panorama_id)
-            
-            serializer = PanoramaLinkSerializer(links, many=True)
-            return Response(serializer.data)
-
-    if not is_admin_or_manager(request.user):
-        return Response(
-            {'error': 'Недостаточно прав'},
-            status=status.HTTP_403_FORBIDDEN
-        )
-
-    if request.method == 'POST':
-        serializer = PanoramaLinkSerializer(data=request.data)
-        if serializer.is_valid():
-            link = serializer.save()
-            
-            ActionLog.objects.create(
-                user_id=request.user.id,
-                action_type='CREATE_PANORAMA_LINK',
-                description=f'Создана связь: из {link.from_panorama.title} в {link.to_panorama.title}'
-            )
-            
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    if request.method == 'DELETE':
-        try:
-            link = PanoramaLink.objects.get(pk=link_id)
-        except PanoramaLink.DoesNotExist:
-            return Response(
-                {'error': 'Связь не найдена'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-        
-        link.delete()
-        
-        ActionLog.objects.create(
-            user_id=request.user.id,
-            action_type='DELETE_PANORAMA_LINK',
-            description=f'Удалена связь панорам'
-        )
-        
-        return Response({'success': True})
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def get_panorama_by_seat(request):
 
+    # Получение панорамы по месту
     # GET /api/panorama/?seat_id=1
 
     seat_id = request.query_params.get('seat_id')
@@ -2425,8 +1869,6 @@ def get_panorama_by_seat(request):
             {'error': 'Для этого места нет панорамы'},
             status=status.HTTP_404_NOT_FOUND
         )
-
-    links = PanoramaLink.objects.filter(from_panorama=panorama)
     
     return Response({
         'panorama_id': panorama.panorama_id,
@@ -2436,56 +1878,15 @@ def get_panorama_by_seat(request):
             'seat_id': panorama.seat.seat_id,
             'row': panorama.seat.row_number,
             'seat_number': panorama.seat.seat_number
-        },
-        'links': [
-            {
-                'to_panorama_id': link.to_panorama.panorama_id,
-                'to_title': link.to_panorama.title,
-                'direction': link.direction,
-                'hint': link.hint
-            }
-            for link in links
-        ]
+        }
     })
 
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def get_default_panorama(request):
-
-    default_panorama = Panorama.objects.first()
-    
-    if not default_panorama:
-        return Response(
-            {'error': 'Панорамы не загружены'},
-            status=status.HTTP_404_NOT_FOUND
-        )
-
-    links = PanoramaLink.objects.filter(from_panorama=default_panorama)
-    
-    return Response({
-        'panorama_id': default_panorama.panorama_id,
-        'title': default_panorama.title,
-        'image_url': default_panorama.image_url,
-        'seat': {
-            'seat_id': default_panorama.seat.seat_id,
-            'row': default_panorama.seat.row_number,
-            'seat_number': default_panorama.seat.seat_number
-        },
-        'links': [
-            {
-                'to_panorama_id': link.to_panorama.panorama_id,
-                'to_title': link.to_panorama.title,
-                'direction': link.direction,
-                'hint': link.hint
-            }
-            for link in links
-        ]
-    })
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def get_panorama_by_id(request, panorama_id):
 
+    # Получение панормы по id
     # GET /api/panorama/{panorama_id}/
 
     try:
@@ -2496,8 +1897,6 @@ def get_panorama_by_id(request, panorama_id):
             status=status.HTTP_404_NOT_FOUND
         )
     
-    links = PanoramaLink.objects.filter(from_panorama=panorama)
-    
     return Response({
         'panorama_id': panorama.panorama_id,
         'title': panorama.title,
@@ -2506,21 +1905,15 @@ def get_panorama_by_id(request, panorama_id):
             'seat_id': panorama.seat.seat_id,
             'row': panorama.seat.row_number,
             'seat_number': panorama.seat.seat_number
-        },
-        'links': [
-            {
-                'to_panorama_id': link.to_panorama.panorama_id,
-                'to_title': link.to_panorama.title,
-                'direction': link.direction,
-                'hint': link.hint
-            }
-            for link in links
-        ]
+        }
     })
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def train_ml_model(request):
+
+    # Обучение модели прогнозов
+    # POST /api/ml/train/
 
     if not is_admin_or_manager(request.user):
         return Response({'error': 'Нет прав'}, status=403)
@@ -2564,7 +1957,6 @@ def demand_predict(request):
     except Session.DoesNotExist:
         return Response({'error': 'Сеанс не найден'}, status=404)
     
-    # Предсказание
     predicted = predictor.predict(session)
     
     if predicted is None:
@@ -2572,14 +1964,12 @@ def demand_predict(request):
     
     total_seats = Seat.objects.count() or 300
     current_price = float(session.custom_price or session.calculated_price)
-    
-    # Текущие продажи
+
     current_sales = Ticket.objects.filter(
         session=session,
         status__name='продан'
     ).count()
     
-    # Сохраняем предсказание в БД
     prediction_obj, created = AIPrediction.objects.update_or_create(
         session=session,
         defaults={
@@ -2609,7 +1999,6 @@ def demand_predict(request):
         'prediction': {
             'predicted_tickets': predicted,
             'occupancy': f"{predicted/total_seats*100:.0f}%",
-            # 'estimated_revenue': round(predicted * current_price, 2)
         },
         'current': {
             'sales': current_sales,
@@ -2618,53 +2007,16 @@ def demand_predict(request):
         'total_seats': total_seats
     })
 
-# @api_view(['POST'])
-# @permission_classes([IsAuthenticated])
-# def optimize_price(request):
-#     # Поиск оптимальной цены для максимальной выручки
-#     if not is_admin_or_manager(request.user):
-#         return Response({'error': 'Нет прав'}, status=403)
-    
-#     if not predictor.is_trained:
-#         return Response({'error': 'Модель не обучена'}, status=400)
-    
-#     session_id = request.query_params.get('session_id')
-#     if not session_id:
-#         return Response({'error': 'Укажите session_id'}, status=400)
-    
-#     try:
-#         session = Session.objects.select_related('play').get(pk=session_id)
-#     except Session.DoesNotExist:
-#         return Response({'error': 'Сеанс не найден'}, status=404)
-    
-#     result = predictor.find_optimal_price(session)
-    
-#     if result is None:
-#         return Response({'error': 'Ошибка оптимизации'}, status=500)
-    
-#     ActionLog.objects.create(
-#         user_id=request.user.id,
-#         action_type='PRICE_OPTIMIZE',
-#         description=f'Оптимальная цена для сеанса {session_id}: {result["optimal"]["custom_price"]}₽'
-#     )
-    
-#     return Response({
-#         'session_id': session.session_id,
-#         'play': session.play.title,
-#         'date': session.date,
-#         'time': session.time.strftime('%H:%M'),
-#         'base_price': float(session.play.price),
-#         **result
-#     })
-
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def model_info(request):
+
     # Информация о модели
     # GET /api/ml/info/
-    
-    return Response(predictor.get_model_info())
+
+    if not is_admin_or_manager(request.user):
+        return Response(predictor.get_model_info())
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -2859,21 +2211,6 @@ def all_tickets(request):
         'results': result
     })
 
-# @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
-# def model_info(request):
-
-#     # Возвращает информацию о текущей модели
-#     # GET /api/ml/info/
-
-#     if not is_admin_or_manager(request.user):
-#         return Response(
-#             {'error': 'Недостаточно прав'},
-#             status=status.HTTP_403_FORBIDDEN
-#         )
-    
-#     return Response(predictor.get_model_info())
-
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -2910,7 +2247,6 @@ def download_sql_backup(request):
             db_name
         ]
 
-        # Запускаем процесс
         proc = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
@@ -2966,14 +2302,12 @@ def get_ticket_price(request):
     session_id = request.query_params.get('session_id')
     seat_id = request.query_params.get('seat_id')
     
-    # Проверка обязательных параметров
     if not session_id or not seat_id:
         return Response(
             {'error': 'Не указаны обязательные параметры: session_id и seat_id'},
             status=status.HTTP_400_BAD_REQUEST
         )
-    
-    # Проверка существования сеанса
+
     try:
         session = Session.objects.get(pk=session_id)
     except Session.DoesNotExist:
@@ -2981,8 +2315,7 @@ def get_ticket_price(request):
             {'error': 'Сеанс не найден'},
             status=status.HTTP_404_NOT_FOUND
         )
-    
-    # Проверка существования места
+
     try:
         seat = Seat.objects.get(pk=seat_id)
     except Seat.DoesNotExist:
@@ -2991,9 +2324,7 @@ def get_ticket_price(request):
             status=status.HTTP_404_NOT_FOUND
         )
     
-    # Расчёт цены
     try:
-        from .price_service import PriceCalculator
         price = PriceCalculator.calculate_ticket_price(session, seat)
     except Exception as e:
         return Response(
@@ -3001,7 +2332,6 @@ def get_ticket_price(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
     
-    # Формирование ответа
     response_data = {
         'session_id': session.session_id,
         'seat_id': seat.seat_id,
@@ -3023,8 +2353,7 @@ def get_ticket_price(request):
         },
         'price': float(price)
     }
-    
-    # Добавляем коэффициенты (опционально)
+
     from .price_service import PriceCalculator as PC
     response_data['coefficients'] = {
         'weekday': float(PC.get_weekday_coefficient(session.date)),
@@ -3033,7 +2362,6 @@ def get_ticket_price(request):
         'sector': float(seat.sector.price_coefficient)
     }
     
-    # Формула расчёта
     coeffs = response_data['coefficients']
     formula = f"{session.play.price} × {coeffs['weekday']} (день) × {coeffs['time']} (время)"
     if coeffs['holiday'] != 1.0:
@@ -3220,8 +2548,8 @@ def download_tickets_by_payment(request, payment_id):
     except Payment.DoesNotExist:
         return Response({'error': 'Платёж не найден'}, status=404)
     
-    # if payment.user != request.user and not is_admin_or_cashier(request.user):
-    #     return Response({'error': 'Недостаточно прав'}, status=403)
+    if payment.user != request.user and not is_admin_or_cashier(request.user):
+        return Response({'error': 'Недостаточно прав'}, status=403)
     
     tickets = payment.tickets.all()
     
@@ -3288,7 +2616,6 @@ def create_return_request(request, ticket_id):
     
     reason = request.data.get('reason', '')
     
-    # Создаём запрос
     return_request = ReturnRequest.objects.create(
         ticket=ticket,
         user=request.user,
@@ -3305,7 +2632,6 @@ def create_return_request(request, ticket_id):
         ticket.status = pending_status
         ticket.save()
     
-    # Логируем
     ActionLog.objects.create(
         user_id=request.user.id,
         action_type='CREATE_RETURN_REQUEST',
@@ -3323,7 +2649,7 @@ def create_return_request(request, ticket_id):
 @permission_classes([IsAuthenticated])
 def get_return_requests(request):
 
-    # Получить список запросов на возврат (только админ/кассир)
+    # Получить список запросов на возврат
     # GET /api/return-requests/
 
     if not is_admin_or_cashier(request.user):
@@ -3558,3 +2884,624 @@ def is_admin_or_cashier(user):
         return role in ['admin', 'cashier']
     except:
         return False
+    
+# @api_view(['POST'])
+# @permission_classes([IsAuthenticated])
+# def buy_ticket(request):
+#     data = request.data
+    
+#     session_id = data.get('session_id')
+#     seat_id = data.get('seat_id')
+#     user_id = data.get('user_id')
+    
+#     if not user_id:
+#         user_id = request.user.id
+#     else:
+#         if user_id != request.user.id:
+#             if not is_cashier(request.user):
+#                 return Response(
+#                     {'error': 'Только кассир может покупать билеты для других'},
+#                     status=status.HTTP_403_FORBIDDEN
+#                 )
+
+#     # проверка что все нужные данные прислали
+#     if not all([session_id, seat_id, user_id]):
+#         return Response(
+#             {'error': 'Не указаны все необходимые данные'},
+#             status=status.HTTP_400_BAD_REQUEST
+#         )
+    
+#     # проверка существует ли такой сеанс
+#     try:
+#         session = Session.objects.get(pk=session_id)
+#     except Session.DoesNotExist:
+#         return Response(
+#             {'error': 'Сеанс не найден'},
+#             status=status.HTTP_404_NOT_FOUND
+#         )
+    
+#     session_datetime = timezone.datetime.combine(session.date, session.time)
+#     session_datetime = timezone.make_aware(session_datetime)
+    
+#     if session_datetime < timezone.now():
+#         return Response(
+#             {'error': 'Нельзя забронировать место на прошедший сеанс'},
+#             status=status.HTTP_400_BAD_REQUEST
+#         )
+
+#     if session_datetime - timedelta(minutes=5) < timezone.now():
+#         return Response(
+#             {'error': 'Продажа билетов на этот сеанс закрыта за 5 минут до начала'},
+#             status=status.HTTP_400_BAD_REQUEST
+#         )
+    
+#     # проверка существует ли такое место
+#     try:
+#         seat = Seat.objects.get(pk=seat_id)
+#     except Seat.DoesNotExist:
+#         return Response(
+#             {'error': 'Место не найдено'},
+#             status=status.HTTP_404_NOT_FOUND
+#         )
+    
+#     existing_basket = Basket.objects.filter(
+#         session=session,
+#         seat=seat,
+#         expires_at__gt=timezone.now()
+#     ).first()
+    
+#     if existing_basket:
+#         if existing_basket.user_id == user_id:
+#             # Своя бронь — удаляем и продолжаем покупку
+#             existing_basket.delete()
+#         else:
+#             # Чужая бронь — ошибка
+#             return Response(
+#                 {'error': 'Это место уже забронировано другим пользователем'},
+#                 status=status.HTTP_400_BAD_REQUEST
+#             )
+
+    
+#     active_ticket = Ticket.objects.filter(
+#         session=session, 
+#         seat=seat
+#     ).exclude(
+#         status__name='возврат'
+#     ).first()
+    
+#     if active_ticket:
+#         return Response(
+#             {'error': 'Это место уже занято'},
+#             status=400
+#         )
+    
+#     # Удаляем старый возвращенный билет (если есть)
+#     Ticket.objects.filter(
+#         session=session,
+#         seat=seat,
+#         status__name='возврат'
+#     ).delete()
+    
+#     # Создаем новый билет
+#     try:
+#         sold_status = TicketStatus.objects.get(name='продан')
+#     except TicketStatus.DoesNotExist:
+#         return Response(
+#             {'error': 'Статус "продан" не найден'},
+#             status=500
+#         )
+    
+#     ticket = Ticket.objects.create(
+#         session=session,
+#         seat=seat,
+#         user_id=user_id,
+#         status=sold_status,
+#         price_paid=session.play.price,
+#         purchase_date=timezone.now()
+#     )
+    
+#     return Response({
+#         'success': True,
+#         'ticket_id': ticket.ticket_id,
+#         'message': 'Билет успешно куплен'
+#     }, status=201)
+
+
+# @api_view(['GET'])
+# @permission_classes([IsAuthenticated])
+# def my_tickets(request):
+
+#     # возвращает список билетов текущего пользователя
+#     # GET /api/tickets/my/
+
+#     user = request.user
+    
+#     # получаем все билеты пользователя, исключая возвращенные
+#     tickets = Ticket.objects.filter(
+#         user=user
+#     ).exclude(
+#         status__name='возврат'
+#     ).select_related(
+#         'session', 
+#         'session__play', 
+#         'seat', 
+#         'seat__sector',
+#         'status'
+#     ).order_by('-purchase_date')
+    
+#     result = []
+#     for ticket in tickets:
+#         result.append({
+#             'ticket_id': ticket.ticket_id,
+#             'play_title': ticket.session.play.title,
+#             'play_duration': ticket.session.play.duration,
+#             'date': ticket.session.date,
+#             'time': ticket.session.time,
+#             'hall': ticket.session.hall.name,
+#             'sector': ticket.seat.sector.name if ticket.seat.sector else None,
+#             'row': ticket.seat.row_number,
+#             'seat': ticket.seat.seat_number,
+#             'price': str(ticket.price_paid),
+#             'status': ticket.status.name,
+#             'purchase_date': ticket.purchase_date,
+#             'session_id': ticket.session.session_id
+#         })
+    
+#     return Response(result)
+
+# @api_view(['POST'])
+# @permission_classes([IsAuthenticated])
+# def add_to_basket(request):
+#     data = request.data
+
+#     session_id = data.get('session_id')
+#     seat_id = data.get('seat_id')
+#     user_id = request.user.id
+
+#     if not all([session_id, seat_id, user_id]):
+#         return Response(
+#             {'error': 'Не указаны все необходимые данные'},
+#             status=status.HTTP_400_BAD_REQUEST
+#         )
+    
+#     try:
+#         session = Session.objects.get(pk=session_id)
+#     except Session.DoesNotExist:
+#         return Response(
+#             {'error': 'Сеанс не найден'},
+#             status=status.HTTP_404_NOT_FOUND
+#         )
+
+#     try:
+#         seat = Seat.objects.get(pk=seat_id)
+#     except Seat.DoesNotExist:
+#         return Response(
+#             {'error': 'Место не найдено'},
+#             status=status.HTTP_404_NOT_FOUND
+#         )
+
+#     session_datetime = timezone.datetime.combine(session.date, session.time)
+#     session_datetime = timezone.make_aware(session_datetime)
+    
+#     if session_datetime < timezone.now():
+#         return Response(
+#             {'error': 'Нельзя забронировать место на прошедший сеанс'},
+#             status=status.HTTP_400_BAD_REQUEST
+#         )
+
+#     if session_datetime - timedelta(minutes=5) < timezone.now():
+#         return Response(
+#             {'error': 'Продажа билетов на этот сеанс закрыта за 5 минут до начала'},
+#             status=status.HTTP_400_BAD_REQUEST
+#         )
+
+#     existing_ticket = Ticket.objects.filter(
+#         session=session, 
+#         seat=seat
+#     ).exclude(
+#         status__name='возврат'
+#     ).first()
+    
+#     if existing_ticket:
+#         return Response(
+#             {'error': 'Это место уже занято'},
+#             status=status.HTTP_400_BAD_REQUEST
+#         )
+
+#     Basket.objects.filter(
+#         session_id=session_id,
+#         seat_id=seat_id,
+#         expires_at__lt=timezone.now()
+#     ).delete()
+    
+#     existing_basket = Basket.objects.filter(
+#         session_id=session_id,
+#         seat_id=seat_id,
+#         expires_at__gt=timezone.now()
+#     ).first()
+
+#     if existing_basket:
+#         if existing_basket.user_id == user_id:
+#             return Response(
+#                 {'error': 'Это место уже в вашей корзине'},
+#                 status=status.HTTP_400_BAD_REQUEST
+#             )
+#         else:
+#             return Response(
+#                 {'error': 'Это место уже забронировано другим пользователем'},
+#                 status=status.HTTP_400_BAD_REQUEST
+#             )
+        
+#     expires_at = timezone.now() + timedelta(minutes=15)
+
+#     basket = Basket.objects.create(
+#         user_id=user_id,
+#         session=session,
+#         seat=seat,
+#         expires_at=expires_at
+#     )
+
+#     return Response({
+#         'success': True,
+#         'basket_id': basket.basket_id,
+#         'expires_at': basket.expires_at,
+#         'message': f"Место забронировано до {basket.expires_at}"
+#     }, status=status.HTTP_201_CREATED)
+
+# перенести в redic
+# redic развернуть в docker
+# posgres в docker
+# ифслутв d docker backend
+# @api_view(['POST'])
+# @permission_classes([AllowAny])  # разрешаем доступ без токена
+# def register(request):
+#     serializer = RegisterSerializer(data=request.data)
+
+#     if serializer.is_valid():
+#         user = serializer.save()
+
+#         refresh = RefreshToken.for_user(user)
+
+#         return Response({
+#             'success': True,
+#             'user': {
+#                 'id': user.id,
+#                 'username': user.username,
+#                 'email': user.email,
+#                 'first_name': user.first_name,
+#                 'last_name': user.last_name
+#             },
+#             'access_token': str(refresh.access_token),
+#             'refresh_token': str(refresh)
+#         }, status=status.HTTP_201_CREATED)
+    
+#     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# from .redis_blacklist import RedisTokenBlacklist
+
+# @api_view(['POST'])
+# @permission_classes([IsAuthenticated])
+# def logout(request):
+
+#     try:
+#         refresh_token = request.data.get('refresh')
+#         if not refresh_token:
+#             return Response(
+#                 {'error': 'Не указан refresh токен'},
+#                 status=status.HTTP_400_BAD_REQUEST
+#             )
+
+#         if RedisTokenBlacklist.add_refresh(refresh_token):
+#             auth_header = request.headers.get('Authorization')
+#             if auth_header:
+#                 access_token = auth_header.split(' ')[1]
+#                 RedisTokenBlacklist.add_access(access_token)
+            
+#             return Response({
+#                 'success': True,
+#                 'message': 'Выход выполнен успешно'
+#             })
+#         else:
+#             return Response(
+#                 {'error': 'Не удалось добавить токен в черный список'},
+#                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
+#             )
+            
+#     except Exception as e:
+#         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+# @api_view(['GET'])
+# @permission_classes([IsAuthenticated])
+# def me(request):
+
+#     # возвращает информацию о текущем пользователе
+#     # GET /api/auth/me/
+
+#     user = request.user
+    
+#     try:
+#         profile = user.profile
+#         role_name = profile.role.name if profile.role else None
+#         phone = profile.phone
+#     except Profile.DoesNotExist:
+#         role_name = None
+#         phone = ''
+    
+#     return Response({
+#         'id': user.id,
+#         'username': user.username,
+#         'email': user.email,
+#         'first_name': user.first_name,
+#         'last_name': user.last_name,
+#         'phone': phone,
+#         'role': role_name
+#     })
+
+# @api_view(['POST', 'PUT', 'DELETE'])
+# @permission_classes([IsAuthenticated])
+# def manage_play(request, play_id=None):
+#     if not is_admin_or_manager(request.user):
+#         return Response(
+#             {'error': 'Недостаточно прав'},
+#             status=status.HTTP_403_FORBIDDEN
+#         )
+    
+#     if request.method == 'POST':
+#         data = request.data
+        
+#         play = Play.objects.create(
+#             title=data['title'],
+#             duration=data['duration'],
+#             description=data.get('description', ''),
+#             price=data['price'],
+#             poster_url=data.get('poster_url', '')
+#         )
+        
+#         return Response({
+#             'success': True,
+#             'play_id': play.play_id
+#         }, status=status.HTTP_201_CREATED)
+    
+#     elif request.method in ['PUT', 'PATCH']:
+#         try:
+#             play = Play.objects.get(pk=play_id)
+#         except Play.DoesNotExist:
+#             return Response(
+#                 {'error': 'Спектакль не найден'},
+#                 status=status.HTTP_404_NOT_FOUND
+#             )
+        
+#         data = request.data
+        
+#         if 'title' in data:
+#             play.title = data['title']
+#         if 'duration' in data:
+#             play.duration = data['duration']
+#         if 'description' in data:
+#             play.description = data['description']
+#         if 'price' in data:
+#             play.price = data['price']
+#         if 'poster_url' in data:
+#             play.poster_url = data['poster_url']
+#         play.save()
+        
+#         return Response({'success': True})
+    
+#     elif request.method == 'DELETE':
+#         try:
+#             play = Play.objects.get(pk=play_id)
+#         except Play.DoesNotExist:
+#             return Response(
+#                 {'error': 'Спектакль не найден'},
+#                 status=status.HTTP_404_NOT_FOUND
+#             )
+        
+#         play.delete()
+#         return Response({'success': True})
+
+# @api_view(['GET'])
+# @permission_classes([IsAuthenticated])
+# def action_log_list(request):
+
+#     # поддерживает фильтрацию:
+#     # ?user_id=1 - по пользователю
+#     # ?action_type=BUY_TICKET - по типу действия
+#     # ?date_from=2026-03-01 - с даты
+#     # ?date_to=2026-03-31 - по дату
+#     # ?limit=50 - ограничить количество записей
+
+#     if not is_admin_or_manager(request.user):
+#         return Response(
+#             {'error': 'Недостаточно прав. Требуется роль администратора или руководителя'},
+#             status=status.HTTP_403_FORBIDDEN
+#         )
+#     logs = ActionLog.objects.all().select_related('user')
+
+#     user_id = request.query_params.get('user_id')
+#     if user_id:
+#         logs = logs.filter(user_id=user_id)
+    
+#     action_type = request.query_params.get('action_type')
+#     if action_type:
+#         logs = logs.filter(action_type=action_type)
+    
+#     date_from = request.query_params.get('date_from')
+#     if date_from:
+#         logs = logs.filter(action_date__date__gte=date_from) # __gte - greater than or equal
+    
+#     date_to = request.query_params.get('date_to')
+#     if date_to:
+#         logs = logs.filter(action_date__date__lte=date_to) # __lte - less than or equal
+
+#     limit = request.query_params.get('limit', 100)
+#     try:
+#         limit = int(limit)
+#         if limit > 500:
+#             limit = 500 
+#     except ValueError:
+#         limit = 100
+    
+#     logs = logs[:limit]
+    
+#     serializer = ActionLogSerializer(logs, many=True)
+    
+#     return Response({
+#         'count': logs.count(),
+#         'limit': limit,
+#         'results': serializer.data
+#     })
+
+# @api_view(['GET', 'POST', 'DELETE'])
+# @permission_classes([IsAuthenticated])
+# def manage_panorama_links(request, link_id=None):
+
+#     # GET /api/panorama-links/?panorama_id=1 - связи для панорамы
+#     # POST /api/panorama-links/ - создать связь
+#     # DELETE /api/panorama-links/{id}/ - удалить связь
+
+#     if request.method == 'GET':
+#         if link_id:
+#             try:
+#                 link = PanoramaLink.objects.get(pk=link_id)
+#                 serializer = PanoramaLinkSerializer(link)
+#                 return Response(serializer.data)
+#             except PanoramaLink.DoesNotExist:
+#                 return Response(
+#                     {'error': 'Связь не найдена'},
+#                     status=status.HTTP_404_NOT_FOUND
+#                 )
+#         else:
+#             links = PanoramaLink.objects.all()
+#             panorama_id = request.query_params.get('panorama_id')
+#             if panorama_id:
+#                 links = links.filter(from_panorama_id=panorama_id)
+            
+#             serializer = PanoramaLinkSerializer(links, many=True)
+#             return Response(serializer.data)
+
+#     if not is_admin_or_manager(request.user):
+#         return Response(
+#             {'error': 'Недостаточно прав'},
+#             status=status.HTTP_403_FORBIDDEN
+#         )
+
+#     if request.method == 'POST':
+#         serializer = PanoramaLinkSerializer(data=request.data)
+#         if serializer.is_valid():
+#             link = serializer.save()
+            
+#             ActionLog.objects.create(
+#                 user_id=request.user.id,
+#                 action_type='CREATE_PANORAMA_LINK',
+#                 description=f'Создана связь: из {link.from_panorama.title} в {link.to_panorama.title}'
+#             )
+            
+#             return Response(serializer.data, status=status.HTTP_201_CREATED)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+#     if request.method == 'DELETE':
+#         try:
+#             link = PanoramaLink.objects.get(pk=link_id)
+#         except PanoramaLink.DoesNotExist:
+#             return Response(
+#                 {'error': 'Связь не найдена'},
+#                 status=status.HTTP_404_NOT_FOUND
+#             )
+        
+#         link.delete()
+        
+#         ActionLog.objects.create(
+#             user_id=request.user.id,
+#             action_type='DELETE_PANORAMA_LINK',
+#             description=f'Удалена связь панорам'
+#         )
+        
+#         return Response({'success': True})
+
+# @api_view(['GET'])
+# @permission_classes([AllowAny])
+# def get_default_panorama(request):
+
+#     default_panorama = Panorama.objects.first()
+    
+#     if not default_panorama:
+#         return Response(
+#             {'error': 'Панорамы не загружены'},
+#             status=status.HTTP_404_NOT_FOUND
+#         )
+
+#     links = PanoramaLink.objects.filter(from_panorama=default_panorama)
+    
+#     return Response({
+#         'panorama_id': default_panorama.panorama_id,
+#         'title': default_panorama.title,
+#         'image_url': default_panorama.image_url,
+#         'seat': {
+#             'seat_id': default_panorama.seat.seat_id,
+#             'row': default_panorama.seat.row_number,
+#             'seat_number': default_panorama.seat.seat_number
+#         },
+#         'links': [
+#             {
+#                 'to_panorama_id': link.to_panorama.panorama_id,
+#                 'to_title': link.to_panorama.title,
+#                 'direction': link.direction,
+#                 'hint': link.hint
+#             }
+#             for link in links
+#         ]
+#     })
+
+# @api_view(['POST'])
+# @permission_classes([IsAuthenticated])
+# def optimize_price(request):
+#     # Поиск оптимальной цены для максимальной выручки
+#     if not is_admin_or_manager(request.user):
+#         return Response({'error': 'Нет прав'}, status=403)
+    
+#     if not predictor.is_trained:
+#         return Response({'error': 'Модель не обучена'}, status=400)
+    
+#     session_id = request.query_params.get('session_id')
+#     if not session_id:
+#         return Response({'error': 'Укажите session_id'}, status=400)
+    
+#     try:
+#         session = Session.objects.select_related('play').get(pk=session_id)
+#     except Session.DoesNotExist:
+#         return Response({'error': 'Сеанс не найден'}, status=404)
+    
+#     result = predictor.find_optimal_price(session)
+    
+#     if result is None:
+#         return Response({'error': 'Ошибка оптимизации'}, status=500)
+    
+#     ActionLog.objects.create(
+#         user_id=request.user.id,
+#         action_type='PRICE_OPTIMIZE',
+#         description=f'Оптимальная цена для сеанса {session_id}: {result["optimal"]["custom_price"]}₽'
+#     )
+    
+#     return Response({
+#         'session_id': session.session_id,
+#         'play': session.play.title,
+#         'date': session.date,
+#         'time': session.time.strftime('%H:%M'),
+#         'base_price': float(session.play.price),
+#         **result
+#     })
+
+# @api_view(['GET'])
+# @permission_classes([IsAuthenticated])
+# def model_info(request):
+
+#     # Возвращает информацию о текущей модели
+#     # GET /api/ml/info/
+
+#     if not is_admin_or_manager(request.user):
+#         return Response(
+#             {'error': 'Недостаточно прав'},
+#             status=status.HTTP_403_FORBIDDEN
+#         )
+    
+#     return Response(predictor.get_model_info())

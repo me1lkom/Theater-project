@@ -167,7 +167,7 @@ SIMPLE_JWT = {
 # Настройки Django REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'api.authentication.RedisJWTAuthentication',    # кастомный класс
+        'api.authentication.CookieJWTAuthentication',    # кастомный класс
     ),
     'EXCEPTION_HANDLER': 'api.exceptions.custom_exception_handler',
 }

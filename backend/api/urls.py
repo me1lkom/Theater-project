@@ -52,11 +52,11 @@ urlpatterns = [
     # path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'), // устарело
     # path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
-    path('auth/login/', views_auth.login_cookie, name='login'),
-    path('auth/register/', views_auth.register_cookie, name='register'),
-    path('auth/refresh/', views_auth.refresh_cookie, name='refresh'),
-    path('auth/logout/', views_auth.logout_cookie, name='logout'),
-    path('auth/me/', views_auth.me_cookie, name='me'),
+    path('auth/login/', views_auth.login, name='login'),
+    path('auth/register/', views_auth.register, name='register'),
+    path('auth/refresh/', views_auth.refresh_token, name='refresh'),
+    path('auth/logout/', views_auth.logout, name='logout'),
+    path('auth/me/', views_auth.me, name='me'),
     path('auth/profile/', views.update_profile, name='update-profile'),
 
     # path('halls/', views.manage_halls, name='halls'),
@@ -66,12 +66,12 @@ urlpatterns = [
     path('sectors/<int:sector_id>/', views.manage_sectors, name='sector-detail'),
 
     path('admin/logs/', views.action_log, name='action-log'),
-    path('admin/logs/', views.action_log_list, name='action-logs'),
+    # path('admin/logs/', views.action_log_list, name='action-logs'),
     path('admin/logs/types/', views.action_types, name='action-types'), 
 
     path('panorama/', views.PanoramaView.as_view(), name='panorama-detail'),
     path('panorama/<int:panorama_id>/', views.get_panorama_by_id, name='panorama-by-id'), 
-    path('panorama/default/', views.get_default_panorama, name='default-panorama'),
+    # path('panorama/default/', views.get_default_panorama, name='default-panorama'),
     path('panoramas/manage/', views.manage_panoramas, name='manage-panoramas'),
     path('panoramas/manage/<int:panorama_id>/', views.manage_panoramas, name='manage-panorama-detail'),
     path('panorama/by-seat/', views.get_panorama_by_seat, name='panorama-by-seat'),  
