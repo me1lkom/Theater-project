@@ -32,8 +32,7 @@ from .payment import refund_ticket
 class PlayListView(generics.ListAPIView):
 
     # возвращает список всех спектаклей
-    # URL: /api/plays/
-    # метод: GET
+    # GET /api/plays/
 
     queryset = Play.objects.all()  # все спектакли из БД (SELECT * FROM plays)
     serializer_class = PlaySerializer
@@ -43,8 +42,7 @@ class PlayListView(generics.ListAPIView):
 class PlayDetailView(generics.RetrieveAPIView):
 
     # возвращает детальную информацию об одном спектакле
-    # URL: /api/plays/1/
-    # метод: GET
+    # GET /api/plays/1/
 
     queryset = Play.objects.all()
     serializer_class = PlaySerializer
@@ -52,8 +50,7 @@ class PlayDetailView(generics.RetrieveAPIView):
 class SessionListView(generics.ListAPIView):
 
     # возвращает список всех будующих сеансов
-    # URL: /api/sessions/
-    # метод: GET
+    # GET /api/sessions/
 
     def get_queryset(self): # Показываем только будущие сеансы
         return Session.objects.filter(
@@ -65,8 +62,7 @@ class SessionListView(generics.ListAPIView):
 class SessionDetailView(generics.RetrieveAPIView):
 
     # возвращает информацию об одном сеансе
-    # URL: /api/sessions/1/
-    # метод: GET
+    # GET /api/sessions/1/
 
     queryset = Session.objects.all()
     serializer_class = SessionSerializer
@@ -74,8 +70,7 @@ class SessionDetailView(generics.RetrieveAPIView):
 class SeatListView(generics.ListAPIView):
 
     # возвращает все места в зале
-    # URL: /api/seats/
-    # метод: GET
+    # GET /api/seats/
 
     queryset = Seat.objects.all()
     serializer_class = SeatSerializer
@@ -83,8 +78,7 @@ class SeatListView(generics.ListAPIView):
 class PanoramaView(generics.RetrieveAPIView):
  
     # возвращает панораму для конкретного места
-    # URL: /api/panorama/?seat_id=1
-    # метод: GET
+    # GET /api/panorama/?seat_id=1
 
     serializer_class = PanoramaSerializer
     
@@ -134,10 +128,10 @@ def session_with_actors(request, session_id):
 @permission_classes([IsAuthenticated])
 def manage_actors(request, actor_id=None):
     
-    # GET    /api/actors/manage/           
-    # GET    /api/actors/manage/{id}/      
-    # POST   /api/actors/manage/          
-    # PUT    /api/actors/manage/{id}/      
+    # GET /api/actors/manage/           
+    # GET /api/actors/manage/{id}/      
+    # POST /api/actors/manage/          
+    # PUT /api/actors/manage/{id}/      
     # DELETE /api/actors/manage/{id}/    
 
     if request.method in ['POST', 'PUT', 'DELETE']:

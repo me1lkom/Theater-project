@@ -1,13 +1,14 @@
-# views_auth.py (полная версия)
+# views_auth.py
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.db import transaction
+from django.utils import timezone
 from .serializers import RegisterSerializer
 from .redis_utils import TokenManager
 from .models import Profile
@@ -17,9 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 def set_auth_cookies(response, access_token, refresh_token=None):
-
-    # Установка cookies с токенами аутентификации
-
+    # Установка cookies с токенами
     cookie_settings = {
         'httponly': True,
         'samesite': 'Lax',
@@ -27,7 +26,6 @@ def set_auth_cookies(response, access_token, refresh_token=None):
         'secure': not settings.DEBUG,
     }
     
-    # установка access-токена
     response.set_cookie(
         settings.SIMPLE_JWT.get('AUTH_COOKIE', 'access_token'),
         access_token,
@@ -35,7 +33,6 @@ def set_auth_cookies(response, access_token, refresh_token=None):
         **cookie_settings
     )
     
-    # установка refresh-токена
     if refresh_token:
         response.set_cookie(
             settings.SIMPLE_JWT.get('AUTH_COOKIE_REFRESH', 'refresh_token'),
@@ -46,9 +43,7 @@ def set_auth_cookies(response, access_token, refresh_token=None):
 
 
 def delete_auth_cookies(response):
-
-    # Удаление cookies с токенами
-
+    # Удаление cookies с токенами"""
     response.delete_cookie(
         settings.SIMPLE_JWT.get('AUTH_COOKIE', 'access_token'),
         path='/'
@@ -60,9 +55,7 @@ def delete_auth_cookies(response):
 
 
 def get_user_data(user):
-
     # Формирование данных пользователя
-
     try:
         profile = user.profile
         role = profile.role.name if profile.role else None
@@ -108,7 +101,10 @@ def login(request):
     
     Profile.objects.get_or_create(user=user)
     
-    # герерация токенов
+    old_refresh = request.COOKIES.get('refresh_token')
+    if old_refresh:
+        TokenManager.blacklist(old_refresh, 'refresh')
+
     refresh = RefreshToken.for_user(user)
     access_token = str(refresh.access_token)
     refresh_token = str(refresh)
@@ -128,18 +124,19 @@ def login(request):
 @api_view(['POST'])
 def refresh_token(request):
 
-    # Обновление access-токена по refresh-токену
+    # Обновление токенов
     # POST /api/auth/refresh/
 
-    refresh_token = request.COOKIES.get('refresh_token')
+    refresh_token_str = request.COOKIES.get('refresh_token')
     
-    if not refresh_token:
+    if not refresh_token_str:
         return Response(
             {'error': 'Refresh-токен не найден'}, 
             status=status.HTTP_400_BAD_REQUEST
         )
     
-    if TokenManager.is_refresh_blacklisted(refresh_token):
+
+    if TokenManager.is_refresh_blacklisted(refresh_token_str):
         logger.warning("Попытка использовать заблокированный refresh-токен")
         return Response(
             {'error': 'Refresh-токен недействителен'}, 
@@ -147,23 +144,44 @@ def refresh_token(request):
         )
     
     try:
-        old_refresh = RefreshToken(refresh_token)
+        old_refresh = RefreshToken(refresh_token_str)
         user_id = old_refresh.payload.get('user_id')
-        TokenManager.blacklist(refresh_token, 'refresh')
+
+        TokenManager.blacklist(refresh_token_str, 'refresh')
         
-        # создание новых токенов для пользователя
         user = User.objects.get(id=user_id)
         new_refresh = RefreshToken.for_user(user)
+        
         new_access = str(new_refresh.access_token)
-        new_refresh_token = str(new_refresh)
+        new_refresh_str = str(new_refresh)
         
-        logger.info(f"Токены обновлены для user_id={user_id}")
+        logger.info(
+            f"Токены обновлены для user_id={user_id}. "
+            f"Refresh продлен на {settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME']}"
+        )
         
-        response = Response({'success': True})
-        set_auth_cookies(response, new_access, new_refresh_token)
+        response = Response({
+            'success': True,
+            'message': 'Токены успешно обновлены',
+            'user': get_user_data(user)
+        })
+        
+        set_auth_cookies(response, new_access, new_refresh_str)
         
         return response
         
+    except TokenError as e:
+        logger.error(f"Refresh-токен истек или невалиден: {e}")
+        return Response(
+            {'error': 'Refresh-токен истек. Требуется повторный вход.'}, 
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+    except User.DoesNotExist:
+        logger.error(f"Пользователь с id={user_id} не найден")
+        return Response(
+            {'error': 'Пользователь не найден'}, 
+            status=status.HTTP_401_UNAUTHORIZED
+        )
     except Exception as e:
         logger.error(f"Ошибка обновления токена: {e}")
         return Response(
@@ -179,19 +197,17 @@ def logout(request):
     # Выход из системы
     # POST /api/auth/logout/
 
-    # блокировка access-токена
     access_token = request.COOKIES.get(
         settings.SIMPLE_JWT.get('AUTH_COOKIE', 'access_token')
     )
     if access_token:
         TokenManager.blacklist(access_token, 'access')
     
-    # блокировка refresh-токена
-    refresh_token = request.COOKIES.get(
+    refresh_token_str = request.COOKIES.get(
         settings.SIMPLE_JWT.get('AUTH_COOKIE_REFRESH', 'refresh_token')
     )
-    if refresh_token:
-        TokenManager.blacklist(refresh_token, 'refresh')
+    if refresh_token_str:
+        TokenManager.blacklist(refresh_token_str, 'refresh')
     
     logger.info(f"Пользователь {request.user.username} вышел из системы")
     
@@ -200,7 +216,6 @@ def logout(request):
         'message': 'Выход выполнен'
     })
     
-    # удаление cookies
     delete_auth_cookies(response)
     
     return response
@@ -214,7 +229,7 @@ def register(request):
     # POST /api/auth/register/
 
     phone = request.data.get('phone', '')
-
+    
     if phone and Profile.objects.filter(phone=phone).exists():
         return Response({
             'phone': ['Пользователь с таким номером телефона уже существует']
@@ -230,10 +245,9 @@ def register(request):
         with transaction.atomic():
             user = serializer.save()
             
-            # генерация токенов
             refresh = RefreshToken.for_user(user)
             access_token = str(refresh.access_token)
-            refresh_token = str(refresh)
+            refresh_token_str = str(refresh)
             
             logger.info(f"Пользователь {user.username} успешно зарегистрирован")
             
@@ -242,8 +256,7 @@ def register(request):
                 'user': get_user_data(user)
             }, status=status.HTTP_201_CREATED)
             
-            # установка токенов в cookies
-            set_auth_cookies(response, access_token, refresh_token)
+            set_auth_cookies(response, access_token, refresh_token_str)
             
             return response
             
