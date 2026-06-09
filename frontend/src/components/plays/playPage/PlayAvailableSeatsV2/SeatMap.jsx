@@ -177,7 +177,7 @@ export default function SeatMap({ seats, availableSeats, selectedSeats, onSeatTo
                 maxScale={3}
                 limitToBounds={true}
                 centerOnInit={true}
-                wheel={{ step: 0.1 }}
+                wheel={{ step: 0.01 }}
             >
                 {({ zoomIn, zoomOut, resetTransform }) => (
                     <TransformComponent>

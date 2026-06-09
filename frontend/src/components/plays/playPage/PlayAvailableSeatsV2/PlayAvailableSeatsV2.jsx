@@ -27,7 +27,8 @@ export default function PlayAvailableSeats({ sessionId }) {
         if (availableSeats?.seats) {
             const prices = {};
             availableSeats.seats.forEach(seat => {
-                if (!prices[seat.sector]) {
+                const currentMin = prices[seat.sector];
+                if (currentMin === undefined || seat.price < currentMin) {
                     prices[seat.sector] = seat.price;
                 }
             });
@@ -36,16 +37,17 @@ export default function PlayAvailableSeats({ sessionId }) {
     }, [availableSeats]);
 
     const handleSeatToggle = (seatId, seatPrice) => {
-        setSelectedSeats(prev =>
-            prev.includes(seatId)
-                ? prev.filter(id => id !== seatId)
-                : [...prev, seatId]
-        );
-        setPrice(prev =>
-            selectedSeats.includes(seatId)
-                ? prev - seatPrice
-                : prev + seatPrice
-        );
+        setSelectedSeats(prev => {
+            const isSelected = prev.includes(seatId);
+
+            if (isSelected) {
+                setPrice(prevPrice => prevPrice - seatPrice);
+                return prev.filter(id => id !== seatId);
+            } else {
+                setPrice(prevPrice => prevPrice + seatPrice);
+                return [...prev, seatId];
+            }
+        });
     };
 
     const handleBooking = async () => {

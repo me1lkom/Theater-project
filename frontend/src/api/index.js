@@ -19,9 +19,10 @@ const addToQueue = (resolve, reject) => {
     failedQueue.push({ resolve, reject });
 };
 
-const redirectToLogin = async () => {
-    const { logout } = useAuthStore.getState();
-    await logout();
+const redirectToLogin = () => {
+    useAuthStore.setState({ user: null, isAuthenticated: false, isLoading: false });
+    localStorage.removeItem('user');
+    localStorage.removeItem('paymentId');
 
     if (!window.location.pathname.includes('/auth')) {
         window.location.href = '/auth';
@@ -43,28 +44,28 @@ apiClient.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
-        console.log(`Ошибка, поймана интерцептором: ${error.response?.status}, ${originalRequest.url}`);
+        console.log(`Ошибка: ${error.response?.status}, ${originalRequest.url}`);
 
         const isAuthEndpoint = originalRequest.url?.includes('/auth/login') ||
-            originalRequest.url?.includes('/auth/register') ||
-            originalRequest.url?.includes('/auth/refresh');
+            originalRequest.url?.includes('/auth/register');
 
-        if (error.response?.status !== 401 || isAuthEndpoint) {
-            return Promise.reject(error);
-        }
-
+        // ЛЮБАЯ ошибка на /auth/refresh/ — разлогиниваем
         if (originalRequest.url === '/auth/refresh/') {
-            console.log('Refresh token expired or invalid, redirecting to login');
+            console.log('Ошибка обновления токена, разлогиниваем');
             await redirectToLogin();
             return Promise.reject(error);
         }
 
+        // Если не 401 или auth-эндпоинт — пробрасываем
+        if (error.response?.status !== 401 || isAuthEndpoint) {
+            return Promise.reject(error);
+        }
+
+        // Если уже идёт обновление — в очередь
         if (isRefreshing) {
-            console.log('Обновление токена');
             return new Promise((resolve, reject) => {
                 addToQueue(resolve, reject);
             }).then(() => {
-                console.log('Повторение исходного запроса');
                 return apiClient(originalRequest);
             }).catch((err) => {
                 return Promise.reject(err);
@@ -74,29 +75,16 @@ apiClient.interceptors.response.use(
         originalRequest._retry = true;
         isRefreshing = true;
 
-        console.log('Обновляем токен');
-
         try {
             await apiClient.post('/auth/refresh/');
-            console.log('Токен обновлён');
-
             processQueue(null);
-
-            console.log('Повторение исходных запросов');
             return apiClient(originalRequest);
-
         } catch (refreshError) {
-            console.log(`Токен не обновлён:', ${refreshError}`);
-
             processQueue(refreshError, null);
-
             await redirectToLogin();
-
             return Promise.reject(refreshError);
-
         } finally {
             isRefreshing = false;
-            console.log('Refresh flag reset');
         }
     }
 );
