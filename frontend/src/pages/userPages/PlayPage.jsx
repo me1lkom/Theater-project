@@ -10,13 +10,11 @@ export default function PlayPage() {
     const [selectedSession, setSelectedSession] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    // Когда выбран сеанс — открываем модалку
     const handleSessionSelect = (sessionId) => {
         setSelectedSession(sessionId);
         setIsModalOpen(true);
     };
 
-    // Закрытие модалки и сброс выбранного сеанса
     const handleCloseModal = () => {
         setIsModalOpen(false);
         setSelectedSession(null);

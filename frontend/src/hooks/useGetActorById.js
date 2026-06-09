@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { getActorById } from '../api/index';
 import { getErrorMessage } from '../utils/getErrorMessage';

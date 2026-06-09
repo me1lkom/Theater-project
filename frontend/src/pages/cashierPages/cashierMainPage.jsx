@@ -1,5 +1,4 @@
 import PlayList from "../../components/cashier/PlayList";
-// import styles from "./cashierMainPage.module.css";
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePlays } from '../../hooks/usePlays';
@@ -9,7 +8,6 @@ export default function CashierMainPage() {
     const { plays, loading, error } = usePlays();
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedGenre, setSelectedGenre] = useState('all');
-    // const navigate = useNavigate();
 
     const [selectedSession, setSelectedSession] = useState(null);
     const [selectedPlayId, setSelectedPlayId] = useState(null);

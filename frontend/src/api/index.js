@@ -49,19 +49,16 @@ apiClient.interceptors.response.use(
         const isAuthEndpoint = originalRequest.url?.includes('/auth/login') ||
             originalRequest.url?.includes('/auth/register');
 
-        // ЛЮБАЯ ошибка на /auth/refresh/ — разлогиниваем
         if (originalRequest.url === '/auth/refresh/') {
-            console.log('Ошибка обновления токена, разлогиниваем');
+            console.log('Ошибка обновления токена, разлогин');
             await redirectToLogin();
             return Promise.reject(error);
         }
 
-        // Если не 401 или auth-эндпоинт — пробрасываем
         if (error.response?.status !== 401 || isAuthEndpoint) {
             return Promise.reject(error);
         }
 
-        // Если уже идёт обновление — в очередь
         if (isRefreshing) {
             return new Promise((resolve, reject) => {
                 addToQueue(resolve, reject);

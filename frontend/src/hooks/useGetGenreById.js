@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { getGenreById } from '../api/index';
 import { getErrorMessage } from '../utils/getErrorMessage';

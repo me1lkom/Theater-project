@@ -2,7 +2,6 @@ import { useSession } from '../../../hooks/useSession';
 import { usePlay } from '../../../hooks/usePlay';
 import { useSeats } from '../../../hooks/useSeats';
 import UserForm from './UserForm';
-// import { useBuyTicket } from '../../../hooks/useBuyTicket';
 import { useNavigate } from 'react-router-dom';
 import styles from './DataInfo.module.css';
 import { createPayment } from '../../../api/index';
@@ -17,7 +16,7 @@ export default function DataInfo({ sessionId, selectedSeats, price }) {
     const { session, loading, error } = useSession(sessionId);
     const { play, loading: playLoading, error: playError } = usePlay(session?.play);
     const { seats } = useSeats();
-    // const { buyTickets } = useBuyTicket();
+
     const navigate = useNavigate();
 
     const setPaymentId = useAuthStore(state => state.setPaymentId);
@@ -37,12 +36,7 @@ export default function DataInfo({ sessionId, selectedSeats, price }) {
         );
     }
 
-
-
-    // const countTickets = selectedSeats.length;
-
     const handleFormSubmit = async () => {
-        // console.log(`user_data: ${user_data}`);
 
         const payload = {
             session_id: Number(sessionId),
@@ -50,23 +44,6 @@ export default function DataInfo({ sessionId, selectedSeats, price }) {
         };
         
         console.log('Отправка на сервер:', payload.user_id, payload.session_id, payload.seat_ids);
-
-        // const result = await buyTickets(payload.session_id, payload.seat_ids);
-
-        // if (result.success) {
-
-        //     MySwal.fire({
-        //         icon: "success",
-        //         title: <p>Билеты успешно куплены</p>,
-        //         showConfirmButton: false,
-        //         timer: 1000
-        //     })
-
-        //     navigate('/profile')
-
-        // } else {
-        //     alert(`Ошибка: ${result.error}`);
-        // }
 
         const paymentData = await createPayment();
 
